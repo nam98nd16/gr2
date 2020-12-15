@@ -2,6 +2,13 @@
   <div>
     <page-title title="User management" />
     Total: {{ data.length }}
+    <a-switch
+      style="float: right"
+      checked-children="Actions shown"
+      un-checked-children="Actions hidden"
+      default-unchecked
+      v-model="showsActions"
+    />
     <a-table
       :columns="columns"
       :data-source="data"
@@ -22,7 +29,7 @@
         </div>
       </template>
       <span
-        v-if="record.privilege"
+        v-if="record.privilege && showsActions"
         slot="operation"
         slot-scope="text, record, index"
       >
@@ -47,45 +54,6 @@
 
 <script>
 import pageTitle from "../components/page-title.vue";
-const columns = [
-  {
-    title: "No",
-    dataIndex: "no",
-    scopedSlots: { customRender: "name" }
-  },
-  {
-    title: "Unique ID",
-    dataIndex: "uniqueId",
-    scopedSlots: { customRender: "uniqueId" }
-  },
-  {
-    title: "Username",
-    dataIndex: "username",
-    scopedSlots: { customRender: "username" }
-  },
-  {
-    title: "Registered Date",
-    dataIndex: "registeredDate",
-    scopedSlots: { customRender: "registeredDate" }
-  },
-  {
-    title: "Privilege",
-    dataIndex: "privilege",
-    scopedSlots: { customRender: "privilege" }
-  },
-  {
-    title: "Subject",
-    dataIndex: "subject",
-    scopedSlots: { customRender: "subject" }
-  },
-  {
-    title: "Operation",
-    class: "action",
-    width: 280,
-    scopedSlots: { customRender: "operation" }
-  }
-];
-
 const data = [];
 for (let i = 0; i < 100; i++) {
   data.push({
@@ -103,9 +71,54 @@ export default {
     this.cacheData = data.map(item => ({ ...item }));
     return {
       data,
-      columns,
-      editingKey: ""
+      editingKey: "",
+      showsActions: false
     };
+  },
+  computed: {
+    columns() {
+      return [
+        {
+          title: "No",
+          dataIndex: "no",
+          scopedSlots: { customRender: "name" }
+        },
+        {
+          title: "Unique ID",
+          dataIndex: "uniqueId",
+          scopedSlots: { customRender: "uniqueId" }
+        },
+        {
+          title: "Username",
+          dataIndex: "username",
+          scopedSlots: { customRender: "username" }
+        },
+        {
+          title: "Registered Date",
+          dataIndex: "registeredDate",
+          scopedSlots: { customRender: "registeredDate" }
+        },
+        {
+          title: "Privilege",
+          dataIndex: "privilege",
+          scopedSlots: { customRender: "privilege" }
+        },
+        {
+          title: "Subject",
+          dataIndex: "subject",
+          scopedSlots: { customRender: "subject" }
+        },
+        {
+          title: "Operation",
+          class: "action",
+          width: this.operationColWidth,
+          scopedSlots: { customRender: "operation" }
+        }
+      ];
+    },
+    operationColWidth() {
+      return this.showsActions ? 280 : 100;
+    }
   },
   methods: {
     handlePromote(user) {
