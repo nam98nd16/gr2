@@ -1,6 +1,7 @@
 <template>
   <div>
     <page-title title="User management" />
+    Total: {{ data.length }}
     <a-table
       :columns="columns"
       :data-source="data"
@@ -50,39 +51,39 @@ const columns = [
   {
     title: "No",
     dataIndex: "no",
-    scopedSlots: { customRender: "name" },
+    scopedSlots: { customRender: "name" }
   },
   {
     title: "Unique ID",
     dataIndex: "uniqueId",
-    scopedSlots: { customRender: "uniqueId" },
+    scopedSlots: { customRender: "uniqueId" }
   },
   {
     title: "Username",
     dataIndex: "username",
-    scopedSlots: { customRender: "username" },
+    scopedSlots: { customRender: "username" }
   },
   {
     title: "Registered Date",
     dataIndex: "registeredDate",
-    scopedSlots: { customRender: "registeredDate" },
+    scopedSlots: { customRender: "registeredDate" }
   },
   {
     title: "Privilege",
     dataIndex: "privilege",
-    scopedSlots: { customRender: "privilege" },
+    scopedSlots: { customRender: "privilege" }
   },
   {
     title: "Subject",
     dataIndex: "subject",
-    scopedSlots: { customRender: "subject" },
+    scopedSlots: { customRender: "subject" }
   },
   {
     title: "Operation",
     class: "action",
     width: 280,
-    scopedSlots: { customRender: "operation" },
-  },
+    scopedSlots: { customRender: "operation" }
+  }
 ];
 
 const data = [];
@@ -93,17 +94,17 @@ for (let i = 0; i < 100; i++) {
     username: `Edrward ${i}`,
     registeredDate: "2020/12/15",
     privilege: i % 4,
-    subject: [1, 2].includes(i % 4) ? "Math" : "",
+    subject: [1, 2].includes(i % 4) ? "Math" : ""
   });
 }
 export default {
   components: { pageTitle },
   data() {
-    this.cacheData = data.map((item) => ({ ...item }));
+    this.cacheData = data.map(item => ({ ...item }));
     return {
       data,
       columns,
-      editingKey: "",
+      editingKey: ""
     };
   },
   methods: {
@@ -113,7 +114,7 @@ export default {
         okText: "OK",
         cancelText: "Cancel",
         onOk: () => {},
-        onCancel() {},
+        onCancel() {}
       });
     },
     handleDemote(user) {
@@ -122,7 +123,7 @@ export default {
         okText: "OK",
         cancelText: "Cancel",
         onOk: () => {},
-        onCancel() {},
+        onCancel() {}
       });
     },
     handleBan(user) {
@@ -131,10 +132,10 @@ export default {
         okText: "OK",
         cancelText: "Cancel",
         onOk: () => {},
-        onCancel() {},
+        onCancel() {}
       });
-    },
-  },
+    }
+  }
 };
 </script>
 
