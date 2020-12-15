@@ -150,7 +150,8 @@ export default {
           this.countDown -= 1;
           this.startCountDownTimer();
         }, 1000);
-      }
+      } else if (this.currentQuestionNo < this.maxQuestionNo) this.handleNext();
+      else this.modalVisible = true;
     },
   },
 };
