@@ -10,20 +10,23 @@
           >Report</a-button
         >
       </div>
-      <a-radio-group class="mb-2 answerable" v-model="answeredKey">
-        <a-radio :class="questionKey == 1 ? 'correct-answer' : ''" :value="1">
-          A. 0
-        </a-radio>
-        <a-radio :class="questionKey == 2 ? 'correct-answer' : ''" :value="2">
-          B. 10
-        </a-radio>
-        <a-radio :class="questionKey == 3 ? 'correct-answer' : ''" :value="3">
-          C. 5
-        </a-radio>
-        <a-radio :class="questionKey == 4 ? 'correct-answer' : ''" :value="4">
-          D. 2
-        </a-radio></a-radio-group
+      <a-radio-group
+        class="mb-2 answerable"
+        :value="isReviewing && answer ? answer.answeredKey : answeredKey"
+        @change="(e) => handleAnswer(e)"
       >
+        <a-radio :class="correctAnswerIsA ? 'correct-answer' : ''" :value="1">
+          A. 0 <i v-if="correctAnswerIsA" class="fas fa-check mr-2" />
+        </a-radio>
+        <a-radio :class="correctAnswerIsB ? 'correct-answer' : ''" :value="2">
+          B. 10 <i v-if="correctAnswerIsB" class="fas fa-check mr-2" />
+        </a-radio>
+        <a-radio :class="correctAnswerIsC ? 'correct-answer' : ''" :value="3">
+          C. 5 <i v-if="correctAnswerIsC" class="fas fa-check mr-2" />
+        </a-radio>
+        <a-radio :class="correctAnswerIsD ? 'correct-answer' : ''" :value="4">
+          D. 2 <i v-if="correctAnswerIsD" class="fas fa-check mr-2" /> </a-radio
+      ></a-radio-group>
     </a-card>
 
     <a-modal
@@ -39,21 +42,40 @@
 
 <script>
 export default {
-  props: ["questionNumber", "questionKey"],
+  props: ["questionNumber", "answerKey", "isReviewing", "answer"],
   data() {
     return {
       answeredKey: "",
       modalVisible: false,
-      countDown: 30,
     };
   },
   mounted() {},
+  computed: {
+    correctAnswerIsA() {
+      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 1;
+    },
+    correctAnswerIsB() {
+      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 2;
+    },
+    correctAnswerIsC() {
+      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 3;
+    },
+    correctAnswerIsD() {
+      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 4;
+    },
+  },
   methods: {
     handleReport() {
       this.modalVisible = true;
     },
     handleOk() {
       this.modalVisible = false;
+    },
+    handleAnswer(e) {
+      if (!this.isReviewing) {
+        this.answeredKey = e.target.value;
+        this.$emit("answer", e.target.value);
+      }
     },
   },
 };
@@ -81,5 +103,6 @@ export default {
 
 .correct-answer {
   color: blue !important;
+  font-weight: bold;
 }
 </style>

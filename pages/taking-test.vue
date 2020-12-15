@@ -5,11 +5,17 @@
       {{ countDown }}
       <div>Questions left: {{ maxQuestionNo - currentQuestionNo }}</div>
     </div>
-    <div v-else class="mb-4" style="text-align: center">Your score: 23/30</div>
+    <div v-else class="mb-4" style="text-align: center">
+      Your score: {{ numberOfCorrectAnswers }}/{{ maxQuestionNo }}
+    </div>
 
     <answerable-question
       :questionNumber="currentQuestionNo"
-      :questionKey="questionKey"
+      :answerKey="answerKeys"
+      :isReviewing="isReviewing"
+      :answer="answers[currentQuestionNo - 1]"
+      ref="question"
+      @answer="handleAnswer"
     />
     <div class="mt-2">
       <a-button v-if="!isReviewing" type="danger" @click="handleAbandon"
@@ -38,12 +44,15 @@
     <a-modal
       :cancelText="'Review'"
       :cancelButtonProps="{ props: {}, on: { click: handleReview } }"
+      :maskClosable="false"
       v-model="modalVisible"
       centered
       title="Your score"
       @ok="handleOk"
     >
-      <div class="score-text">23/30</div>
+      <div class="score-text">
+        {{ numberOfCorrectAnswers }}/{{ maxQuestionNo }}
+      </div>
     </a-modal>
   </div>
 </template>
@@ -59,11 +68,22 @@ export default {
       isReviewing: false,
       currentQuestionNo: 1,
       maxQuestionNo: 20,
-      questionKey: 0,
+      answerKeys: [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
+      answers: [],
     };
   },
   mounted() {
     this.startCountDownTimer();
+  },
+  computed: {
+    numberOfCorrectAnswers() {
+      let correctAnswers = 0;
+      if (this.answers.length)
+        this.answers.forEach((ans, index) => {
+          if (ans.answeredKey == this.answerKeys[index]) correctAnswers++;
+        });
+      return correctAnswers;
+    },
   },
   methods: {
     handleAbandon() {
@@ -84,6 +104,7 @@ export default {
         this.countDown = 30;
         this.startCountDownTimer();
       } else this.countDown = 30;
+      this.$refs.question.answeredKey = "";
     },
     handleBack() {
       if (this.currentQuestionNo > 1) this.currentQuestionNo--;
@@ -107,7 +128,19 @@ export default {
     handleReview() {
       this.modalVisible = false;
       this.isReviewing = true;
-      this.questionKey = 1;
+      this.answerKey = 1;
+      console.log("ans", this.answers);
+    },
+    handleAnswer(answeredKey) {
+      let currentQuestionIndex = this.answers.findIndex(
+        (ans) => ans.questionNumber == this.currentQuestionNo
+      );
+      if (currentQuestionIndex == -1)
+        this.answers.push({
+          questionNumber: this.currentQuestionNo,
+          answeredKey: answeredKey,
+        });
+      else this.answers[currentQuestionIndex].answeredKey = answeredKey;
     },
     startCountDownTimer() {
       if (this.countDown > 0) {
