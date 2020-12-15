@@ -14,7 +14,7 @@
       :questionNumber="currentQuestionNo"
       :answerKey="answerKeys"
       :isReviewing="isReviewing"
-      :answer="answers[currentQuestionNo - 1]"
+      :answer="answers.find((ans) => ans.questionNumber == currentQuestionNo)"
       ref="question"
       @answer="handleAnswer"
     />
@@ -82,7 +82,8 @@ export default {
       let correctAnswers = 0;
       if (this.answers.length)
         this.answers.forEach((ans, index) => {
-          if (ans.answeredKey == this.answerKeys[index]) correctAnswers++;
+          if (ans.answeredKey == this.answerKeys[ans.questionNumber - 1])
+            correctAnswers++;
         });
       return correctAnswers;
     },

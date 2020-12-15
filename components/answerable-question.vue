@@ -12,7 +12,13 @@
       </div>
       <a-radio-group
         class="mb-2 answerable"
-        :value="isReviewing && answer ? answer.answeredKey : answeredKey"
+        :value="
+          isReviewing && answer
+            ? answer.answeredKey
+            : isReviewing && !answer
+            ? ''
+            : answeredKey
+        "
         @change="(e) => handleAnswer(e)"
       >
         <a-radio :class="correctAnswerIsA ? 'correct-answer' : ''" :value="1">
