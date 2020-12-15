@@ -1,5 +1,6 @@
 <template>
   <div>
+    <page-title title="Test" />
     Select topic
     <br />
     <a-select
@@ -52,11 +53,13 @@
 </template>
 
 <script>
+import pageTitle from "../components/page-title.vue";
 export default {
+  components: { pageTitle },
   data() {
     return {
       selectedTopic: "math",
-      selectedLength: "short",
+      selectedLength: "medium",
       selectedDifficulty: "adaptive",
     };
   },

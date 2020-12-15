@@ -1,19 +1,11 @@
 <template>
-  <div class="container">
+  <div class="container2">
     <div>
       <Logo />
       <h1 class="title">gr2</h1>
       <div class="links">
         <a
-          href="https://nuxtjs.org/"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--green"
-        >
-          Documentation
-        </a>
-        <a
-          href="https://github.com/nuxt/nuxt.js"
+          href="https://github.com/nam98nd16/gr2"
           target="_blank"
           rel="noopener noreferrer"
           class="button--grey"
@@ -32,7 +24,7 @@ export default {
 </script>
 
 <style>
-.container {
+.container2 {
   margin: 0 auto;
   min-height: 100vh;
   display: flex;

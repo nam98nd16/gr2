@@ -1,5 +1,6 @@
 <template>
   <div>
+    <page-title title="Question management" />
     <a-input-search
       placeholder="Search for questions"
       style="width: 400px"
@@ -96,8 +97,9 @@
 
 <script>
 import Question from "@/components/question";
+import PageTitle from "../components/page-title.vue";
 export default {
-  components: { Question },
+  components: { Question, PageTitle },
   data() {
     return {
       checked1: false,

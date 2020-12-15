@@ -1,5 +1,6 @@
 <template>
   <a-spin :spinning="pageLoading">
+    <page-title title="Profile" />
     <div class="container">
       <a-form style="margin-top: 50px" :form="form" @submit="handleSubmit">
         <a-form-item :label="'Email'" v-bind="formItemLayout">
@@ -97,8 +98,9 @@
 <script>
 import { mapState, mapMutations } from "vuex";
 import jwt_decode from "jwt-decode";
+import PageTitle from "../components/page-title.vue";
 export default {
-  components: {},
+  components: { PageTitle },
   data() {
     return {
       formItemLayout: {

@@ -1,5 +1,6 @@
 <template>
   <div>
+    <page-title title="User management" />
     <a-table
       :columns="columns"
       :data-source="data"
@@ -44,6 +45,7 @@
 </template>
 
 <script>
+import pageTitle from "../components/page-title.vue";
 const columns = [
   {
     title: "No",
@@ -95,6 +97,7 @@ for (let i = 0; i < 100; i++) {
   });
 }
 export default {
+  components: { pageTitle },
   data() {
     this.cacheData = data.map((item) => ({ ...item }));
     return {

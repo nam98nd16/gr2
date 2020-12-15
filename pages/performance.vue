@@ -1,5 +1,6 @@
 <template>
   <div>
+    <page-title title="Performance" />
     <div>
       Select topic
       <br />
@@ -25,10 +26,12 @@
 </template>
 
 <script>
+import pageTitle from "../components/page-title.vue";
 export default {
+  components: { pageTitle },
   data() {
     return {
-      correctedAnswers: [14, 13, 15, 24, 23, 12, 17, 24],
+      correctAnswers: [14, 13, 15, 24, 23, 12, 17, 24],
       totalQuestions: [20, 20, 20, 30, 30, 20, 20, 30],
       selectedTopic: "",
     };
@@ -37,9 +40,9 @@ export default {
     series() {
       return [
         {
-          name: "Number of corrected answers",
+          name: "Number of correct answers",
           type: "column",
-          data: this.correctedAnswers,
+          data: this.correctAnswers,
         },
         {
           name: "Number of questions",
@@ -49,7 +52,7 @@ export default {
         {
           name: "Percentage",
           type: "line",
-          data: this.correctedAnswers.map((a, index) =>
+          data: this.correctAnswers.map((a, index) =>
             ((a / this.totalQuestions[index]) * 100).toFixed(0)
           ),
         },
@@ -88,7 +91,7 @@ export default {
         },
         yaxis: [
           {
-            seriesName: "Number of corrected answers",
+            seriesName: "Number of correct answers",
             axisTicks: {
               show: true,
             },
@@ -100,7 +103,7 @@ export default {
             },
           },
           {
-            seriesName: "Number of corrected answers",
+            seriesName: "Number of correct answers",
             show: false,
           },
           {

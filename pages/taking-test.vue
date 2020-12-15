@@ -1,9 +1,10 @@
 <template>
   <div>
+    <page-title title="Test" />
     <div v-if="!isReviewing" class="mb-4" style="text-align: center">
       <i class="fas fa-clock"></i> Time left for the current question:
       {{ countDown }}
-      <div>Questions left: {{ maxQuestionNo - currentQuestionNo }}</div>
+      <div>Questions left: {{ maxQuestionNo - answers.length }}</div>
     </div>
     <div v-else class="mb-4" style="text-align: center">
       Your score: {{ numberOfCorrectAnswers }}/{{ maxQuestionNo }}
@@ -59,8 +60,9 @@
 
 <script>
 import AnswerableQuestion from "../components/answerable-question.vue";
+import PageTitle from "../components/page-title.vue";
 export default {
-  components: { AnswerableQuestion },
+  components: { AnswerableQuestion, PageTitle },
   data() {
     return {
       countDown: 30,
