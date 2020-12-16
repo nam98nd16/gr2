@@ -16,10 +16,8 @@
             v-decorator="[
               'userName',
               {
-                rules: [
-                  { required: true, message: 'Please input your email!' },
-                ],
-              },
+                rules: [{ required: true, message: 'Please input your email!' }]
+              }
             ]"
             placeholder="Email"
           >
@@ -36,9 +34,9 @@
               'password',
               {
                 rules: [
-                  { required: true, message: 'Please input your Password!' },
-                ],
-              },
+                  { required: true, message: 'Please input your Password!' }
+                ]
+              }
             ]"
             type="password"
             placeholder="Password"
@@ -56,9 +54,9 @@
               'rePassword',
               {
                 rules: [
-                  { required: true, message: 'Please re-enter your Password!' },
-                ],
-              },
+                  { required: true, message: 'Please re-enter your Password!' }
+                ]
+              }
             ]"
             type="password"
             placeholder="Re-enter Password"
@@ -97,7 +95,7 @@ export default {
   data() {
     return {
       errMessage: "",
-      loading: false,
+      loading: false
     };
   },
   methods: {
@@ -109,8 +107,8 @@ export default {
     handleError(e) {
       this.errMessage = e;
       setTimeout(() => (this.errMessage = ""), 3000);
-    },
-  },
+    }
+  }
 };
 </script>
 

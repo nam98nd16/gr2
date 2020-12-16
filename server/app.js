@@ -5,6 +5,7 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var expressJwt = require("express-jwt");
 const jwtSecret = require("./config/const");
+const cors = require("cors");
 
 var app = express();
 
@@ -18,6 +19,7 @@ app.use(
     path: ["/accounts/login", "/accounts/register"],
   })
 );
+app.use(cors());
 
 app.use(require("./routes"));
 

@@ -16,10 +16,8 @@
             v-decorator="[
               'userName',
               {
-                rules: [
-                  { required: true, message: 'Please input your email!' },
-                ],
-              },
+                rules: [{ required: true, message: 'Please input your email!' }]
+              }
             ]"
             placeholder="Email"
           >
@@ -36,9 +34,9 @@
               'password',
               {
                 rules: [
-                  { required: true, message: 'Please input your Password!' },
-                ],
-              },
+                  { required: true, message: 'Please input your Password!' }
+                ]
+              }
             ]"
             type="password"
             placeholder="Password"
@@ -57,8 +55,8 @@
               'remember',
               {
                 valuePropName: 'checked',
-                initialValue: true,
-              },
+                initialValue: true
+              }
             ]"
             >Remember me</a-checkbox
           >
@@ -92,18 +90,38 @@ export default {
   data() {
     return {
       errMessage: "",
-      loading: false,
+      loading: false
     };
   },
   methods: {
     ...mapMutations({
-      setCurrentUser: "profile/setCurrentUser",
+      setCurrentUser: "profile/setCurrentUser"
     }),
     handleSubmit(e) {
       e.preventDefault();
-      this.$router.push("/");
-    },
-  },
+      this.form.validateFields(async (err, values) => {
+        if (!err) {
+          this.loading = true;
+          let payload = {
+            username: values.userName,
+            password: values.password
+          };
+          try {
+            let res = await this.$axios.post("/accounts/login", payload);
+            if (res.status == 200) {
+              localStorage.setItem("token", res.data);
+              this.$axios.setToken(res.data, "Bearer");
+              this.$router.push("/");
+            }
+          } catch (error) {
+            this.errMessage = error.response.data;
+          } finally {
+            this.loading = false;
+          }
+        }
+      });
+    }
+  }
 };
 </script>
 
