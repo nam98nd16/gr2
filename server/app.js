@@ -3,6 +3,8 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+var expressJwt = require("express-jwt");
+const jwtSecret = require("./config/const");
 
 var app = express();
 
@@ -11,8 +13,19 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
+app.use(
+  expressJwt({ secret: jwtSecret, algorithms: ["HS256"] }).unless({
+    path: ["/accounts/login", "/accounts/register"],
+  })
+);
 
 app.use(require("./routes"));
+
+app.use(function (err, req, res, next) {
+  if (err.name === "UnauthorizedError") {
+    res.status(401).send("Unauthorized");
+  }
+});
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {

@@ -54,6 +54,7 @@ const login = async (req, res) => {
         user.password = undefined;
         const token = jwt.sign(user, jwtSecret, {
           expiresIn: validDays * 24 + "h",
+          algorithm: "HS256",
         });
         return res.json(token);
       } else res.status(400).json("Invalid password!");
