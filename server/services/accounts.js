@@ -31,7 +31,7 @@ const register = async (req, res) => {
       });
       res.json({ user: user });
     } catch (error) {
-      res.json(error);
+      res.status(400).json(error);
     }
   });
 };
@@ -46,7 +46,7 @@ const login = async (req, res) => {
     .select()
     .from("accounts")
     .where({ username: req.body.username });
-  if (!users.length) res.status(401).json("Account not existed!");
+  if (!users.length) res.status(400).json("Account not existed!");
   else {
     let user = users[0];
     bcrypt.compare(req.body.password, user.password, async (err, result) => {
@@ -56,7 +56,7 @@ const login = async (req, res) => {
           expiresIn: validDays * 24 + "h",
         });
         return res.json(token);
-      } else res.status(401).json("Invalid password!");
+      } else res.status(400).json("Invalid password!");
     });
   }
 };
