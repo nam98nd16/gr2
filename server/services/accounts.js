@@ -4,18 +4,6 @@ const jwtSecret = require("../config/const");
 const validDays = 7;
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
-/**
- * @param {Request} req Request object from express
- * @param {Response} res Response object from express
- */
-const test = async (req, res) => {
-  const users = await knex
-    .column()
-    .select()
-    .from("accounts")
-    .where({ userId: 1 });
-  res.json({ a: users });
-};
 
 /**
  * @param {Request} req Request object from express
@@ -24,6 +12,7 @@ const test = async (req, res) => {
 const register = async (req, res) => {
   bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
     // Store hash in your password DB.
+    if (err) res.status(500).json(err.message);
     try {
       let user = await knex("accounts").returning("*").insert({
         username: req.body.username,
@@ -63,7 +52,6 @@ const login = async (req, res) => {
 };
 
 module.exports = {
-  test,
   register,
   login,
 };
