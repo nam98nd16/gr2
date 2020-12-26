@@ -101,8 +101,29 @@ export default {
   methods: {
     handleSubmit(e) {
       e.preventDefault();
-
-      this.$router.push("/login");
+      this.form.validateFields(async (err, values) => {
+        if (!err) {
+          this.loading = true;
+          try {
+            if (values.password !== values.rePassword)
+              this.handleError("Passwords do not match!");
+            else {
+              let payload = {
+                username: values.userName,
+                password: values.password
+              };
+              let res = await this.$axios.post("/accounts/register", payload);
+              if (res.status == 200) {
+                this.$router.push("/login");
+              }
+            }
+          } catch (error) {
+            this.errMessage = error.response.data.detail;
+          } finally {
+            this.loading = false;
+          }
+        }
+      });
     },
     handleError(e) {
       this.errMessage = e;

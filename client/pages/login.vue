@@ -60,9 +60,9 @@
             ]"
             >Remember me</a-checkbox
           >
-          <nuxt-link :to="'/reset-password'">
+          <!-- <nuxt-link :to="'/reset-password'">
             <a class="login-form-forgot">Forgot password</a>
-          </nuxt-link>
+          </nuxt-link> -->
           <a-button
             :loading="loading"
             type="primary"
@@ -110,7 +110,6 @@ export default {
             let res = await this.$axios.post("/accounts/login", payload);
             if (res.status == 200) {
               localStorage.setItem("token", res.data);
-              this.$axios.setToken(res.data, "Bearer");
               this.$router.push("/");
             }
           } catch (error) {

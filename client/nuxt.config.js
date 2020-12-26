@@ -20,7 +20,8 @@ export default {
   plugins: [
     "@/plugins/antd-ui",
     "@/plugins/bootstrap-vue",
-    "@/plugins/apexcharts"
+    "@/plugins/apexcharts",
+    "@/plugins/axios"
   ],
 
   // Auto import components (https://go.nuxtjs.dev/config-components)

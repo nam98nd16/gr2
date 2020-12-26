@@ -6,7 +6,7 @@ module.exports = {
   // Notice: It only affects the settings used by Vetur.
   settings: {
     "vetur.useWorkspaceDependencies": true,
-    "vetur.experimental.templateInterpolationService": true,
+    "vetur.experimental.templateInterpolationService": false,
   },
   // **optional** default: `[{ root: './' }]`
   // support monorepos
@@ -16,7 +16,7 @@ module.exports = {
       // **required**
       // Where is your project?
       // It is relative to `vetur.config.js`.
-      root: "./client/repo1",
+      root: "./client",
       // **optional** default: `'package.json'`
       // Where is `package.json` in the project?
       // We use it to determine the version of vue.
