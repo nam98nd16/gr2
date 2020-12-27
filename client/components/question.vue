@@ -2,21 +2,70 @@
   <div>
     <a-card size="small">
       <div slot="title">
-        Simplify :150 ÷ (6 + 3 x 8) - 5 ?
-        <a-tag color="green">Math</a-tag>
+        {{ question.questionString }}
+        <a-tag color="green">{{
+          allSubjects.find(subject => subject.subjectId == question.subjectId)
+            .subjectName
+        }}</a-tag>
+        <a-tag v-if="isWaitingForPreliminaryReview" color="blue"
+          >Waiting for preliminary review</a-tag
+        >
+        <a-tag v-if="isWaitingForAssignee" color="blue"
+          >Waiting for assignee</a-tag
+        >
+        <a-tag v-else-if="isWaitingForPeerReview" color="blue"
+          >Waiting for peer review</a-tag
+        >
+        <a-tag v-if="isWaitingForFinalReview" color="blue"
+          >Waiting for final review</a-tag
+        >
       </div>
       <div slot="extra">
+        <span v-if="isAuthorized">
+          <a-button size="small" type="primary" @click="handleApprove"
+            >Approve</a-button
+          >
+          <a-button size="small" type="danger" ghost @click="handleReject"
+            >Reject</a-button
+          ></span
+        >
+        <span v-if="isWaitingForAssignee && isSubjectLeader">
+          <a-select
+            size="small"
+            placeholder="Select 3 assignees for peer reviews"
+            style="min-width: 255px"
+            mode="multiple"
+            class="mb-2"
+            v-model="selectedAssignee"
+          >
+            <a-select-option
+              v-for="assignee in availableAssignees"
+              :key="assignee.userId"
+              >{{ assignee.username }}</a-select-option
+            >
+          </a-select>
+          <a-button
+            size="small"
+            type="primary"
+            :disabled="selectedAssignee.length != 3"
+            >Confirm assignees</a-button
+          >
+        </span>
         <a-button size="small" type="primary" ghost @click="handleReport"
           >Report</a-button
         >
-        <a-button size="small" type="danger" @click="handleDeletion"
+        <a-button
+          v-if="!isNormalUser && !isPreliminaryReviewer"
+          size="small"
+          type="danger"
+          @click="handleDeletion"
           >Delete</a-button
         >
       </div>
-      <div>A. 0</div>
-      <div>B. 10</div>
-      <div>C. 5</div>
-      <div>D. 2</div>
+      <div v-for="(answer, index) in question.answers" :key="answer.answerId">
+        {{ String.fromCharCode(97 + index).toUpperCase() }}.
+        {{ answer.answerString }}
+      </div>
     </a-card>
 
     <a-modal
@@ -31,20 +80,75 @@
 </template>
 
 <script>
+import { mapState, mapActions } from "vuex";
+import jwtdecode from "jwt-decode";
 export default {
+  props: ["question"],
   data() {
     return {
       modalVisible: false,
+      currentUser: jwtdecode(localStorage.getItem("token")),
+      selectedAssignee: []
     };
   },
+  computed: {
+    ...mapState({
+      allSubjects: state => state.subjects.allSubjects,
+      availableAssignees: state => state.questions.availableAssignees
+    }),
+    isNormalUser() {
+      return this.currentUser.role === 3;
+    },
+    isAdmin() {
+      return this.currentUser.role === 0;
+    },
+    isSubjectExpert() {
+      return this.currentUser.role === 2;
+    },
+    isSubjectLeader() {
+      return this.currentUser.role === 1;
+    },
+    isPreliminaryReviewer() {
+      return this.currentUser.role === 4;
+    },
+    isWaitingForPreliminaryReview() {
+      return this.question.passedPreliminaryReview === "0";
+    },
+    isWaitingForAssignee() {
+      return (
+        this.question.passedPreliminaryReview === "1" &&
+        this.question.hasBeenAssigned === "0"
+      );
+    },
+    isWaitingForPeerReview() {
+      return (
+        this.question.passedPreliminaryReview === "1" &&
+        this.question.passedPeerReview === "0"
+      );
+    },
+    isWaitingForFinalReview() {
+      return (
+        this.question.passedPreliminaryReview === "1" &&
+        this.question.passedPeerReview === "1" &&
+        this.question.passedFinalReview === "0"
+      );
+    },
+    isAuthorized() {
+      return this.isPreliminaryReviewer && this.isWaitingForPreliminaryReview;
+    }
+  },
   methods: {
+    ...mapActions({
+      approveQuestions: "questions/approveQuestions",
+      getAvailableAssignees: "questions/getAvailableAssignees"
+    }),
     handleDeletion() {
       this.$confirm({
         title: "Are you sure to remove the question from the system?",
         okText: "OK",
         cancelText: "Cancel",
         onOk: () => {},
-        onCancel() {},
+        onCancel() {}
       });
     },
     handleReport() {
@@ -53,6 +157,25 @@ export default {
     handleOk() {
       this.modalVisible = false;
     },
-  },
+    handleApprove() {
+      this.$confirm({
+        title: "Are you sure to approve the question?",
+        okText: "OK",
+        cancelText: "Cancel",
+        onOk: async () => {
+          let payload = {
+            isForPreliminaryReview: this.isWaitingForPreliminaryReview,
+            isForPeerReview: this.isWaitingForPeerReview,
+            isForFinalReview: this.isWaitingForFinalReview,
+            questionId: this.question.questionId
+          };
+          await this.approveQuestions(payload);
+          this.$emit("approve");
+        },
+        onCancel() {}
+      });
+    },
+    handleReject() {}
+  }
 };
 </script>

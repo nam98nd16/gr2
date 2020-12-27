@@ -132,22 +132,37 @@
     </a-modal>
     <br />
 
-    <a-checkable-tag class="mt-2" v-model="checked1" @change="handleChange">
-      Questions waiting for review
+    <a-checkable-tag
+      v-if="!isNormalUser"
+      class="mt-2"
+      v-model="wfReviewFiltered"
+      @change="handleChange"
+    >
+      Questions waiting for my review
     </a-checkable-tag>
-    <a-checkable-tag v-model="checked2" @change="handleChange">
+    <a-checkable-tag
+      v-if="!isNormalUser && !isPreliminaryReviewer"
+      v-model="reportedFiltered"
+      @change="handleChange"
+    >
       Reported questions
     </a-checkable-tag>
-    <a-checkable-tag v-model="checked3" @change="handleChange">
+    <a-checkable-tag
+      v-if="isSubjectLeader || isAdmin"
+      v-model="wfAssigneeFiltered"
+      @change="handleChange"
+    >
       Questions waiting for assignee
     </a-checkable-tag>
     <br /><br />
 
-    <Question class="mt-2" />
-    <Question class="mt-2" />
-    <Question class="mt-2" />
-    <Question class="mt-2" />
-    <Question class="mt-2" />
+    <Question
+      v-for="question in filteredQuestions"
+      :key="question.questionId"
+      :question="question"
+      @approve="getAllQuestions"
+      class="mt-2"
+    />
 
     <a-pagination
       class="mt-2"
@@ -163,13 +178,11 @@
 import Question from "@/components/question";
 import PageTitle from "../components/page-title.vue";
 import { mapActions, mapState } from "vuex";
+import jwtdecode from "jwt-decode";
 export default {
   components: { Question, PageTitle },
   data() {
     return {
-      checked1: false,
-      checked2: false,
-      checked3: false,
       modalVisible: false,
       selectedTopic: "",
       allowedTime: 30,
@@ -192,11 +205,19 @@ export default {
         isCorrect: false
       },
       questionString: "",
-      subjects: []
+      subjects: [],
+      currentUser: jwtdecode(localStorage.getItem("token")),
+      wfReviewFiltered: false,
+      reportedFiltered: false,
+      wfAssigneeFiltered: false
     };
   },
   async mounted() {
-    await this.getAllSubjects();
+    await Promise.all([
+      this.getAllSubjects(),
+      this.getAllQuestions(),
+      this.getAvailableAssignees()
+    ]);
     this.subjects = this.allSubjects.map(subject => ({
       value: subject.subjectId,
       label: subject.subjectName
@@ -205,13 +226,64 @@ export default {
   },
   computed: {
     ...mapState({
-      allSubjects: state => state.subjects.allSubjects
-    })
+      allSubjects: state => state.subjects.allSubjects,
+      allQuestions: state => state.questions.allQuestions,
+      availableAssignees: state => state.questions.availableAssignees
+    }),
+    isNormalUser() {
+      return this.currentUser.role === 3;
+    },
+    isAdmin() {
+      return this.currentUser.role === 0;
+    },
+    isSubjectExpert() {
+      return this.currentUser.role === 2;
+    },
+    isSubjectLeader() {
+      return this.currentUser.role === 1;
+    },
+    isPreliminaryReviewer() {
+      return this.currentUser.role === 4;
+    },
+    filteredQuestions() {
+      let filteredQuestions = this.allQuestions.filter(question => {
+        let isRenderedWfReview = true;
+        if (this.wfReviewFiltered) {
+          if (this.isPreliminaryReviewer)
+            isRenderedWfReview = question.passedPreliminaryReview === "0";
+          else if (this.isSubjectExpert)
+            isRenderedWfReview =
+              question.passedPreliminaryReview === "1" &&
+              question.passedPeerReview === "0" &&
+              question.passedFinalReview === "0";
+          else if (this.isSubjectLeader)
+            isRenderedWfReview =
+              question.passedPreliminaryReview === "1" &&
+              question.passedPeerReview === "1" &&
+              question.passedFinalReview === "0";
+          else if (this.isAdmin)
+            isRenderedWfReview = question.passedFinalReview === "0";
+        }
+        let isRenderedReported = true;
+        if (this.reportedFiltered)
+          isRenderedReported = question.hasBeenReported === "1";
+        let isRenderedWfAssignee = true;
+        if (this.wfAssigneeFiltered)
+          isRenderedWfAssignee =
+            question.passedPreliminaryReview === "1" &&
+            question.hasBeenAssigned === "0";
+        return isRenderedWfReview && isRenderedReported && isRenderedWfAssignee;
+      });
+      console.log("filtered", filteredQuestions);
+      return filteredQuestions;
+    }
   },
   methods: {
     ...mapActions({
       getAllSubjects: "subjects/getAllSubjects",
-      proposeQuestion: "questions/proposeQuestion"
+      proposeQuestion: "questions/proposeQuestion",
+      getAllQuestions: "questions/getAllQuestions",
+      getAvailableAssignees: "questions/getAvailableAssignees"
     }),
     onSearch() {},
     async handleProposeQuestion() {
@@ -238,7 +310,6 @@ export default {
         difficultyLevel: this.difficultyLevel,
         allowedTime: this.allowedTime
       };
-      console.log("payload", payload);
       let res = await this.proposeQuestion(payload);
       this.$notification.success({
         message: "Successfully proposed the question!"
