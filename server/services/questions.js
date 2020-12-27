@@ -1,6 +1,7 @@
 const knex = require("../config/database");
 const jwt = require("jsonwebtoken");
 const jwtSecret = require("../config/const");
+var _ = require("lodash");
 
 /**
  * @param {Request} req Request object from express
@@ -41,6 +42,10 @@ const proposeQuestion = async (req, res) => {
     timeAllowed: allowedTime,
     passedPreliminaryReview: isPassedPreliminaryReview,
     passedFinalReview: 0,
+    passedPeerReview: 0,
+    hasBeenReported: 0,
+    hasBeenAssigned: 0,
+    hasBeenRejected: 0,
   });
   let addedAnswers = [];
   let insertAnswers = new Promise((resolve, reject) => {
@@ -60,6 +65,92 @@ const proposeQuestion = async (req, res) => {
   });
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getAllQuestions = async (req, res) => {
+  let questions = await knex
+    .column()
+    .select()
+    .from("questions")
+    .joinRaw("natural full join answers");
+  questions = _.groupBy(questions, function (item) {
+    return item.questionId;
+  });
+  let trueQuestions = new Array();
+  for (let questionId in questions) {
+    let index = questions[questionId].findIndex((q) => q.subjectId);
+    trueQuestions.push({
+      questionId: questions[questionId][index].questionId,
+      subjectId: questions[questionId][index].subjectId,
+      answerId: questions[questionId][index].answerId,
+      questionString: questions[questionId][index].questionString,
+      creatorId: questions[questionId][index].creatorId,
+      difficultyLevel: questions[questionId][index].difficultyLevel,
+      timeAllowed: questions[questionId][index].timeAllowed,
+      passedPreliminaryReview:
+        questions[questionId][index].passedPreliminaryReview,
+      passedFinalReview: questions[questionId][index].passedFinalReview,
+      passedPeerReview: questions[questionId][index].passedPeerReview,
+      hasBeenReported: questions[questionId][index].hasBeenReported,
+      hasBeenAssigned: questions[questionId][index].hasBeenAssigned,
+      hasBeenRejected: questions[questionId][index].hasBeenRejected,
+      answers: questions[questionId].map((ans) => ({
+        answerId: ans.answerId,
+        answerString: ans.answerString,
+        isCorrect: ans.answerId == questions[questionId][index].answerId,
+      })),
+    });
+  }
+
+  res.json(trueQuestions);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const approveQuestion = async (req, res) => {
+  let {
+    isForPreliminaryReview,
+    isForPeerReview,
+    isForFinalReview,
+    questionId,
+  } = req.body;
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+  if (isForPreliminaryReview) {
+    await knex("questions")
+      .where("questionId", "=", questionId)
+      .update("passedPreliminaryReview", 1);
+    res.json("success");
+  }
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getAvailableAssignees = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+  let assignees = await knex()
+    .select("username", "userId", "role", "subjectId")
+    .from("accounts")
+    .where("subjectId", "=", reqUser.subjectId);
+  res.json(assignees);
+};
+
 module.exports = {
   proposeQuestion,
+  getAllQuestions,
+  approveQuestion,
+  getAvailableAssignees,
 };
