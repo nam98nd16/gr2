@@ -13,7 +13,7 @@
         <a-tag v-if="isWaitingForAssignee" color="blue"
           >Waiting for assignee</a-tag
         >
-        <a-tag v-else-if="isWaitingForPeerReview" color="blue"
+        <a-tag v-if="isWaitingForPeerReview" color="blue"
           >Waiting for peer review</a-tag
         >
         <a-tag v-if="isWaitingForFinalReview" color="blue"
@@ -36,7 +36,7 @@
             style="min-width: 255px"
             mode="multiple"
             class="mb-2"
-            v-model="selectedAssignee"
+            v-model="selectedAssignees"
           >
             <a-select-option
               v-for="assignee in availableAssignees"
@@ -47,7 +47,8 @@
           <a-button
             size="small"
             type="primary"
-            :disabled="selectedAssignee.length != 3"
+            :disabled="selectedAssignees.length != 3"
+            @click="handleConfirmingAssignees"
             >Confirm assignees</a-button
           >
         </span>
@@ -88,7 +89,7 @@ export default {
     return {
       modalVisible: false,
       currentUser: jwtdecode(localStorage.getItem("token")),
-      selectedAssignee: []
+      selectedAssignees: []
     };
   },
   computed: {
@@ -123,6 +124,7 @@ export default {
     isWaitingForPeerReview() {
       return (
         this.question.passedPreliminaryReview === "1" &&
+        this.question.hasBeenAssigned === "1" &&
         this.question.passedPeerReview === "0"
       );
     },
@@ -134,13 +136,20 @@ export default {
       );
     },
     isAuthorized() {
-      return this.isPreliminaryReviewer && this.isWaitingForPreliminaryReview;
+      return (
+        (this.isPreliminaryReviewer && this.isWaitingForPreliminaryReview) ||
+        (this.isWaitingForPeerReview &&
+          this.question.assignees?.findIndex(
+            assignee => assignee.reviewerId == this.currentUser.userId
+          ) >= 0)
+      );
     }
   },
   methods: {
     ...mapActions({
       approveQuestions: "questions/approveQuestions",
-      getAvailableAssignees: "questions/getAvailableAssignees"
+      getAvailableAssignees: "questions/getAvailableAssignees",
+      setAssignees: "questions/setAssignees"
     }),
     handleDeletion() {
       this.$confirm({
@@ -170,12 +179,26 @@ export default {
             questionId: this.question.questionId
           };
           await this.approveQuestions(payload);
+          this.$notification.success({
+            message: "Approved successfully!"
+          });
           this.$emit("approve");
         },
         onCancel() {}
       });
     },
-    handleReject() {}
+    handleReject() {},
+    async handleConfirmingAssignees() {
+      let payload = {
+        assigneeIds: this.selectedAssignees,
+        questionId: this.question.questionId
+      };
+      await this.setAssignees(payload);
+      this.$notification.success({
+        message: "Assigned successfully!"
+      });
+      this.$emit("assign");
+    }
   }
 };
 </script>

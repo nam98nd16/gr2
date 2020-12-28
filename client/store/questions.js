@@ -30,5 +30,9 @@ export const actions = {
     const res = await this.$axios.get(`/questions/assignees`);
     commit("setAvailableAssignees", res.data);
     return res;
+  },
+  async setAssignees({ commit }, payload) {
+    const res = await this.$axios.post(`/questions/assignees`, payload);
+    return res;
   }
 };

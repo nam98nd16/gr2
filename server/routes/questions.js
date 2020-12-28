@@ -6,5 +6,6 @@ router.post("/propose", service.proposeQuestion);
 router.get("/all", service.getAllQuestions);
 router.post("/approve", service.approveQuestion);
 router.get("/assignees", service.getAvailableAssignees);
+router.post("/assignees", service.setAssignees);
 
 module.exports = router;

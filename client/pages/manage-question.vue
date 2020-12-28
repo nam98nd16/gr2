@@ -161,6 +161,7 @@
       :key="question.questionId"
       :question="question"
       @approve="getAllQuestions"
+      @assign="getAllQuestions"
       class="mt-2"
     />
 
@@ -253,14 +254,19 @@ export default {
             isRenderedWfReview = question.passedPreliminaryReview === "0";
           else if (this.isSubjectExpert)
             isRenderedWfReview =
-              question.passedPreliminaryReview === "1" &&
-              question.passedPeerReview === "0" &&
-              question.passedFinalReview === "0";
+              question.hasBeenAssigned === "1" &&
+              question.assignees?.findIndex(
+                assignee => assignee.reviewerId == this.currentUser.userId
+              ) >= 0;
           else if (this.isSubjectLeader)
             isRenderedWfReview =
-              question.passedPreliminaryReview === "1" &&
-              question.passedPeerReview === "1" &&
-              question.passedFinalReview === "0";
+              (question.passedPreliminaryReview === "1" &&
+                question.passedPeerReview === "1" &&
+                question.passedFinalReview === "0") ||
+              (question.hasBeenAssigned === "1" &&
+                question.assignees?.findIndex(
+                  assignee => assignee.reviewerId == this.currentUser.userId
+                ) >= 0);
           else if (this.isAdmin)
             isRenderedWfReview = question.passedFinalReview === "0";
         }
@@ -271,7 +277,8 @@ export default {
         if (this.wfAssigneeFiltered)
           isRenderedWfAssignee =
             question.passedPreliminaryReview === "1" &&
-            question.hasBeenAssigned === "0";
+            question.hasBeenAssigned === "0" &&
+            question.subjectId == this.currentUser.subjectId;
         return isRenderedWfReview && isRenderedReported && isRenderedWfAssignee;
       });
       console.log("filtered", filteredQuestions);

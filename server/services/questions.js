@@ -75,6 +75,12 @@ const getAllQuestions = async (req, res) => {
     .select()
     .from("questions")
     .joinRaw("natural full join answers");
+
+  let peerReviewResults = await knex
+    .column()
+    .select()
+    .from("peer_review_results");
+
   questions = _.groupBy(questions, function (item) {
     return item.questionId;
   });
@@ -102,6 +108,19 @@ const getAllQuestions = async (req, res) => {
         isCorrect: ans.answerId == questions[questionId][index].answerId,
       })),
     });
+  }
+
+  let assignees = _.groupBy(peerReviewResults, function (item) {
+    return item.questionId;
+  });
+
+  for (let questionId in assignees) {
+    let questionIndex = trueQuestions.findIndex(
+      (question) => question.questionId == questionId
+    );
+    trueQuestions[questionIndex].assignees = assignees[
+      questionId
+    ].map((assignee) => ({ ...assignee, questionId: undefined }));
   }
 
   res.json(trueQuestions);
@@ -148,9 +167,33 @@ const getAvailableAssignees = async (req, res) => {
   res.json(assignees);
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const setAssignees = async (req, res) => {
+  let { assigneeIds, questionId } = req.body;
+
+  assigneeIds.forEach(async (assigneeId) => {
+    await knex("peer_review_results").returning("*").insert({
+      questionId: questionId,
+      reviewerId: assigneeId,
+      hasApproved: 0,
+      hasRejected: 0,
+    });
+  });
+
+  await knex("questions")
+    .where("questionId", "=", questionId)
+    .update("hasBeenAssigned", 1);
+
+  res.json("success");
+};
+
 module.exports = {
   proposeQuestion,
   getAllQuestions,
   approveQuestion,
   getAvailableAssignees,
+  setAssignees,
 };
