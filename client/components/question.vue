@@ -7,25 +7,60 @@
           allSubjects.find(subject => subject.subjectId == question.subjectId)
             .subjectName
         }}</a-tag>
-        <a-tag v-if="isWaitingForPreliminaryReview" color="blue"
-          >Waiting for preliminary review</a-tag
+        <a-tag v-if="isRejected" color="red">Rejected</a-tag>
+        <span v-else>
+          <a-tag v-if="isWaitingForPreliminaryReview" color="blue"
+            >Waiting for preliminary review</a-tag
+          >
+          <a-tag v-if="isWaitingForAssignee" color="blue"
+            >Waiting for assignee</a-tag
+          >
+          <a-tag v-if="isWaitingForPeerReview" color="blue"
+            >Waiting for peer review</a-tag
+          >
+          <a-tag v-if="isWaitingForFinalReview" color="blue"
+            >Waiting for final review</a-tag
+          ></span
         >
-        <a-tag v-if="isWaitingForAssignee" color="blue"
-          >Waiting for assignee</a-tag
-        >
-        <a-tag v-if="isWaitingForPeerReview" color="blue"
-          >Waiting for peer review</a-tag
-        >
-        <a-tag v-if="isWaitingForFinalReview" color="blue"
-          >Waiting for final review</a-tag
-        >
+        <div v-if="isRejected" style="font-style: italic; font-weight: 400">
+          <span v-if="question.passedPreliminaryReview === '0'"
+            ><span class="reviewer">Preliminary reviewer:</span>
+            {{ question.rejectReason }}</span
+          >
+          <div v-else-if="question.passedPeerReview === '0'">
+            <div>
+              <span class="reviewer">Expert 1:</span> {{ getRejectReason(0) }}
+            </div>
+            <div>
+              <span class="reviewer">Expert 2:</span> {{ getRejectReason(1) }}
+            </div>
+            <div v-if="getRejectReason(2)">
+              <span class="reviewer">Expert 3:</span> {{ getRejectReason(2) }}
+            </div>
+          </div>
+          <div v-else>
+            <span class="reviewer">Subject leader:</span>
+            {{ question.rejectReason }}
+          </div>
+        </div>
       </div>
       <div slot="extra">
-        <span v-if="isAuthorized">
+        <a-button
+          v-if="isRejected"
+          size="small"
+          type="primary"
+          @click="handleUpdate"
+          >Update</a-button
+        >
+        <span v-if="isAuthorized && !isRejected">
           <a-button size="small" type="primary" @click="handleApprove"
             >Approve</a-button
           >
-          <a-button size="small" type="danger" ghost @click="handleReject"
+          <a-button
+            size="small"
+            type="danger"
+            ghost
+            @click="modalRejectIsVisible = true"
             >Reject</a-button
           ></span
         >
@@ -74,6 +109,19 @@
     </a-card>
 
     <a-modal
+      v-model="modalRejectIsVisible"
+      centered
+      title="Reject question"
+      :okButtonProps="{ props: { disabled: !rejectReason } }"
+      @ok="handleReject"
+    >
+      <a-textarea
+        v-model="rejectReason"
+        placeholder="Enter the reason why this question is rejected ..."
+      />
+    </a-modal>
+
+    <a-modal
       v-model="modalVisible"
       centered
       title="Report question"
@@ -92,8 +140,10 @@ export default {
   data() {
     return {
       modalVisible: false,
+      modalRejectIsVisible: false,
       currentUser: jwtdecode(localStorage.getItem("token")),
-      selectedAssignees: []
+      selectedAssignees: [],
+      rejectReason: ""
     };
   },
   computed: {
@@ -139,6 +189,9 @@ export default {
         this.question.passedFinalReview === "0"
       );
     },
+    isRejected() {
+      return this.question.hasBeenRejected === "1";
+    },
     isAuthorized() {
       let isAuthorizedForPreliminaryReview =
         this.isPreliminaryReviewer && this.isWaitingForPreliminaryReview;
@@ -165,6 +218,7 @@ export default {
   methods: {
     ...mapActions({
       approveQuestions: "questions/approveQuestions",
+      rejectQuestions: "questions/rejectQuestions",
       getAvailableAssignees: "questions/getAvailableAssignees",
       setAssignees: "questions/setAssignees"
     }),
@@ -204,7 +258,32 @@ export default {
         onCancel() {}
       });
     },
-    handleReject() {},
+    handleReject() {
+      this.$confirm({
+        title: "Are you sure to reject the question?",
+        okText: "OK",
+        cancelText: "Cancel",
+        onOk: async () => {
+          let payload = {
+            isForPreliminaryReview: this.isWaitingForPreliminaryReview,
+            isForPeerReview: this.isWaitingForPeerReview,
+            isForFinalReview: this.isWaitingForFinalReview,
+            questionId: this.question.questionId,
+            rejectReason: this.rejectReason
+          };
+          await this.rejectQuestions(payload);
+          this.$notification.success({
+            message: "Rejected successfully!"
+          });
+          this.$emit("reject");
+          this.modalRejectIsVisible = false;
+        },
+        onCancel: () => {}
+      });
+    },
+    handleUpdate() {
+      this.$emit("update", this.question);
+    },
     async handleConfirmingAssignees() {
       let payload = {
         assigneeIds: this.selectedAssignees,
@@ -226,7 +305,20 @@ export default {
       ) {
         return "color: blue; font-weight: bold";
       } else return "";
+    },
+    getRejectReason(index) {
+      let rejectAssignees = this.question.assignees.filter(
+        assignee => assignee.hasRejected === "1"
+      );
+      return rejectAssignees[index]?.rejectReason;
     }
   }
 };
 </script>
+
+<style scoped>
+.reviewer {
+  font-style: italic;
+  font-weight: 500;
+}
+</style>

@@ -14,8 +14,9 @@
     <a-modal
       v-model="modalVisible"
       centered
-      title="Propose new question"
+      :title="questionToUpdate ? 'Update question' : 'Propose new question'"
       @ok="handleProposeQuestion"
+      @cancel="questionToUpdate = null"
     >
       <a-textarea
         autosize
@@ -94,6 +95,7 @@
       Topic
       <br />
       <a-select
+        :disabled="!!questionToUpdate"
         style="min-width: 150px"
         class="mb-2"
         v-model="selectedTopic"
@@ -154,6 +156,9 @@
     >
       Questions waiting for assignee
     </a-checkable-tag>
+    <a-checkable-tag v-model="rejectedFiltered" @change="handleChange">
+      Rejected questions
+    </a-checkable-tag>
     <br /><br />
 
     <Question
@@ -162,6 +167,8 @@
       :question="question"
       @approve="getAllQuestions"
       @assign="getAllQuestions"
+      @reject="getAllQuestions"
+      @update="handleUpdate"
       class="mt-2"
     />
 
@@ -210,7 +217,9 @@ export default {
       currentUser: jwtdecode(localStorage.getItem("token")),
       wfReviewFiltered: false,
       reportedFiltered: false,
-      wfAssigneeFiltered: false
+      wfAssigneeFiltered: false,
+      rejectedFiltered: false,
+      questionToUpdate: null
     };
   },
   async mounted() {
@@ -251,13 +260,16 @@ export default {
         if (
           !this.wfReviewFiltered &&
           !this.wfAssigneeFiltered &&
-          !this.reportedFiltered
+          !this.reportedFiltered &&
+          !this.rejectedFiltered
         )
           return question.passedFinalReview === "1";
         let isRenderedWfReview = true;
         if (this.wfReviewFiltered) {
           if (this.isPreliminaryReviewer)
-            isRenderedWfReview = question.passedPreliminaryReview === "0";
+            isRenderedWfReview =
+              question.passedPreliminaryReview === "0" &&
+              question.hasBeenRejected === "0";
           else if (this.isSubjectExpert) {
             let assigneeIndex = question.assignees?.findIndex(
               assignee => assignee.reviewerId == this.currentUser.userId
@@ -265,10 +277,15 @@ export default {
             let isAuthorizedForPeerReview =
               assigneeIndex >= 0 &&
               question.assignees[assigneeIndex].hasApproved === "0";
+            let hasRejected =
+              assigneeIndex >= 0 &&
+              question.assignees[assigneeIndex].hasRejected === "1";
             isRenderedWfReview =
               question.hasBeenAssigned === "1" &&
               isAuthorizedForPeerReview &&
-              question.passedPeerReview === "0";
+              !hasRejected &&
+              question.passedPeerReview === "0" &&
+              question.hasBeenRejected === "0";
           } else if (this.isSubjectLeader) {
             let assigneeIndex = question.assignees?.findIndex(
               assignee => assignee.reviewerId == this.currentUser.userId
@@ -277,13 +294,17 @@ export default {
               assigneeIndex >= 0 &&
               question.assignees[assigneeIndex].hasApproved === "0";
             isRenderedWfReview =
-              (question.subjectId == this.currentUser.subjectId &&
+              ((question.subjectId == this.currentUser.subjectId &&
                 question.passedPreliminaryReview === "1" &&
                 question.passedPeerReview === "1" &&
                 question.passedFinalReview === "0") ||
-              (question.hasBeenAssigned === "1" && isAuthorizedForPeerReview);
+                (question.hasBeenAssigned === "1" &&
+                  isAuthorizedForPeerReview)) &&
+              question.hasBeenRejected === "0";
           } else if (this.isAdmin)
-            isRenderedWfReview = question.passedFinalReview === "0";
+            isRenderedWfReview =
+              question.passedFinalReview === "0" &&
+              question.hasBeenRejected === "0";
         }
         let isRenderedReported = true;
         if (this.reportedFiltered)
@@ -293,8 +314,19 @@ export default {
           isRenderedWfAssignee =
             question.passedPreliminaryReview === "1" &&
             question.hasBeenAssigned === "0" &&
-            question.subjectId == this.currentUser.subjectId;
-        return isRenderedWfReview && isRenderedReported && isRenderedWfAssignee;
+            question.subjectId == this.currentUser.subjectId &&
+            question.hasBeenRejected === "0";
+        let isRenderedRejected = true;
+        if (this.rejectedFiltered)
+          isRenderedRejected =
+            question.hasBeenRejected === "1" &&
+            question.creatorId == this.currentUser.userId;
+        return (
+          isRenderedWfReview &&
+          isRenderedReported &&
+          isRenderedWfAssignee &&
+          isRenderedRejected
+        );
       });
       console.log("filtered", filteredQuestions);
       return filteredQuestions;
@@ -304,6 +336,7 @@ export default {
     ...mapActions({
       getAllSubjects: "subjects/getAllSubjects",
       proposeQuestion: "questions/proposeQuestion",
+      updateQuestion: "questions/updateQuestion",
       getAllQuestions: "questions/getAllQuestions",
       getAvailableAssignees: "questions/getAvailableAssignees"
     }),
@@ -330,12 +363,21 @@ export default {
         answer4: this.answer4,
         topicId: this.selectedTopic,
         difficultyLevel: this.difficultyLevel,
-        allowedTime: this.allowedTime
+        allowedTime: this.allowedTime,
+        questionId: this.questionToUpdate?.questionId ?? undefined
       };
-      let res = await this.proposeQuestion(payload);
-      this.$notification.success({
-        message: "Successfully proposed the question!"
-      });
+      if (this.questionToUpdate) {
+        let res = await this.updateQuestion(payload);
+        this.$notification.success({
+          message: "Successfully updated the question!"
+        });
+      } else {
+        let res = await this.proposeQuestion(payload);
+        this.$notification.success({
+          message: "Successfully proposed the question!"
+        });
+      }
+      this.getAllQuestions();
       this.modalVisible = false;
     },
     handleChange() {},
@@ -351,6 +393,34 @@ export default {
           this[ans].isCorrect = false;
         });
       }
+    },
+    handleUpdate(question) {
+      this.questionToUpdate = question;
+      this.questionString = question.questionString;
+      this.answer1 = {
+        string: question.answers[0].answerString,
+        isCorrect: question.answers[0].isCorrect,
+        id: question.answers[0].answerId
+      };
+      this.answer2 = {
+        string: question.answers[1].answerString,
+        isCorrect: question.answers[1].isCorrect,
+        id: question.answers[1].answerId
+      };
+      this.answer3 = {
+        string: question.answers[2].answerString,
+        isCorrect: question.answers[2].isCorrect,
+        id: question.answers[2].answerId
+      };
+      this.answer4 = {
+        string: question.answers[3].answerString,
+        isCorrect: question.answers[3].isCorrect,
+        id: question.answers[3].answerId
+      };
+      this.selectedTopic = parseInt(question.subjectId);
+      this.difficultyLevel = question.difficultyLevel;
+      this.allowedTime = question.timeAllowed;
+      this.modalVisible = true;
     }
   }
 };

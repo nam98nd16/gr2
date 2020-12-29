@@ -69,6 +69,66 @@ const proposeQuestion = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const updateQuestion = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let {
+    questionString,
+    answer1,
+    answer2,
+    answer3,
+    answer4,
+    topicId,
+    difficultyLevel,
+    allowedTime,
+    questionId,
+  } = req.body;
+
+  let answers = [answer1, answer2, answer3, answer4];
+  let correctAnswerId = answers.find((answer) => answer.isCorrect).id;
+  let reqUser = jwt.verify(token, jwtSecret);
+  let addedQuestion = await knex("questions")
+    .returning("*")
+    .where("questionId", "=", questionId)
+    .update({
+      questionString: questionString,
+      answerId: correctAnswerId,
+      subjectId: topicId,
+      difficultyLevel: difficultyLevel,
+      timeAllowed: allowedTime,
+      hasBeenRejected: 0,
+    });
+  let addedAnswers = [];
+  let insertAnswers = new Promise((resolve, reject) => {
+    answers.forEach(async (answer, index, arr) => {
+      let ans = await knex("answers")
+        .returning("*")
+        .where("answerId", "=", answer.id)
+        .update({
+          answerString: answer.string,
+        });
+      addedAnswers.push(ans[0]);
+      if (index === arr.length - 1) resolve();
+    });
+  });
+
+  insertAnswers.then(async () => {
+    await knex("peer_review_results")
+      .where("questionId", "=", questionId)
+      .update("hasRejected", 0);
+    res.json({
+      updatedQuestion: addedQuestion[0],
+      updatedAnswers: addedAnswers,
+    });
+  });
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const getAllQuestions = async (req, res) => {
   let questions = await knex
     .column()
@@ -102,6 +162,7 @@ const getAllQuestions = async (req, res) => {
       hasBeenReported: questions[questionId][index].hasBeenReported,
       hasBeenAssigned: questions[questionId][index].hasBeenAssigned,
       hasBeenRejected: questions[questionId][index].hasBeenRejected,
+      rejectReason: questions[questionId][index].rejectReason,
       answers: questions[questionId].map((ans) => ({
         answerId: ans.answerId,
         answerString: ans.answerString,
@@ -180,6 +241,55 @@ const approveQuestion = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const rejectQuestion = async (req, res) => {
+  let {
+    isForPreliminaryReview,
+    isForPeerReview,
+    isForFinalReview,
+    questionId,
+    rejectReason,
+  } = req.body;
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+  if (isForPreliminaryReview || isForFinalReview) {
+    await knex("questions")
+      .where("questionId", "=", questionId)
+      .update("hasBeenRejected", 1)
+      .update("rejectReason", rejectReason);
+    res.json("success");
+  } else if (isForPeerReview) {
+    await knex("peer_review_results")
+      .where("questionId", "=", questionId)
+      .where("reviewerId", "=", reqUser.userId)
+      .update("hasRejected", 1)
+      .update("rejectReason", rejectReason);
+
+    let peerReviewResults = await knex
+      .column()
+      .select()
+      .from("peer_review_results")
+      .where("questionId", "=", questionId);
+
+    let hasFailedPeerReview =
+      peerReviewResults.filter((result) => result.hasRejected === "1").length >=
+      2;
+
+    if (hasFailedPeerReview)
+      await knex("questions")
+        .where("questionId", "=", questionId)
+        .update("hasBeenRejected", 1);
+
+    res.json("success");
+  }
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const getAvailableAssignees = async (req, res) => {
   let token = req.headers.authorization.substring(
     7,
@@ -218,8 +328,10 @@ const setAssignees = async (req, res) => {
 
 module.exports = {
   proposeQuestion,
+  updateQuestion,
   getAllQuestions,
   approveQuestion,
+  rejectQuestion,
   getAvailableAssignees,
   setAssignees,
 };

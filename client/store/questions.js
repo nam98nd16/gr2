@@ -17,6 +17,10 @@ export const actions = {
     const res = await this.$axios.post(`/questions/propose`, payload);
     return res;
   },
+  async updateQuestion({ commit }, payload) {
+    const res = await this.$axios.post(`/questions/update`, payload);
+    return res;
+  },
   async getAllQuestions({ commit }) {
     const res = await this.$axios.get(`/questions/all`);
     commit("setAllQuestions", res.data);
@@ -24,6 +28,10 @@ export const actions = {
   },
   async approveQuestions({ commit }, payload) {
     const res = await this.$axios.post(`/questions/approve`, payload);
+    return res;
+  },
+  async rejectQuestions({ commit }, payload) {
+    const res = await this.$axios.post(`/questions/reject`, payload);
     return res;
   },
   async getAvailableAssignees({ commit }) {
