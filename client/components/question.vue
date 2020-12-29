@@ -63,7 +63,11 @@
           >Delete</a-button
         >
       </div>
-      <div v-for="(answer, index) in question.answers" :key="answer.answerId">
+      <div
+        :style="getAnswerStyle(answer.isCorrect)"
+        v-for="(answer, index) in question.answers"
+        :key="answer.answerId"
+      >
         {{ String.fromCharCode(97 + index).toUpperCase() }}.
         {{ answer.answerString }}
       </div>
@@ -136,12 +140,25 @@ export default {
       );
     },
     isAuthorized() {
+      let isAuthorizedForPreliminaryReview =
+        this.isPreliminaryReviewer && this.isWaitingForPreliminaryReview;
+
+      let assigneeIndex = this.question.assignees?.findIndex(
+        assignee => assignee.reviewerId == this.currentUser.userId
+      );
+      let isAuthorizedForPeerReview =
+        this.isWaitingForPeerReview &&
+        assigneeIndex >= 0 &&
+        this.question.assignees[assigneeIndex].hasApproved === "0";
+
+      let isAuthorizedForFinalReview =
+        this.isSubjectLeader &&
+        this.isWaitingForFinalReview &&
+        this.question.subjectId == this.currentUser.subjectId;
       return (
-        (this.isPreliminaryReviewer && this.isWaitingForPreliminaryReview) ||
-        (this.isWaitingForPeerReview &&
-          this.question.assignees?.findIndex(
-            assignee => assignee.reviewerId == this.currentUser.userId
-          ) >= 0)
+        isAuthorizedForPreliminaryReview ||
+        isAuthorizedForPeerReview ||
+        isAuthorizedForFinalReview
       );
     }
   },
@@ -198,6 +215,17 @@ export default {
         message: "Assigned successfully!"
       });
       this.$emit("assign");
+    },
+    getAnswerStyle(isCorrect) {
+      if (
+        isCorrect &&
+        (this.isWaitingForPreliminaryReview ||
+          this.isWaitingForAssignee ||
+          this.isWaitingForPeerReview ||
+          this.isWaitingForFinalReview)
+      ) {
+        return "color: blue; font-weight: bold";
+      } else return "";
     }
   }
 };

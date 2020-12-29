@@ -248,26 +248,41 @@ export default {
     },
     filteredQuestions() {
       let filteredQuestions = this.allQuestions.filter(question => {
+        if (
+          !this.wfReviewFiltered &&
+          !this.wfAssigneeFiltered &&
+          !this.reportedFiltered
+        )
+          return question.passedFinalReview === "1";
         let isRenderedWfReview = true;
         if (this.wfReviewFiltered) {
           if (this.isPreliminaryReviewer)
             isRenderedWfReview = question.passedPreliminaryReview === "0";
-          else if (this.isSubjectExpert)
+          else if (this.isSubjectExpert) {
+            let assigneeIndex = question.assignees?.findIndex(
+              assignee => assignee.reviewerId == this.currentUser.userId
+            );
+            let isAuthorizedForPeerReview =
+              assigneeIndex >= 0 &&
+              question.assignees[assigneeIndex].hasApproved === "0";
             isRenderedWfReview =
               question.hasBeenAssigned === "1" &&
-              question.assignees?.findIndex(
-                assignee => assignee.reviewerId == this.currentUser.userId
-              ) >= 0;
-          else if (this.isSubjectLeader)
+              isAuthorizedForPeerReview &&
+              question.passedPeerReview === "0";
+          } else if (this.isSubjectLeader) {
+            let assigneeIndex = question.assignees?.findIndex(
+              assignee => assignee.reviewerId == this.currentUser.userId
+            );
+            let isAuthorizedForPeerReview =
+              assigneeIndex >= 0 &&
+              question.assignees[assigneeIndex].hasApproved === "0";
             isRenderedWfReview =
-              (question.passedPreliminaryReview === "1" &&
+              (question.subjectId == this.currentUser.subjectId &&
+                question.passedPreliminaryReview === "1" &&
                 question.passedPeerReview === "1" &&
                 question.passedFinalReview === "0") ||
-              (question.hasBeenAssigned === "1" &&
-                question.assignees?.findIndex(
-                  assignee => assignee.reviewerId == this.currentUser.userId
-                ) >= 0);
-          else if (this.isAdmin)
+              (question.hasBeenAssigned === "1" && isAuthorizedForPeerReview);
+          } else if (this.isAdmin)
             isRenderedWfReview = question.passedFinalReview === "0";
         }
         let isRenderedReported = true;

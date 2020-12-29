@@ -41,18 +41,19 @@ export default {
   data() {
     return {
       current: ["home"],
+      currentUser: jwt_decode(localStorage.getItem("token"))
     };
   },
   methods: {
     handleLogout() {
       localStorage.clear();
       this.$router.push("/login");
-    },
+    }
   },
   computed: {
     getProfileName() {
-      return "Nguyễn Văn Nam";
-    },
-  },
+      return this.currentUser.username;
+    }
+  }
 };
 </script>

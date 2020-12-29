@@ -147,6 +147,32 @@ const approveQuestion = async (req, res) => {
       .where("questionId", "=", questionId)
       .update("passedPreliminaryReview", 1);
     res.json("success");
+  } else if (isForPeerReview) {
+    await knex("peer_review_results")
+      .where("questionId", "=", questionId)
+      .where("reviewerId", "=", reqUser.userId)
+      .update("hasApproved", 1);
+    let peerReviewResults = await knex
+      .column()
+      .select()
+      .from("peer_review_results")
+      .where("questionId", "=", questionId);
+
+    let hasPassedPeerReview =
+      peerReviewResults.filter((result) => result.hasApproved === "1").length >=
+      2;
+
+    if (hasPassedPeerReview)
+      await knex("questions")
+        .where("questionId", "=", questionId)
+        .update("passedPeerReview", 1);
+
+    res.json("success");
+  } else if (isForFinalReview) {
+    await knex("questions")
+      .where("questionId", "=", questionId)
+      .update("passedFinalReview", 1);
+    res.json("success");
   }
 };
 
