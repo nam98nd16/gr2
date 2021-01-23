@@ -1,10 +1,10 @@
 <template>
   <div>
     <page-title title="Question management" />
-    <a-input-search
+    <a-input
       placeholder="Search for questions"
       style="width: 400px"
-      enter-button="Search"
+      v-model="filterText"
       @search="onSearch"
     />
 
@@ -174,13 +174,13 @@
       class="mt-2"
     />
 
-    <a-pagination
+    <!-- <a-pagination
       class="mt-2"
       style="float: right"
       v-model="currentPage"
       :total="50"
       show-less-items
-    />
+    /> -->
   </div>
 </template>
 
@@ -221,7 +221,8 @@ export default {
       reportedFiltered: false,
       wfAssigneeFiltered: false,
       myQuestionsFiltered: false,
-      questionToUpdate: null
+      questionToUpdate: null,
+      filterText: ""
     };
   },
   async mounted() {
@@ -261,6 +262,12 @@ export default {
     },
     filteredQuestions() {
       let filteredQuestions = this.allQuestions.filter(question => {
+        if (
+          !question.questionString
+            .toUpperCase()
+            .includes(this.filterText.toUpperCase())
+        )
+          return false;
         if (
           !this.wfReviewFiltered &&
           !this.wfAssigneeFiltered &&
