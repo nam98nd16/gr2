@@ -23,12 +23,16 @@
       >
         <a-radio
           v-for="(answer, index) in question.answers"
+          :class="answer.answerId == question.answerId ? 'correct-answer' : ''"
           :key="answer.answerId"
           :value="answer.answerId"
         >
           {{ String.fromCharCode(97 + index).toUpperCase() }}.
           {{ answer.answerString }}
-          <i v-if="correctAnswerIsA" class="fas fa-check mr-2" />
+          <i
+            v-if="answer.answerId == question.answerId"
+            class="fas fa-check mr-2"
+          />
         </a-radio>
       </a-radio-group>
     </a-card>
@@ -46,7 +50,7 @@
 
 <script>
 export default {
-  props: ["questionNumber", "answerKey", "isReviewing", "answer", "question"],
+  props: ["questionNumber", "isReviewing", "answer", "question"],
   data() {
     return {
       answeredKey: "",
@@ -54,20 +58,7 @@ export default {
     };
   },
   mounted() {},
-  computed: {
-    correctAnswerIsA() {
-      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 1;
-    },
-    correctAnswerIsB() {
-      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 2;
-    },
-    correctAnswerIsC() {
-      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 3;
-    },
-    correctAnswerIsD() {
-      return this.isReviewing && this.answerKey[this.questionNumber - 1] == 4;
-    }
-  },
+  computed: {},
   methods: {
     handleReport() {
       this.modalVisible = true;

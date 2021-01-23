@@ -14,7 +14,6 @@
 
     <answerable-question
       :questionNumber="currentQuestionNo"
-      :answerKey="answerKeys"
       :isReviewing="isReviewing"
       :answer="answers.find(ans => ans.questionNumber == currentQuestionNo)"
       :question="testQuestions[currentQuestionNo - 1]"
@@ -50,6 +49,7 @@
       :cancelButtonProps="{ props: {}, on: { click: handleReview } }"
       :maskClosable="false"
       v-model="modalVisible"
+      :closable="false"
       centered
       title="Your score"
       @ok="handleOk"
@@ -80,7 +80,6 @@ export default {
   mounted() {
     this.countDown = this.testQuestions[0].timeAllowed;
     this.startCountDownTimer();
-    console.log("here", this.testQuestions);
   },
   computed: {
     ...mapState({
@@ -90,7 +89,11 @@ export default {
       let correctAnswers = 0;
       if (this.answers.length)
         this.answers.forEach((ans, index) => {
-          if (ans.answeredKey == this.answerKeys[ans.questionNumber - 1])
+          if (
+            this.testQuestions.findIndex(
+              question => question.answerId == ans.answeredKey
+            ) >= 0
+          )
             correctAnswers++;
         });
       return correctAnswers;
@@ -98,7 +101,8 @@ export default {
   },
   methods: {
     ...mapActions({
-      setTestQuestions: "test/setTestQuestions"
+      setTestQuestions: "test/setTestQuestions",
+      submitAnswers: "test/submitAnswers"
     }),
     handleAbandon() {
       this.$confirm({
@@ -135,7 +139,11 @@ export default {
           "Are you sure to submit your answers? This action cannot be undone!",
         okText: "OK",
         cancelText: "Cancel",
-        onOk: () => {
+        onOk: async () => {
+          await this.submitAnswers({
+            answers: this.answers,
+            questionIds: this.testQuestions.map(question => question.questionId)
+          });
           this.modalVisible = true;
         },
         onCancel() {}
@@ -149,7 +157,6 @@ export default {
       this.modalVisible = false;
       this.isReviewing = true;
       this.answerKey = 1;
-      console.log("ans", this.answers);
     },
     handleAnswer(answeredKey) {
       let currentQuestionIndex = this.answers.findIndex(
@@ -158,6 +165,7 @@ export default {
       if (currentQuestionIndex == -1)
         this.answers.push({
           questionNumber: this.currentQuestionNo,
+          questionId: this.testQuestions[this.currentQuestionNo - 1].questionId,
           answeredKey: answeredKey
         });
       else this.answers[currentQuestionIndex].answeredKey = answeredKey;
