@@ -168,6 +168,7 @@
       @approve="getAllQuestions"
       @assign="getAllQuestions"
       @reject="getAllQuestions"
+      @delete="getAllQuestions"
       @update="handleUpdate"
       class="mt-2"
     />

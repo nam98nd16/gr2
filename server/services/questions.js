@@ -129,6 +129,23 @@ const updateQuestion = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const deleteQuestion = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { questionId } = req.query;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+  await knex("questions").where("questionId", "=", questionId).del();
+
+  res.json("success");
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const getAllQuestions = async (req, res) => {
   let questions = await knex
     .column()
@@ -329,6 +346,7 @@ const setAssignees = async (req, res) => {
 module.exports = {
   proposeQuestion,
   updateQuestion,
+  deleteQuestion,
   getAllQuestions,
   approveQuestion,
   rejectQuestion,

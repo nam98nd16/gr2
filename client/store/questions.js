@@ -21,6 +21,12 @@ export const actions = {
     const res = await this.$axios.post(`/questions/update`, payload);
     return res;
   },
+  async deleteQuestion({ commit }, questionId) {
+    const res = await this.$axios.delete(
+      `/questions/delete?questionId=${questionId}`
+    );
+    return res;
+  },
   async getAllQuestions({ commit }) {
     const res = await this.$axios.get(`/questions/all`);
     commit("setAllQuestions", res.data);

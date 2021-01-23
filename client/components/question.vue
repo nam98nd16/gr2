@@ -91,7 +91,7 @@
           >Report</a-button
         >
         <a-button
-          v-if="!isNormalUser && !isPreliminaryReviewer"
+          v-if="canDelete"
           size="small"
           type="danger"
           @click="handleDeletion"
@@ -213,21 +213,35 @@ export default {
         isAuthorizedForPeerReview ||
         isAuthorizedForFinalReview
       );
+    },
+    canDelete() {
+      let isTopicLeader =
+        this.isSubjectLeader &&
+        this.question.subjectId == this.currentUser.subjectId;
+      return this.isAdmin || isTopicLeader;
     }
   },
   methods: {
     ...mapActions({
       approveQuestions: "questions/approveQuestions",
       rejectQuestions: "questions/rejectQuestions",
+      deleteQuestion: "questions/deleteQuestion",
       getAvailableAssignees: "questions/getAvailableAssignees",
       setAssignees: "questions/setAssignees"
     }),
     handleDeletion() {
       this.$confirm({
-        title: "Are you sure to remove the question from the system?",
+        title:
+          "Are you sure to remove the question from the system? This action CANNOT be undone!",
         okText: "OK",
         cancelText: "Cancel",
-        onOk: () => {},
+        onOk: async () => {
+          await this.deleteQuestion(this.question.questionId);
+          this.$notification.success({
+            message: "Delete successfully!"
+          });
+          this.$emit("delete");
+        },
         onCancel() {}
       });
     },
