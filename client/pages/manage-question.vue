@@ -156,8 +156,8 @@
     >
       Questions waiting for assignee
     </a-checkable-tag>
-    <a-checkable-tag v-model="rejectedFiltered" @change="handleChange">
-      Rejected questions
+    <a-checkable-tag v-model="myQuestionsFiltered" @change="handleChange">
+      My proposed questions
     </a-checkable-tag>
     <br /><br />
 
@@ -219,7 +219,7 @@ export default {
       wfReviewFiltered: false,
       reportedFiltered: false,
       wfAssigneeFiltered: false,
-      rejectedFiltered: false,
+      myQuestionsFiltered: false,
       questionToUpdate: null
     };
   },
@@ -234,6 +234,7 @@ export default {
       label: subject.subjectName
     }));
     this.subjects.unshift({ value: "", label: "Select a topic" });
+    if (this.isNormalUser) this.myQuestionsFiltered = true;
   },
   computed: {
     ...mapState({
@@ -262,9 +263,11 @@ export default {
           !this.wfReviewFiltered &&
           !this.wfAssigneeFiltered &&
           !this.reportedFiltered &&
-          !this.rejectedFiltered
-        )
-          return question.passedFinalReview === "1";
+          !this.myQuestionsFiltered
+        ) {
+          if (this.isNormalUser) return false;
+          else return question.passedFinalReview === "1";
+        }
         let isRenderedWfReview = true;
         if (this.wfReviewFiltered) {
           if (this.isPreliminaryReviewer)
@@ -314,16 +317,14 @@ export default {
             question.hasBeenAssigned === "0" &&
             question.subjectId == this.currentUser.subjectId &&
             question.hasBeenRejected === "0";
-        let isRenderedRejected = true;
-        if (this.rejectedFiltered)
-          isRenderedRejected =
-            question.hasBeenRejected === "1" &&
-            question.creatorId == this.currentUser.userId;
+        let isRenderedMyQuestions = true;
+        if (this.myQuestionsFiltered)
+          isRenderedMyQuestions = question.creatorId == this.currentUser.userId;
         return (
           isRenderedWfReview &&
           isRenderedReported &&
           isRenderedWfAssignee &&
-          isRenderedRejected
+          isRenderedMyQuestions
         );
       });
       console.log("filtered", filteredQuestions);
