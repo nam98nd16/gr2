@@ -4,13 +4,10 @@
     Select topic
     <br />
     <a-select
-      style="min-width: 120px"
+      style="min-width: 150px"
       class="mb-2"
       v-model="selectedTopic"
-      :options="[
-        { value: 'math', label: 'Math' },
-        { value: 'english', label: 'English' },
-      ]"
+      :options="subjects"
     />
 
     <br />
@@ -23,9 +20,9 @@
       class="mb-2"
       v-model="selectedLength"
       :options="[
-        { value: 'short', label: 'Short (10 questions)' },
-        { value: 'medium', label: 'Medium (20 questions)' },
-        { value: 'long', label: 'Long (30 questions)' },
+        { value: 10, label: 'Short (10 questions)' },
+        { value: 20, label: 'Medium (20 questions)' },
+        { value: 30, label: 'Long (30 questions)' }
       ]"
     />
 
@@ -42,7 +39,7 @@
         { value: 'adaptive', label: 'Adaptive' },
         { value: 'easy', label: 'Easy' },
         { value: 'medium', label: 'Medium' },
-        { value: 'hard', label: 'Hard' },
+        { value: 'hard', label: 'Hard' }
       ]"
     />
     <br /><br />
@@ -54,19 +51,47 @@
 
 <script>
 import pageTitle from "../components/page-title.vue";
+import { mapState, mapActions } from "vuex";
 export default {
   components: { pageTitle },
   data() {
     return {
-      selectedTopic: "math",
-      selectedLength: "medium",
+      selectedTopic: 1,
+      selectedLength: 20,
       selectedDifficulty: "adaptive",
+      subjects: []
     };
   },
-  methods: {
-    handleStartingTest() {
-      this.$router.push("/taking-test");
-    },
+  async mounted() {
+    this.allSubjects.length ? undefined : await this.getAllSubjects();
+    this.subjects = this.allSubjects.map(subject => ({
+      value: subject.subjectId,
+      label: subject.subjectName
+    }));
   },
+  computed: {
+    ...mapState({
+      allSubjects: state => state.subjects.allSubjects
+    })
+  },
+  methods: {
+    ...mapActions({
+      getAllSubjects: "subjects/getAllSubjects",
+      getTestQuestions: "test/getTestQuestions"
+    }),
+    async handleStartingTest() {
+      let payload = {
+        subjectId: this.selectedTopic,
+        length: this.selectedLength,
+        difficulty: this.selectedDifficulty
+      };
+      try {
+        await this.getTestQuestions(payload);
+        this.$router.push("/taking-test");
+      } catch (error) {
+        this.$notification.error({ message: error.response.data });
+      }
+    }
+  }
 };
 </script>

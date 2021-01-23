@@ -2,7 +2,7 @@
   <div>
     <a-card size="small">
       <div slot="title">
-        {{ questionNumber }}. Simplify :150 ÷ (6 + 3 x 8) - 5 ?
+        {{ questionNumber }}. {{ question.questionString }}
         <a-tag color="green">Math</a-tag>
       </div>
       <div slot="extra">
@@ -19,20 +19,18 @@
             ? ''
             : answeredKey
         "
-        @change="(e) => handleAnswer(e)"
+        @change="e => handleAnswer(e)"
       >
-        <a-radio :class="correctAnswerIsA ? 'correct-answer' : ''" :value="1">
-          A. 0 <i v-if="correctAnswerIsA" class="fas fa-check mr-2" />
+        <a-radio
+          v-for="(answer, index) in question.answers"
+          :key="answer.answerId"
+          :value="answer.answerId"
+        >
+          {{ String.fromCharCode(97 + index).toUpperCase() }}.
+          {{ answer.answerString }}
+          <i v-if="correctAnswerIsA" class="fas fa-check mr-2" />
         </a-radio>
-        <a-radio :class="correctAnswerIsB ? 'correct-answer' : ''" :value="2">
-          B. 10 <i v-if="correctAnswerIsB" class="fas fa-check mr-2" />
-        </a-radio>
-        <a-radio :class="correctAnswerIsC ? 'correct-answer' : ''" :value="3">
-          C. 5 <i v-if="correctAnswerIsC" class="fas fa-check mr-2" />
-        </a-radio>
-        <a-radio :class="correctAnswerIsD ? 'correct-answer' : ''" :value="4">
-          D. 2 <i v-if="correctAnswerIsD" class="fas fa-check mr-2" /> </a-radio
-      ></a-radio-group>
+      </a-radio-group>
     </a-card>
 
     <a-modal
@@ -48,11 +46,11 @@
 
 <script>
 export default {
-  props: ["questionNumber", "answerKey", "isReviewing", "answer"],
+  props: ["questionNumber", "answerKey", "isReviewing", "answer", "question"],
   data() {
     return {
       answeredKey: "",
-      modalVisible: false,
+      modalVisible: false
     };
   },
   mounted() {},
@@ -68,7 +66,7 @@ export default {
     },
     correctAnswerIsD() {
       return this.isReviewing && this.answerKey[this.questionNumber - 1] == 4;
-    },
+    }
   },
   methods: {
     handleReport() {
@@ -82,8 +80,8 @@ export default {
         this.answeredKey = e.target.value;
         this.$emit("answer", e.target.value);
       }
-    },
-  },
+    }
+  }
 };
 </script>
 

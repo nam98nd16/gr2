@@ -4,17 +4,20 @@
     <div v-if="!isReviewing" class="mb-4" style="text-align: center">
       <i class="fas fa-clock"></i> Time left for the current question:
       {{ countDown }}
-      <div>Questions left: {{ maxQuestionNo - answers.length }}</div>
+      <div>
+        Questions unanswered: {{ testQuestions.length - answers.length }}
+      </div>
     </div>
     <div v-else class="mb-4" style="text-align: center">
-      Your score: {{ numberOfCorrectAnswers }}/{{ maxQuestionNo }}
+      Your score: {{ numberOfCorrectAnswers }}/{{ testQuestions.length }}
     </div>
 
     <answerable-question
       :questionNumber="currentQuestionNo"
       :answerKey="answerKeys"
       :isReviewing="isReviewing"
-      :answer="answers.find((ans) => ans.questionNumber == currentQuestionNo)"
+      :answer="answers.find(ans => ans.questionNumber == currentQuestionNo)"
+      :question="testQuestions[currentQuestionNo - 1]"
       ref="question"
       @answer="handleAnswer"
     />
@@ -31,7 +34,7 @@
           ><i class="fas fa-arrow-left mr-2"></i>Back</a-button
         >
         <a-button
-          :disabled="currentQuestionNo == maxQuestionNo"
+          :disabled="currentQuestionNo == testQuestions.length"
           type="primary"
           @click="handleNext"
           ><i class="fas fa-arrow-right mr-2"></i>Next</a-button
@@ -52,7 +55,7 @@
       @ok="handleOk"
     >
       <div class="score-text">
-        {{ numberOfCorrectAnswers }}/{{ maxQuestionNo }}
+        {{ numberOfCorrectAnswers }}/{{ testQuestions.length }}
       </div>
     </a-modal>
   </div>
@@ -61,6 +64,7 @@
 <script>
 import AnswerableQuestion from "../components/answerable-question.vue";
 import PageTitle from "../components/page-title.vue";
+import { mapState, mapActions } from "vuex";
 export default {
   components: { AnswerableQuestion, PageTitle },
   data() {
@@ -69,15 +73,19 @@ export default {
       modalVisible: false,
       isReviewing: false,
       currentQuestionNo: 1,
-      maxQuestionNo: 20,
       answerKeys: [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
-      answers: [],
+      answers: []
     };
   },
   mounted() {
+    this.countDown = this.testQuestions[0].timeAllowed;
     this.startCountDownTimer();
+    console.log("here", this.testQuestions);
   },
   computed: {
+    ...mapState({
+      testQuestions: state => state.test.testQuestions
+    }),
     numberOfCorrectAnswers() {
       let correctAnswers = 0;
       if (this.answers.length)
@@ -86,9 +94,12 @@ export default {
             correctAnswers++;
         });
       return correctAnswers;
-    },
+    }
   },
   methods: {
+    ...mapActions({
+      setTestQuestions: "test/setTestQuestions"
+    }),
     handleAbandon() {
       this.$confirm({
         title:
@@ -98,15 +109,21 @@ export default {
         onOk: () => {
           window.history.back();
         },
-        onCancel() {},
+        onCancel() {}
       });
     },
     handleNext() {
-      if (this.currentQuestionNo < this.maxQuestionNo) this.currentQuestionNo++;
+      if (this.currentQuestionNo < this.testQuestions.length)
+        this.currentQuestionNo++;
       if (!this.countDown) {
-        this.countDown = 30;
+        this.countDown = this.testQuestions[
+          this.currentQuestionNo - 1
+        ].timeAllowed;
         this.startCountDownTimer();
-      } else this.countDown = 30;
+      } else
+        this.countDown = this.testQuestions[
+          this.currentQuestionNo - 1
+        ].timeAllowed;
       this.$refs.question.answeredKey = "";
     },
     handleBack() {
@@ -121,7 +138,7 @@ export default {
         onOk: () => {
           this.modalVisible = true;
         },
-        onCancel() {},
+        onCancel() {}
       });
     },
     handleOk() {
@@ -136,12 +153,12 @@ export default {
     },
     handleAnswer(answeredKey) {
       let currentQuestionIndex = this.answers.findIndex(
-        (ans) => ans.questionNumber == this.currentQuestionNo
+        ans => ans.questionNumber == this.currentQuestionNo
       );
       if (currentQuestionIndex == -1)
         this.answers.push({
           questionNumber: this.currentQuestionNo,
-          answeredKey: answeredKey,
+          answeredKey: answeredKey
         });
       else this.answers[currentQuestionIndex].answeredKey = answeredKey;
     },
@@ -151,10 +168,15 @@ export default {
           this.countDown -= 1;
           this.startCountDownTimer();
         }, 1000);
-      } else if (this.currentQuestionNo < this.maxQuestionNo) this.handleNext();
+      } else if (this.currentQuestionNo < this.testQuestions.length)
+        this.handleNext();
       else this.modalVisible = true;
-    },
+    }
   },
+  beforeRouteLeave(to, from, next) {
+    this.setTestQuestions([]);
+    next();
+  }
 };
 </script>
 

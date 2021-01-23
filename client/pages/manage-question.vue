@@ -227,7 +227,7 @@ export default {
   },
   async mounted() {
     await Promise.all([
-      this.getAllSubjects(),
+      this.allSubjects.length ? undefined : this.getAllSubjects(),
       this.getAllQuestions(),
       this.getAvailableAssignees()
     ]);
