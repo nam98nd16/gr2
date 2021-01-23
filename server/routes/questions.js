@@ -5,6 +5,8 @@ const service = require("../services/questions");
 router.post("/propose", service.proposeQuestion);
 router.post("/update", service.updateQuestion);
 router.delete("/delete", service.deleteQuestion);
+router.post("/report", service.reportQuestion);
+router.post("/ignore-report", service.ignoreReports);
 router.get("/all", service.getAllQuestions);
 router.post("/approve", service.approveQuestion);
 router.post("/reject", service.rejectQuestion);

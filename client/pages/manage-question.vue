@@ -143,7 +143,7 @@
       Questions waiting for my review
     </a-checkable-tag>
     <a-checkable-tag
-      v-if="!isNormalUser && !isPreliminaryReviewer"
+      v-if="isAdmin || isSubjectLeader"
       v-model="reportedFiltered"
       @change="handleChange"
     >
@@ -169,6 +169,7 @@
       @assign="getAllQuestions"
       @reject="getAllQuestions"
       @delete="getAllQuestions"
+      @ignore="getAllQuestions"
       @update="handleUpdate"
       class="mt-2"
     />
@@ -309,7 +310,9 @@ export default {
         }
         let isRenderedReported = true;
         if (this.reportedFiltered)
-          isRenderedReported = question.hasBeenReported === "1";
+          isRenderedReported =
+            question.hasBeenReported === "1" &&
+            question.subjectId == this.currentUser.subjectId;
         let isRenderedWfAssignee = true;
         if (this.wfAssigneeFiltered)
           isRenderedWfAssignee =

@@ -99,7 +99,11 @@ const updateQuestion = async (req, res) => {
       difficultyLevel: difficultyLevel,
       timeAllowed: allowedTime,
       hasBeenRejected: 0,
+      hasBeenReported: 0,
     });
+
+  await knex("reports").where("questionId", "=", questionId).del();
+
   let addedAnswers = [];
   let insertAnswers = new Promise((resolve, reject) => {
     answers.forEach(async (answer, index, arr) => {
@@ -146,6 +150,53 @@ const deleteQuestion = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const reportQuestion = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { questionId, reason } = req.body;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+  let reportedQuestion = await knex("reports").returning("*").insert({
+    reason: reason,
+    reporterId: reqUser.userId,
+    questionId: questionId,
+  });
+
+  await knex("questions").where("questionId", "=", questionId).update({
+    hasBeenReported: 1,
+  });
+
+  res.json({ reportedQuestion: reportedQuestion });
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const ignoreReports = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { questionId } = req.body;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  await knex("reports").where("questionId", "=", questionId).del();
+
+  await knex("questions").where("questionId", "=", questionId).update({
+    hasBeenReported: 0,
+  });
+
+  res.json("success");
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const getAllQuestions = async (req, res) => {
   let questions = await knex
     .column()
@@ -157,6 +208,12 @@ const getAllQuestions = async (req, res) => {
     .column()
     .select()
     .from("peer_review_results");
+
+  let reports = await knex
+    .column()
+    .select("reporterId", "reason", "username", "questionId")
+    .from("reports")
+    .leftJoin("accounts", "reports.reporterId", "accounts.userId");
 
   questions = _.groupBy(questions, function (item) {
     return item.questionId;
@@ -192,6 +249,10 @@ const getAllQuestions = async (req, res) => {
     return item.questionId;
   });
 
+  let trueReports = _.groupBy(reports, function (item) {
+    return item.questionId;
+  });
+
   for (let questionId in assignees) {
     let questionIndex = trueQuestions.findIndex(
       (question) => question.questionId == questionId
@@ -199,6 +260,15 @@ const getAllQuestions = async (req, res) => {
     trueQuestions[questionIndex].assignees = assignees[
       questionId
     ].map((assignee) => ({ ...assignee, questionId: undefined }));
+  }
+
+  for (let questionId in trueReports) {
+    let questionIndex = trueQuestions.findIndex(
+      (question) => question.questionId == questionId
+    );
+    trueQuestions[questionIndex].reports = trueReports[
+      questionId
+    ].map((report) => ({ ...report, questionId: undefined }));
   }
 
   res.json(trueQuestions);
@@ -347,6 +417,8 @@ module.exports = {
   proposeQuestion,
   updateQuestion,
   deleteQuestion,
+  reportQuestion,
+  ignoreReports,
   getAllQuestions,
   approveQuestion,
   rejectQuestion,

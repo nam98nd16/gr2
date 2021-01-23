@@ -8,6 +8,7 @@
             .subjectName
         }}</a-tag>
         <a-tag v-if="isRejected" color="red">Rejected</a-tag>
+
         <span v-else>
           <a-tag v-if="isWaitingForPreliminaryReview" color="blue"
             >Waiting for preliminary review</a-tag
@@ -22,6 +23,23 @@
             >Waiting for final review</a-tag
           ></span
         >
+
+        <a-tooltip placement="right">
+          <template slot="title">
+            <div>
+              This question has been reported by:
+            </div>
+            <div v-for="(report, index) in question.reports" :key="index">
+              <span style="font-weight: bold">{{ report.username }}</span
+              >:
+              <span style="font-style: italic">{{ report.reason }}</span>
+            </div>
+          </template>
+          <i
+            v-if="isReported && canHandleReport"
+            class="fas fa-exclamation-circle pointer-cursor"
+          ></i>
+        </a-tooltip>
         <div v-if="isRejected" style="font-style: italic; font-weight: 400">
           <span v-if="question.passedPreliminaryReview === '0'"
             ><span class="reviewer">Preliminary reviewer:</span>
@@ -46,11 +64,13 @@
       </div>
       <div slot="extra">
         <a-button
-          v-if="isRejected"
+          v-if="isRejected || (isReported && canHandleReport)"
           size="small"
           type="primary"
           @click="handleUpdate"
-          >Update</a-button
+          >{{
+            isRejected ? "Update for review again" : "Update and clear reports"
+          }}</a-button
         >
         <span v-if="isAuthorized && !isRejected">
           <a-button size="small" type="primary" @click="handleApprove"
@@ -64,7 +84,7 @@
             >Reject</a-button
           ></span
         >
-        <span v-if="isWaitingForAssignee && (isSubjectLeader || isAdmin)">
+        <span v-if="isWaitingForAssignee && canAssignQuestions">
           <a-select
             size="small"
             placeholder="Select 3 assignees for peer reviews"
@@ -88,7 +108,20 @@
           >
         </span>
         <a-button
-          v-if="!isSubjectLeader && !isAdmin"
+          v-if="isReported && canHandleReport"
+          size="small"
+          type="danger"
+          ghost
+          @click="handleIgnore"
+          >Ignore reports</a-button
+        >
+        <a-button
+          v-if="
+            !isSubjectLeader &&
+              !isAdmin &&
+              !isRejected &&
+              question.passedFinalReview == 1
+          "
           size="small"
           type="primary"
           ghost
@@ -130,9 +163,13 @@
       v-model="modalVisible"
       centered
       title="Report question"
+      :okButtonProps="{ props: { disabled: !reportReason } }"
       @ok="handleOk"
     >
-      <a-textarea placeholder="Enter the reason to report this question ..." />
+      <a-textarea
+        placeholder="Enter the reason to report this question ..."
+        v-model="reportReason"
+      />
     </a-modal>
   </div>
 </template>
@@ -148,7 +185,8 @@ export default {
       modalRejectIsVisible: false,
       currentUser: jwtdecode(localStorage.getItem("token")),
       selectedAssignees: [],
-      rejectReason: ""
+      rejectReason: "",
+      reportReason: ""
     };
   },
   computed: {
@@ -197,6 +235,9 @@ export default {
     isRejected() {
       return this.question.hasBeenRejected === "1";
     },
+    isReported() {
+      return this.question.hasBeenReported === "1";
+    },
     isAuthorized() {
       let isAuthorizedForPreliminaryReview =
         this.isPreliminaryReviewer && this.isWaitingForPreliminaryReview;
@@ -219,6 +260,18 @@ export default {
         isAuthorizedForFinalReview
       );
     },
+    canAssignQuestions() {
+      return (
+        (this.isSubjectLeader || this.isAdmin) &&
+        this.question.subjectId == this.currentUser.subjectId
+      );
+    },
+    canHandleReport() {
+      return (
+        (this.isSubjectLeader || this.isAdmin) &&
+        this.question.subjectId == this.currentUser.subjectId
+      );
+    },
     canDelete() {
       let isTopicLeader =
         this.isSubjectLeader &&
@@ -230,6 +283,8 @@ export default {
     ...mapActions({
       approveQuestions: "questions/approveQuestions",
       rejectQuestions: "questions/rejectQuestions",
+      reportQuestion: "questions/reportQuestion",
+      ignoreReports: "questions/ignoreReports",
       deleteQuestion: "questions/deleteQuestion",
       getAvailableAssignees: "questions/getAvailableAssignees",
       setAssignees: "questions/setAssignees"
@@ -253,7 +308,16 @@ export default {
     handleReport() {
       this.modalVisible = true;
     },
-    handleOk() {
+    async handleOk() {
+      let payload = {
+        questionId: this.question.questionId,
+        reporterId: this.currentUser.userId,
+        reason: this.reportReason
+      };
+      await this.reportQuestion(payload);
+      this.$notification.success({
+        message: "Reported successfully!"
+      });
       this.modalVisible = false;
     },
     handleApprove() {
@@ -330,14 +394,35 @@ export default {
         assignee => assignee.hasRejected === "1"
       );
       return rejectAssignees[index]?.rejectReason;
+    },
+    async handleIgnore() {
+      this.$confirm({
+        title: "Are you sure to ignore all reports of this question?",
+        okText: "OK",
+        cancelText: "Cancel",
+        onOk: async () => {
+          await this.ignoreReports({ questionId: this.question.questionId });
+
+          this.$notification.success({
+            message: "Ignore reports successfully!"
+          });
+          this.$emit("ignore");
+          this.modalRejectIsVisible = false;
+        },
+        onCancel: () => {}
+      });
     }
   }
 };
 </script>
 
-<style scoped>
+<style>
 .reviewer {
   font-style: italic;
   font-weight: 500;
+}
+
+.pointer-cursor {
+  cursor: pointer;
 }
 </style>
