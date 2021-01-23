@@ -64,7 +64,7 @@
 <script>
 import AnswerableQuestion from "../components/answerable-question.vue";
 import PageTitle from "../components/page-title.vue";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapMutations } from "vuex";
 export default {
   components: { AnswerableQuestion, PageTitle },
   data() {
@@ -101,8 +101,10 @@ export default {
   },
   methods: {
     ...mapActions({
-      setTestQuestions: "test/setTestQuestions",
       submitAnswers: "test/submitAnswers"
+    }),
+    ...mapMutations({
+      setTestQuestions: "test/setTestQuestions"
     }),
     handleAbandon() {
       this.$confirm({
@@ -170,7 +172,7 @@ export default {
         });
       else this.answers[currentQuestionIndex].answeredKey = answeredKey;
     },
-    startCountDownTimer() {
+    async startCountDownTimer() {
       if (this.countDown > 0) {
         setTimeout(() => {
           this.countDown -= 1;
@@ -178,7 +180,13 @@ export default {
         }, 1000);
       } else if (this.currentQuestionNo < this.testQuestions.length)
         this.handleNext();
-      else this.modalVisible = true;
+      else {
+        await this.submitAnswers({
+          answers: this.answers,
+          questionIds: this.testQuestions.map(question => question.questionId)
+        });
+        this.modalVisible = true;
+      }
     }
   },
   beforeRouteLeave(to, from, next) {
