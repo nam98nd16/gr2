@@ -379,13 +379,7 @@ export default {
       this.$emit("assign");
     },
     getAnswerStyle(isCorrect) {
-      if (
-        isCorrect &&
-        (this.isWaitingForPreliminaryReview ||
-          this.isWaitingForAssignee ||
-          this.isWaitingForPeerReview ||
-          this.isWaitingForFinalReview)
-      ) {
+      if (isCorrect) {
         return "color: blue; font-weight: bold";
       } else return "";
     },

@@ -236,6 +236,7 @@ export default {
     }));
     this.subjects.unshift({ value: "", label: "Select a topic" });
     if (this.isNormalUser) this.myQuestionsFiltered = true;
+    else if (this.isPreliminaryReviewer) this.wfReviewFiltered = true;
   },
   computed: {
     ...mapState({
@@ -267,7 +268,12 @@ export default {
           !this.myQuestionsFiltered
         ) {
           if (this.isNormalUser) return false;
-          else return question.passedFinalReview === "1";
+          else if (this.isAdmin) return true;
+          else
+            return (
+              question.passedFinalReview === "1" &&
+              question.subjectId == this.currentUser.subjectId
+            );
         }
         let isRenderedWfReview = true;
         if (this.wfReviewFiltered) {
