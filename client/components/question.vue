@@ -64,7 +64,7 @@
             >Reject</a-button
           ></span
         >
-        <span v-if="isWaitingForAssignee && isSubjectLeader">
+        <span v-if="isWaitingForAssignee && (isSubjectLeader || isAdmin)">
           <a-select
             size="small"
             placeholder="Select 3 assignees for peer reviews"
@@ -87,7 +87,12 @@
             >Confirm assignees</a-button
           >
         </span>
-        <a-button size="small" type="primary" ghost @click="handleReport"
+        <a-button
+          v-if="!isSubjectLeader && !isAdmin"
+          size="small"
+          type="primary"
+          ghost
+          @click="handleReport"
           >Report</a-button
         >
         <a-button
@@ -205,7 +210,7 @@ export default {
         this.question.assignees[assigneeIndex].hasApproved === "0";
 
       let isAuthorizedForFinalReview =
-        this.isSubjectLeader &&
+        (this.isSubjectLeader || this.isAdmin) &&
         this.isWaitingForFinalReview &&
         this.question.subjectId == this.currentUser.subjectId;
       return (

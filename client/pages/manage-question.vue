@@ -287,7 +287,7 @@ export default {
               !hasRejected &&
               question.passedPeerReview === "0" &&
               question.hasBeenRejected === "0";
-          } else if (this.isSubjectLeader) {
+          } else if (this.isSubjectLeader || this.isAdmin) {
             let assigneeIndex = question.assignees?.findIndex(
               assignee => assignee.reviewerId == this.currentUser.userId
             );
@@ -302,10 +302,7 @@ export default {
                 (question.hasBeenAssigned === "1" &&
                   isAuthorizedForPeerReview)) &&
               question.hasBeenRejected === "0";
-          } else if (this.isAdmin)
-            isRenderedWfReview =
-              question.passedFinalReview === "0" &&
-              question.hasBeenRejected === "0";
+          }
         }
         let isRenderedReported = true;
         if (this.reportedFiltered)
