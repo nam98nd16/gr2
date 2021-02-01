@@ -40,6 +40,14 @@
             class="fas fa-exclamation-circle pointer-cursor"
           ></i>
         </a-tooltip>
+        <a-tag color="blue" title="Allowed time for the question">
+          <i class="fas fa-clock"></i> {{ question.timeAllowed }}</a-tag
+        >
+        <a-tag color="red" title="Difficulty level"
+          ><i class="fas fa-skull-crossbones"></i>
+          {{ question.difficultyLevel }}
+        </a-tag>
+
         <div v-if="isRejected" style="font-style: italic; font-weight: 400">
           <span v-if="question.passedPreliminaryReview === '0'"
             ><span class="reviewer">Preliminary reviewer:</span>
