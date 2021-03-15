@@ -51,7 +51,38 @@ const login = async (req, res) => {
   }
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const updateProfile = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+  let { fullName, phoneNumber, autobiography, birthday, gender } = req.body;
+  let updatedProfile = await knex("accounts")
+    .returning("*")
+    .where("userId", "=", reqUser.userId)
+    .update({
+      fullName: fullName,
+      phoneNumber: phoneNumber,
+      autobiography: autobiography,
+      birthday: birthday,
+      gender: gender,
+    });
+  updatedProfile = updatedProfile[0];
+  updatedProfile.password = undefined;
+  const newToken = jwt.sign(updatedProfile, jwtSecret, {
+    expiresIn: validDays * 24 + "h",
+    algorithm: "HS256",
+  });
+  return res.json(newToken);
+};
+
 module.exports = {
   register,
   login,
+  updateProfile,
 };
