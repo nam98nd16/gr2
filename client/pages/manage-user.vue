@@ -1,151 +1,230 @@
 <template>
   <div>
     <page-title title="User management" />
-    Total: {{ data.length }}
-    <a-switch
-      style="float: right"
-      checked-children="Actions shown"
-      un-checked-children="Actions hidden"
-      default-unchecked
-      v-model="showsActions"
-    />
+    Total: {{ allUsers.length }}
+    <span style="float: right">
+      <span v-show="isEditing"
+        ><a-button type="primary" ghost size="small" @click="handleResetData"
+          ><i class="fas fa-recycle mr-1"></i>Reset</a-button
+        >
+        <a-button type="primary" size="small" @click="handleSave"
+          ><i class="fas fa-check mr-1"></i>Save</a-button
+        ></span
+      >
+      <a-switch
+        class="mb-1"
+        checked-children="Editing"
+        un-checked-children="Not Editing"
+        default-unchecked
+        v-model="isEditing"
+      />
+    </span>
+
     <a-table
       :columns="columns"
-      :data-source="data"
+      :data-source="editableDataSource"
+      :pagination="pagination"
       bordered
       :rowKey="(r, i) => i"
+      size="small"
+      @change="handleTableChange"
     >
-      <template slot="privilege" slot-scope="text">
-        <div>
-          {{
-            !text
-              ? "Admin"
-              : text == 1
-              ? "Subject Leader"
-              : text == 2
-              ? "Subject Expert"
-              : ""
-          }}
+      <template slot="privilege" slot-scope="text, record">
+        <div v-if="!isEditing">
+          {{ getUserRoleText(text) }}
+        </div>
+        <div v-else>
+          <a-select
+            style="min-width: 150px"
+            v-model="record.role"
+            @change="val => handleRoleChange(record, val)"
+            :options="roleOptions"
+          />
         </div>
       </template>
-      <span
-        v-if="record.privilege && showsActions"
-        slot="operation"
-        slot-scope="text, record, index"
-      >
-        <a-button
-          class="mr-2"
-          type="primary"
-          v-if="[2, 3].includes(record.privilege)"
-          @click="handlePromote(record)"
-          >Promote</a-button
-        ><a-button
-          class="mr-2"
-          type="danger"
-          ghost
-          v-if="[2, 1].includes(record.privilege)"
-          @click="handleDemote(record)"
-          >Demote</a-button
-        ><a-button type="danger" @click="handleBan(record)">Ban</a-button>
-      </span>
+      <template slot="subject" slot-scope="text, record">
+        <div v-if="!isEditing">
+          {{ getUserSubject(text) }}
+        </div>
+        <div v-else-if="![3, 4].includes(record.role)">
+          <a-select
+            style="min-width: 150px"
+            v-model="record.subjectId"
+            :options="subjectOptions"
+          />
+        </div>
+      </template>
+      <template slot="no" slot-scope="text, record, index">
+        <div>
+          {{ index + (pagination.current - 1) * pagination.pageSize + 1 }}
+        </div>
+      </template>
     </a-table>
   </div>
 </template>
 
 <script>
 import pageTitle from "../components/page-title.vue";
-const data = [];
-for (let i = 0; i < 100; i++) {
-  data.push({
-    no: i,
-    uniqueId: 1412 + i,
-    username: `Edrward ${i}`,
-    registeredDate: "2020/12/15",
-    privilege: i % 4,
-    subject: [1, 2].includes(i % 4) ? "Math" : ""
-  });
-}
+import { mapActions, mapState, mapMutations } from "vuex";
+const roleOptions = [
+  { value: 0, label: "Admin" },
+  { value: 1, label: "Subject Leader" },
+  { value: 2, label: "Subject Expert" },
+  { value: 4, label: "Preliminary Reviewer" },
+  { value: 3, label: "None" }
+];
 export default {
   components: { pageTitle },
   data() {
-    this.cacheData = data.map(item => ({ ...item }));
     return {
-      data,
       editingKey: "",
-      showsActions: false
+      isEditing: false,
+      pagination: {
+        pageSize: 10,
+        total: 0,
+        current: 1
+      },
+      roleOptions,
+      subjectOptions: [],
+      editableDataSource: []
     };
   },
+  watch: {
+    isEditing(newVal) {
+      if (!newVal) {
+        this.handleResetData();
+      }
+    }
+  },
+  async mounted() {
+    await Promise.all([
+      this.allUsers.length ? {} : this.getAllUsers(),
+      this.allSubjects.length ? {} : this.getAllSubjects()
+    ]);
+    this.editableDataSource = _.cloneDeep(this.allUsers);
+    this.subjectOptions = this.allSubjects.map(subject => ({
+      value: subject.subjectId,
+      label: subject.subjectName
+    }));
+  },
   computed: {
+    ...mapState({
+      allSubjects: state => state.subjects.allSubjects
+    }),
+    allUsers: {
+      get() {
+        return this.$store.state.allUsers;
+      },
+      set(value) {
+        this.setAllUsers(value);
+      }
+    },
     columns() {
       return [
         {
           title: "No",
-          dataIndex: "no",
-          scopedSlots: { customRender: "name" }
+          scopedSlots: { customRender: "no" }
         },
         {
           title: "Unique ID",
-          dataIndex: "uniqueId",
-          scopedSlots: { customRender: "uniqueId" }
+          dataIndex: "userId",
+          scopedSlots: { customRender: "uniqueId" },
+          sorter: (a, b) => a.userId - b.userId
         },
         {
           title: "Username",
           dataIndex: "username",
-          scopedSlots: { customRender: "username" }
-        },
-        {
-          title: "Registered Date",
-          dataIndex: "registeredDate",
-          scopedSlots: { customRender: "registeredDate" }
+          scopedSlots: { customRender: "username" },
+          sorter: (a, b) => a.username.localeCompare(b.username)
         },
         {
           title: "Privilege",
-          dataIndex: "privilege",
-          scopedSlots: { customRender: "privilege" }
+          dataIndex: "role",
+          scopedSlots: { customRender: "privilege" },
+          sorter: (a, b) => {
+            if (a.role == 3) return 1;
+            if (b.role == 3) return -1;
+            return a.role - b.role;
+          }
         },
         {
           title: "Subject",
-          dataIndex: "subject",
-          scopedSlots: { customRender: "subject" }
-        },
-        {
-          title: "Operation",
-          class: "action",
-          width: this.operationColWidth,
-          scopedSlots: { customRender: "operation" }
+          dataIndex: "subjectId",
+          scopedSlots: { customRender: "subject" },
+          sorter: (a, b, order) => {
+            if (a.subjectId == b.subjectId) return 0;
+            if (!a.subjectId) return 1;
+            if (!b.subjectId) return -1;
+            if (order == "ascend") return a.subjectId < b.subjectId ? -1 : 1;
+            else {
+              return a.subjectId < b.subjectId ? 1 : -1;
+            }
+          }
         }
       ];
     },
     operationColWidth() {
-      return this.showsActions ? 280 : 100;
+      return this.isEditing ? 280 : 100;
     }
   },
   methods: {
-    handlePromote(user) {
-      this.$confirm({
-        title: `Are you sure to promote ${user.username}?`,
-        okText: "OK",
-        cancelText: "Cancel",
-        onOk: () => {},
-        onCancel() {}
-      });
+    ...mapActions({
+      getAllUsers: "getAllUsers",
+      getAllSubjects: "subjects/getAllSubjects",
+      updateUsersRole: "updateUsersRole"
+    }),
+    ...mapMutations({
+      setAllUsers: "setAllUsers"
+    }),
+    getUserRoleText(r) {
+      let role = "";
+      switch (r) {
+        case 0:
+          role = "Admin";
+          break;
+        case 1:
+          role = "Subject Leader";
+          break;
+        case 2:
+          role = "Subject Expert";
+          break;
+        case 4:
+          role = "Preliminary Reviewer";
+          break;
+        default:
+          break;
+      }
+      return role;
     },
-    handleDemote(user) {
-      this.$confirm({
-        title: `Are you sure to demote ${user.username}?`,
-        okText: "OK",
-        cancelText: "Cancel",
-        onOk: () => {},
-        onCancel() {}
-      });
+    getUserSubject(subjectId) {
+      return this.allSubjects.find(subj => subj.subjectId == subjectId)
+        ?.subjectName;
     },
-    handleBan(user) {
-      this.$confirm({
-        title: `Are you sure to ban ${user.username}?`,
-        okText: "OK",
-        cancelText: "Cancel",
-        onOk: () => {},
-        onCancel() {}
+    handleTableChange(pagination, filters, sorter) {
+      const pager = { ...this.pagination };
+      pager.current = pagination.current;
+      this.pagination = pager;
+    },
+    handleRoleChange(user, selectedRole) {
+      if ([0, 1, 2].includes(selectedRole)) user.subjectId = 1;
+      else user.subjectId = null;
+    },
+    handleResetData() {
+      this.editableDataSource = _.cloneDeep(this.allUsers);
+    },
+    async handleSave() {
+      let updatedUsers = this.editableDataSource.filter(
+        x =>
+          this.allUsers.findIndex(
+            user =>
+              user.userId == x.userId &&
+              (user.role != x.role || user.subjectId != x.subjectId)
+          ) >= 0
+      );
+      await this.updateUsersRole({ users: updatedUsers });
+      this.allUsers = this.editableDataSource;
+      this.$notification.success({
+        message: "Updated successfully!"
       });
     }
   }
