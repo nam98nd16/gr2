@@ -2,19 +2,9 @@
   <a-spin :spinning="pageLoading">
     <page-title title="Profile" />
     <div class="container">
-      <a-form style="margin-top: 50px" :form="form" @submit="handleSubmit">
+      <a-form :form="form" @submit="handleSubmit">
         <a-form-item :label="'Username'" v-bind="formItemLayout">
-          <a-input
-            disabled
-            :value="currentUser ? currentUser.username : ''"
-            placeholder="Username"
-          >
-            <a-icon
-              slot="prefix"
-              type="user"
-              style="color: rgba(0, 0, 0, 0.25)"
-            />
-          </a-input>
+          {{ currentUser ? currentUser.username : "" }}
         </a-form-item>
         <a-form-item :label="'Full name'" v-bind="formItemLayout">
           <a-input
@@ -189,5 +179,9 @@ export default {
   justify-content: center;
   align-items: center;
   display: initial;
+}
+
+.container .ant-form-item {
+  margin-bottom: unset;
 }
 </style>
