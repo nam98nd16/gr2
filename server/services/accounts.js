@@ -61,7 +61,15 @@ const updateProfile = async (req, res) => {
     req.headers.authorization.length
   );
   let reqUser = jwt.verify(token, jwtSecret);
-  let { fullName, phoneNumber, autobiography, birthday, gender } = req.body;
+  let {
+    fullName,
+    phoneNumber,
+    autobiography,
+    birthday,
+    gender,
+    address,
+    email,
+  } = req.body;
   let updatedProfile = await knex("accounts")
     .returning("*")
     .where("userId", "=", reqUser.userId)
@@ -71,6 +79,8 @@ const updateProfile = async (req, res) => {
       autobiography: autobiography,
       birthday: birthday,
       gender: gender,
+      address: address,
+      email: email,
     });
   updatedProfile = updatedProfile[0];
   updatedProfile.password = undefined;

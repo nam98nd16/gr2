@@ -1,20 +1,18 @@
 <template>
   <a-spin :spinning="pageLoading">
     <page-title title="Profile" />
-    <div class="container">
+    <div v-if="currentUser" class="container">
       <a-form :form="form" @submit="handleSubmit">
         <a-form-item :label="'Username'" v-bind="formItemLayout">
-          {{ currentUser ? currentUser.username : "" }}
+          {{ currentUser.username }}
+          <a-tag v-if="userRole" :color="userRoleColor">{{ userRole }}</a-tag>
         </a-form-item>
         <a-form-item :label="'Full name'" v-bind="formItemLayout">
           <a-input
             v-decorator="[
               'fullName',
               {
-                rules: [
-                  { required: true, message: 'Please input your full name!' }
-                ],
-                initialValue: currentUser ? currentUser.fullName : ''
+                initialValue: currentUser.fullName
               }
             ]"
             placeholder="Full name"
@@ -26,6 +24,29 @@
             />
           </a-input>
         </a-form-item>
+        <a-form-item :label="'Email'" v-bind="formItemLayout">
+          <a-input
+            v-decorator="[
+              'email',
+              {
+                rules: [
+                  {
+                    pattern: /\S+@\S+\.\S+/,
+                    message: 'Please input a valid email!'
+                  }
+                ],
+                initialValue: currentUser.email
+              }
+            ]"
+            placeholder="Email"
+          >
+            <a-icon
+              slot="prefix"
+              type="mail"
+              style="color: rgba(0, 0, 0, 0.25)"
+            />
+          </a-input>
+        </a-form-item>
         <a-form-item :label="'Phone number'" v-bind="formItemLayout">
           <a-input
             v-decorator="[
@@ -33,11 +54,11 @@
               {
                 rules: [
                   {
-                    pattern: /^(0|[1-9][0-9]*)$/,
+                    pattern: /^\s*(?:\+?(\d{1,3}))?[-. (]*(\d{3})[-. )]*(\d{3})[-. ]*(\d{4})(?: *x(\d+))?\s*$/,
                     message: 'Please input a valid phone number!'
                   }
                 ],
-                initialValue: currentUser ? currentUser.phoneNumber : ''
+                initialValue: currentUser.phoneNumber
               }
             ]"
             placeholder="Phone number"
@@ -56,22 +77,35 @@
             v-decorator="[
               'birthday',
               {
-                initialValue:
-                  currentUser && currentUser.birthday
-                    ? $moment(currentUser.birthday)
-                    : null
+                initialValue: currentUser.birthday
+                  ? $moment(currentUser.birthday)
+                  : null
               }
             ]"
           />
+        </a-form-item>
+        <a-form-item :label="'Address'" v-bind="formItemLayout">
+          <a-input
+            v-decorator="[
+              'address',
+              {
+                initialValue: currentUser.address
+              }
+            ]"
+            placeholder="Address"
+          >
+            <a-icon
+              slot="prefix"
+              type="home"
+              style="color: rgba(0, 0, 0, 0.25)"
+            />
+          </a-input>
         </a-form-item>
         <a-form-item :label="'Gender'" v-bind="formItemLayout">
           <a-radio-group
             name="gender"
             style="float: left; margin-top: 8px"
-            v-decorator="[
-              'gender',
-              { initialValue: currentUser ? currentUser.gender : 1 }
-            ]"
+            v-decorator="['gender', { initialValue: currentUser.gender }]"
           >
             <a-radio :value="1">Male</a-radio>
             <a-radio :value="2">Female</a-radio>
@@ -80,10 +114,7 @@
         </a-form-item>
         <a-form-item :label="'About me'" v-bind="formItemLayout">
           <a-textarea
-            v-decorator="[
-              'about',
-              { initialValue: currentUser ? currentUser.autobiography : '' }
-            ]"
+            v-decorator="['about', { initialValue: currentUser.autobiography }]"
             placeholder="Describe something about me ..."
             :autoSize="{ minRows: 2, maxRows: 10 }"
           ></a-textarea>
@@ -131,11 +162,65 @@ export default {
   },
   mounted() {
     this.currentUser = jwt_decode(localStorage.getItem("token"));
+    this.allSubjects.length ? {} : this.getAllSubjects();
+  },
+  computed: {
+    ...mapState({
+      allSubjects: state => state.subjects.allSubjects
+    }),
+    userRole() {
+      let role = "";
+      switch (this.currentUser?.role) {
+        case 0:
+          role = "Admin";
+          break;
+        case 1:
+          role = "Subject Leader";
+          break;
+        case 2:
+          role = "Subject Expert";
+          break;
+        case 4:
+          role = "Preliminary Reviewer";
+          break;
+        default:
+          break;
+      }
+      if (this.currentUser.subjectId)
+        role += ` - ${
+          this.allSubjects.find(
+            subj => subj.subjectId == this.currentUser?.subjectId
+          )?.subjectName
+        }`;
+      return role;
+    },
+    userRoleColor() {
+      let color = "";
+      switch (this.currentUser?.role) {
+        case 0:
+          color = "red";
+          break;
+        case 1:
+          color = "#0000A0";
+          break;
+        case 2:
+          color = "blue";
+          break;
+        case 4:
+          color = "green";
+          break;
+        default:
+          color = "#000000";
+          break;
+      }
+      return color;
+    }
   },
   methods: {
     ...mapMutations({}),
     ...mapActions({
-      updateProfile: "updateProfile"
+      updateProfile: "updateProfile",
+      getAllSubjects: "subjects/getAllSubjects"
     }),
     handleSubmit(e) {
       e.preventDefault();
@@ -151,7 +236,9 @@ export default {
                   .add(7, "hours")
                   .format("YYYY/MM/DD")
               : null,
-            gender: values.gender
+            gender: values.gender,
+            address: values.address,
+            email: values.email
           };
           try {
             let res = await this.updateProfile(payload);
