@@ -26,7 +26,7 @@
       :pagination="pagination"
       bordered
       :rowKey="(r, i) => i"
-      size="small"
+      size="middle"
       @change="handleTableChange"
     >
       <template slot="privilege" slot-scope="text, record">
@@ -152,13 +152,9 @@ export default {
           dataIndex: "subjectId",
           scopedSlots: { customRender: "subject" },
           sorter: (a, b, order) => {
-            if (a.subjectId == b.subjectId) return 0;
             if (!a.subjectId) return 1;
             if (!b.subjectId) return -1;
-            if (order == "ascend") return a.subjectId < b.subjectId ? -1 : 1;
-            else {
-              return a.subjectId < b.subjectId ? 1 : -1;
-            }
+            return a.subjectId - b.subjectId;
           }
         }
       ];
@@ -221,11 +217,16 @@ export default {
               (user.role != x.role || user.subjectId != x.subjectId)
           ) >= 0
       );
-      await this.updateUsersRole({ users: updatedUsers });
-      this.allUsers = this.editableDataSource;
-      this.$notification.success({
-        message: "Updated successfully!"
-      });
+      if (updatedUsers.length) {
+        await this.updateUsersRole({ users: updatedUsers });
+        this.allUsers = this.editableDataSource;
+        this.$notification.success({
+          message: "Updated successfully!"
+        });
+      } else
+        this.$notification.info({
+          message: "Nothing to update!"
+        });
     }
   }
 };
