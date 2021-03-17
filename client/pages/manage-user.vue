@@ -74,6 +74,7 @@ const roleOptions = [
   { value: 3, label: "None" }
 ];
 export default {
+  middleware: "user-management-guard",
   components: { pageTitle },
   data() {
     return {

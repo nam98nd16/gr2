@@ -91,8 +91,44 @@ const updateProfile = async (req, res) => {
   return res.json(newToken);
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getAllUsers = async (req, res) => {
+  let users = await knex("accounts")
+    .column()
+    .select("userId", "username", "role", "subjectId");
+
+  users = users.sort((a, b) => a.userId - b.userId);
+
+  res.json(users);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const updateUsersRole = async (req, res) => {
+  let { users } = req.body;
+  let queries = [];
+  users.forEach((user) => {
+    queries.push(
+      knex("accounts")
+        .where("userId", "=", user.userId)
+        .update("role", user.role)
+        .update("subjectId", user.subjectId)
+    );
+  });
+  await Promise.all(queries);
+
+  res.json("success");
+};
+
 module.exports = {
   register,
   login,
   updateProfile,
+  getAllUsers,
+  updateUsersRole,
 };

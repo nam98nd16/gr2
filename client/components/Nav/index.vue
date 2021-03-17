@@ -17,7 +17,7 @@
           <a-icon type="line-chart" />Performance
         </nuxt-link>
       </a-menu-item>
-      <a-menu-item key="manage-users">
+      <a-menu-item v-if="isAdmin" key="manage-users">
         <nuxt-link :to="'/manage-user'">
           <a-icon type="usergroup-add" />User Management
         </nuxt-link>
@@ -53,6 +53,9 @@ export default {
   computed: {
     getProfileName() {
       return this.currentUser.username;
+    },
+    isAdmin() {
+      return this.currentUser.role == 0;
     }
   }
 };
