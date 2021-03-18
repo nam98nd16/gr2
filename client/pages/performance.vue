@@ -106,17 +106,21 @@ export default {
           }
         },
         xaxis: {
-          categories: this.myPerformances.map(m =>
-            this.$moment(m.startTime).format("YYYY/MM/DD HH:mm:ss")
-          ),
+          categories: this.selectedTopicId
+            ? this.myPerformances.map(m =>
+                this.$moment(m.startTime).format("YYYY/MM/DD HH:mm:ss")
+              )
+            : this.myPerformances.map(
+                m =>
+                  this.allSubjects.find(s => s.subjectId == m.subjectId)
+                    ?.subjectName
+              ),
           tooltip: {
             enabled: this.selectedTopicId == 0 ? true : false,
             formatter: (val, opts) => {
-              return this.allSubjects.find(
-                s =>
-                  s.subjectId ==
-                  this.myPerformances[opts.dataPointIndex].subjectId
-              ).subjectName;
+              return this.$moment(
+                this.myPerformances[opts.dataPointIndex].startTime
+              ).format("YYYY/MM/DD HH:mm:ss");
             }
           }
         },

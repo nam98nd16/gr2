@@ -3,7 +3,6 @@
     <a-card size="small">
       <div slot="title">
         {{ questionNumber }}. {{ question.questionString }}
-        <a-tag color="green">Math</a-tag>
       </div>
       <div slot="extra">
         <a-button size="small" type="primary" ghost @click="handleReport"

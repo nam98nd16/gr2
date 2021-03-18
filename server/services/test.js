@@ -67,6 +67,8 @@ const submitAnswers = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
 
+  if (!questionIds.length) res.json("invalid request!");
+
   let questions = await knex
     .column()
     .select("questionId", "answerId")

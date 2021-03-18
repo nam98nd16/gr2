@@ -1,6 +1,6 @@
 <template>
   <div v-if="startTime && testQuestions.length">
-    <page-title title="Test" />
+    <page-title :title="getCurrentSubjectName() + ' Test'" />
     <div v-if="!isReviewing" class="mb-4" style="text-align: center">
       <i class="fas fa-clock"></i> Time left for the current question:
       {{ countDown }}
@@ -91,7 +91,8 @@ export default {
   mounted() {},
   computed: {
     ...mapState({
-      testQuestions: state => state.test.testQuestions
+      testQuestions: state => state.test.testQuestions,
+      allSubjects: state => state.subjects.allSubjects
     }),
     numberOfCorrectAnswers() {
       let correctAnswers = 0;
@@ -169,6 +170,11 @@ export default {
       this.modalVisible = true;
       this.hasSubmitted = true;
     },
+    getCurrentSubjectName() {
+      return this.allSubjects.find(
+        s => s.subjectId == this.$route.params.subjectId
+      )?.subjectName;
+    },
     handleOk() {
       this.modalVisible = false;
       window.history.back();
@@ -205,6 +211,7 @@ export default {
     }
   },
   beforeRouteLeave(to, from, next) {
+    this.hasSubmitted = true;
     this.setTestQuestions([]);
     next();
   }
