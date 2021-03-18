@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="startTime && testQuestions.length">
     <page-title title="Test" />
     <div v-if="!isReviewing" class="mb-4" style="text-align: center">
       <i class="fas fa-clock"></i> Time left for the current question:
@@ -73,14 +73,22 @@ export default {
       modalVisible: false,
       isReviewing: false,
       currentQuestionNo: 1,
-      answerKeys: [1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4, 1, 2, 3, 4],
-      answers: []
+      answers: [],
+      hasSubmitted: false,
+      startTime: null,
+      completeTime: null
     };
   },
-  mounted() {
-    this.countDown = this.testQuestions[0].timeAllowed;
-    this.startCountDownTimer();
+  created() {
+    if (!this.$route.params?.difficultyLevel) {
+      this.$router.push("/test");
+    } else {
+      this.startTime = this.$moment();
+      this.countDown = this.testQuestions[0].timeAllowed;
+      this.startCountDownTimer();
+    }
   },
+  mounted() {},
   computed: {
     ...mapState({
       testQuestions: state => state.test.testQuestions
@@ -142,14 +150,24 @@ export default {
         okText: "OK",
         cancelText: "Cancel",
         onOk: async () => {
-          await this.submitAnswers({
-            answers: this.answers,
-            questionIds: this.testQuestions.map(question => question.questionId)
-          });
-          this.modalVisible = true;
+          await this.performSubmission();
         },
         onCancel() {}
       });
+    },
+    async performSubmission() {
+      this.completeTime = this.$moment();
+      let payload = {
+        difficultyLevel: this.$route.params.difficultyLevel,
+        subjectId: this.$route.params.subjectId,
+        startTime: this.startTime,
+        totalTimeSpent: this.completeTime.diff(this.startTime),
+        answers: this.answers,
+        questionIds: this.testQuestions.map(question => question.questionId)
+      };
+      await this.submitAnswers(payload);
+      this.modalVisible = true;
+      this.hasSubmitted = true;
     },
     handleOk() {
       this.modalVisible = false;
@@ -173,6 +191,7 @@ export default {
       else this.answers[currentQuestionIndex].answeredKey = answeredKey;
     },
     async startCountDownTimer() {
+      if (this.hasSubmitted) return;
       if (this.countDown > 0) {
         setTimeout(() => {
           this.countDown -= 1;
@@ -181,11 +200,7 @@ export default {
       } else if (this.currentQuestionNo < this.testQuestions.length)
         this.handleNext();
       else {
-        await this.submitAnswers({
-          answers: this.answers,
-          questionIds: this.testQuestions.map(question => question.questionId)
-        });
-        this.modalVisible = true;
+        await this.performSubmission();
       }
     }
   },

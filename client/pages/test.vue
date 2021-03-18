@@ -87,7 +87,13 @@ export default {
       };
       try {
         await this.getTestQuestions(payload);
-        this.$router.push("/taking-test");
+        this.$router.push({
+          name: "taking-test",
+          params: {
+            difficultyLevel: this.selectedDifficulty,
+            subjectId: this.selectedTopic
+          }
+        });
       } catch (error) {
         this.$notification.error({ message: error.response.data });
       }
