@@ -7,11 +7,16 @@
       <a-select
         style="min-width: 120px"
         class="mb-2"
-        v-model="selectedTopic"
+        v-model="selectedTopicId"
         :options="subjectOptions"
       />
     </div>
-    <div class="chart-title">Performance Over Time</div>
+    <div class="chart-title">
+      Performance Over Time
+    </div>
+    <div class="chart-title">
+      {{ selectedSubjectName }}
+    </div>
     <apexchart
       height="500"
       type="bar"
@@ -28,7 +33,7 @@ export default {
   components: { pageTitle },
   data() {
     return {
-      selectedTopic: 0,
+      selectedTopicId: 0,
       subjectOptions: []
     };
   },
@@ -41,10 +46,10 @@ export default {
       value: subject.subjectId,
       label: subject.subjectName
     }));
-    this.subjectOptions.unshift({ value: 0, label: "All" });
+    this.subjectOptions.unshift({ value: 0, label: "All Subjects" });
   },
   watch: {
-    selectedTopic(newVal) {
+    selectedTopicId(newVal) {
       this.getMyPerformances(newVal);
     }
   },
@@ -103,7 +108,17 @@ export default {
         xaxis: {
           categories: this.myPerformances.map(m =>
             this.$moment(m.startTime).format("YYYY/MM/DD HH:mm:ss")
-          )
+          ),
+          tooltip: {
+            enabled: this.selectedTopicId == 0 ? true : false,
+            formatter: (val, opts) => {
+              return this.allSubjects.find(
+                s =>
+                  s.subjectId ==
+                  this.myPerformances[opts.dataPointIndex].subjectId
+              ).subjectName;
+            }
+          }
         },
         yaxis: [
           {
@@ -146,6 +161,12 @@ export default {
           y: {
             formatter: (value, { series, seriesIndex, dataPointIndex, w }) =>
               `${value}${seriesIndex == 2 ? "%" : ""}`
+          },
+          fixed: {
+            enabled: true,
+            position: "topLeft",
+            offsetX: 0,
+            offsetY: 0
           }
         },
         legend: {
@@ -154,6 +175,10 @@ export default {
         }
       };
       return options;
+    },
+    selectedSubjectName() {
+      return this.subjectOptions.find(s => s.value == this.selectedTopicId)
+        ?.label;
     }
   }
 };
