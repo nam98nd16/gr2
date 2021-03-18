@@ -8,11 +8,7 @@
         style="min-width: 120px"
         class="mb-2"
         v-model="selectedTopic"
-        :options="[
-          { value: '', label: 'All' },
-          { value: 'math', label: 'Math' },
-          { value: 'english', label: 'English' },
-        ]"
+        :options="subjectOptions"
       />
     </div>
     <div class="chart-title">Performance Over Time</div>
@@ -27,35 +23,58 @@
 
 <script>
 import pageTitle from "../components/page-title.vue";
+import { mapState, mapActions } from "vuex";
 export default {
   components: { pageTitle },
   data() {
     return {
       correctAnswers: [14, 13, 15, 24, 23, 12, 17, 24],
       totalQuestions: [20, 20, 20, 30, 30, 20, 20, 30],
-      selectedTopic: "",
+      selectedTopic: 0,
+      subjectOptions: []
     };
   },
+  async mounted() {
+    await Promise.all([
+      this.getMyPerformances(0),
+      this.allSubjects.length ? undefined : this.getAllSubjects()
+    ]);
+    this.subjectOptions = this.allSubjects.map(subject => ({
+      value: subject.subjectId,
+      label: subject.subjectName
+    }));
+    this.subjectOptions.unshift({ value: 0, label: "All" });
+  },
+  methods: {
+    ...mapActions({
+      getMyPerformances: "performance/getMyPerformances",
+      getAllSubjects: "subjects/getAllSubjects"
+    })
+  },
   computed: {
+    ...mapState({
+      myPerformances: state => state.performance.myPerformances,
+      allSubjects: state => state.subjects.allSubjects
+    }),
     series() {
       return [
         {
           name: "Number of correct answers",
           type: "column",
-          data: this.correctAnswers,
+          data: this.myPerformances.map(m => m.correctAnswerCount)
         },
         {
           name: "Number of questions",
           type: "column",
-          data: this.totalQuestions,
+          data: this.myPerformances.map(m => m.questionCount)
         },
         {
           name: "Percentage",
           type: "line",
-          data: this.correctAnswers.map((a, index) =>
-            ((a / this.totalQuestions[index]) * 100).toFixed(0)
-          ),
-        },
+          data: this.myPerformances.map(m =>
+            ((m.correctAnswerCount / m.questionCount) * 100).toFixed(0)
+          )
+        }
       ];
     },
     chartOptions() {
@@ -63,79 +82,76 @@ export default {
         chart: {
           height: 350,
           type: "line",
-          stacked: false,
+          stacked: false
         },
         dataLabels: {
-          enabled: false,
+          enabled: false
         },
         colors: ["#99C2A2", "#C5EDAC", "#66C7F4"],
         stroke: {
-          width: [1, 1, 4],
+          width: [1, 1, 4]
         },
         plotOptions: {
           bar: {
-            columnWidth: "20%",
-          },
+            columnWidth: "20%"
+          }
         },
         xaxis: {
-          categories: [
-            "2020/12/04",
-            "2020/12/05",
-            "2020/12/07",
-            "2020/12/08",
-            "2020/12/09",
-            "2020/12/11",
-            "2020/12/12",
-            "2020/12/15",
-          ],
+          categories: this.myPerformances.map(m =>
+            this.$moment(m.startTime).format("YYYY/MM/DD HH:mm:ss")
+          )
         },
         yaxis: [
           {
             seriesName: "Number of correct answers",
             axisTicks: {
-              show: true,
+              show: true
             },
             axisBorder: {
-              show: true,
+              show: true
             },
             title: {
-              text: "Questions",
-            },
+              text: "Questions"
+            }
           },
           {
             seriesName: "Number of correct answers",
-            show: false,
+            show: false
           },
           {
             opposite: true,
             seriesName: "Percentage",
             axisTicks: {
-              show: true,
+              show: true
             },
             axisBorder: {
-              show: true,
+              show: true
             },
             title: {
-              text: "Percentage",
-            },
-          },
+              text: "Percentage"
+            }
+          }
         ],
         tooltip: {
           theme: "dark",
           shared: true,
           intersect: false,
           x: {
-            show: false,
+            show: false
           },
+          y: {
+            formatter: (value, { series, seriesIndex, dataPointIndex, w }) =>
+              `${value}${seriesIndex == 2 ? "%" : ""}`
+          }
         },
         legend: {
           horizontalAlign: "left",
-          offsetX: 40,
-        },
+          offsetX: 40
+        }
       };
       return options;
-    },
-  },
+    }
+  }
 };
 </script>
 

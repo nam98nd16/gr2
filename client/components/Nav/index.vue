@@ -40,9 +40,19 @@ import jwt_decode from "jwt-decode";
 export default {
   data() {
     return {
-      current: ["home"],
+      current: null,
       currentUser: jwt_decode(localStorage.getItem("token"))
     };
+  },
+  watch: {
+    current(newVal) {
+      localStorage.setItem("currentRoute", newVal);
+    }
+  },
+  mounted() {
+    let storedRoute = localStorage.getItem("currentRoute");
+    if (!this.current && storedRoute) this.current = [storedRoute];
+    else if (!this.current && !storedRoute) this.current = ["home"];
   },
   methods: {
     handleLogout() {
@@ -57,6 +67,9 @@ export default {
     isAdmin() {
       return this.currentUser.role == 0;
     }
+  },
+  beforeDestroy() {
+    localStorage.clear();
   }
 };
 </script>
