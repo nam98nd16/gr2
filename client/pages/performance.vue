@@ -28,8 +28,6 @@ export default {
   components: { pageTitle },
   data() {
     return {
-      correctAnswers: [14, 13, 15, 24, 23, 12, 17, 24],
-      totalQuestions: [20, 20, 20, 30, 30, 20, 20, 30],
       selectedTopic: 0,
       subjectOptions: []
     };
@@ -44,6 +42,11 @@ export default {
       label: subject.subjectName
     }));
     this.subjectOptions.unshift({ value: 0, label: "All" });
+  },
+  watch: {
+    selectedTopic(newVal) {
+      this.getMyPerformances(newVal);
+    }
   },
   methods: {
     ...mapActions({
@@ -69,7 +72,7 @@ export default {
           data: this.myPerformances.map(m => m.questionCount)
         },
         {
-          name: "Percentage",
+          name: "Correct percentage",
           type: "line",
           data: this.myPerformances.map(m =>
             ((m.correctAnswerCount / m.questionCount) * 100).toFixed(0)
@@ -89,7 +92,8 @@ export default {
         },
         colors: ["#99C2A2", "#C5EDAC", "#66C7F4"],
         stroke: {
-          width: [1, 1, 4]
+          width: [1, 1, 4],
+          curve: "straight"
         },
         plotOptions: {
           bar: {
@@ -120,7 +124,7 @@ export default {
           },
           {
             opposite: true,
-            seriesName: "Percentage",
+            seriesName: "Correct percentage",
             axisTicks: {
               show: true
             },
@@ -128,7 +132,7 @@ export default {
               show: true
             },
             title: {
-              text: "Percentage"
+              text: "Correct percentage"
             }
           }
         ],
