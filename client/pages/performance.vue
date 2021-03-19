@@ -14,10 +14,18 @@
         v-model="selectedDifficultyLevel"
         :options="difficultyOptions"
       />
+      <a-range-picker
+        :ranges="{
+          'All Time': [$moment('2000-01-01'), $moment('2099-12-31')],
+          'This Month': [$moment().startOf('month'), $moment().endOf('month')],
+          'Last 3 Months': [$moment().subtract(3, 'months'), $moment()],
+          'Last 6 Months': [$moment().subtract(6, 'months'), $moment()],
+          'Last 12 Months': [$moment().subtract(12, 'months'), $moment()]
+        }"
+        v-model="selectedRangeMoments"
+      />
     </div>
-    <div class="chart-title">
-      Performance Over Time
-    </div>
+
     <div class="chart-title">
       {{ selectedSubjectName }} - {{ selectedDifficultyLabel }}
     </div>
@@ -48,6 +56,29 @@ export default {
         { value: "medium", label: "Medium" },
         { value: "hard", label: "Hard" }
       ],
+      dateRangeOptions: [
+        {
+          value: 0,
+          label: "All Time"
+        },
+        { value: 1, label: "Last 3 months" },
+        {
+          value: 2,
+          label: "Last 6 months"
+        },
+        {
+          value: 3,
+          label: "Last year"
+        },
+        {
+          value: 4,
+          label: "Select range"
+        }
+      ],
+      selectedRangeMoments: [
+        this.$moment("2000-01-01"),
+        this.$moment("2099-12-31")
+      ],
       mounted: false,
       loading: false
     };
@@ -72,6 +103,9 @@ export default {
     },
     selectedDifficultyLevel(newVal) {
       this.fetchData();
+    },
+    selectedRangeMoments(newVal) {
+      this.fetchData();
     }
   },
   methods: {
@@ -80,9 +114,22 @@ export default {
       getAllSubjects: "subjects/getAllSubjects"
     }),
     async fetchData() {
+      let selectedRange;
+      if (this.selectedRangeMoments.length)
+        selectedRange = {
+          startDate: this.selectedRangeMoments[0].format("YYYY-MM-DD"),
+          endDate: this.selectedRangeMoments[1].format("YYYY-MM-DD")
+        };
+      else
+        selectedRange = {
+          startDate: null,
+          endDate: null
+        };
+
       let performancePayload = {
         subjectId: this.selectedTopicId,
-        difficultyLevel: this.selectedDifficultyLevel
+        difficultyLevel: this.selectedDifficultyLevel,
+        ...selectedRange
       };
       this.loading = true;
       await this.getMyPerformances(performancePayload);
