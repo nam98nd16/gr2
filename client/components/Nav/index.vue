@@ -1,7 +1,7 @@
 <template>
   <div>
     <a-menu v-model="current" mode="horizontal">
-      <a-menu-item key="home">
+      <a-menu-item key="index">
         <nuxt-link :to="'/'"> <a-icon type="home" />Home </nuxt-link>
       </a-menu-item>
       <a-menu-item key="test">
@@ -17,7 +17,7 @@
           <a-icon type="line-chart" />Performance
         </nuxt-link>
       </a-menu-item>
-      <a-menu-item v-if="isAdmin" key="manage-users">
+      <a-menu-item v-if="isAdmin" key="manage-user">
         <nuxt-link :to="'/manage-user'">
           <a-icon type="usergroup-add" />User Management
         </nuxt-link>
@@ -44,15 +44,9 @@ export default {
       currentUser: jwt_decode(localStorage.getItem("token"))
     };
   },
-  watch: {
-    current(newVal) {
-      localStorage.setItem("currentRoute", newVal);
-    }
-  },
   mounted() {
-    let storedRoute = localStorage.getItem("currentRoute");
-    if (!this.current && storedRoute) this.current = [storedRoute];
-    else if (!this.current && !storedRoute) this.current = ["home"];
+    let curRoute = this.$route.name;
+    this.current = [curRoute];
   },
   methods: {
     handleLogout() {
@@ -67,9 +61,6 @@ export default {
     isAdmin() {
       return this.currentUser.role == 0;
     }
-  },
-  beforeDestroy() {
-    localStorage.clear();
   }
 };
 </script>

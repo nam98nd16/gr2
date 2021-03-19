@@ -1,29 +1,34 @@
 <template>
-  <div>
-    <page-title title="Performance" />
+  <a-spin :spinning="loading">
+    <page-title title="Performance monitor" />
     <div>
-      Select topic
-      <br />
       <a-select
         style="min-width: 120px"
         class="mb-2"
         v-model="selectedTopicId"
         :options="subjectOptions"
       />
+      <a-select
+        style="min-width: 120px"
+        class="mb-2"
+        v-model="selectedDifficultyLevel"
+        :options="difficultyOptions"
+      />
     </div>
     <div class="chart-title">
       Performance Over Time
     </div>
     <div class="chart-title">
-      {{ selectedSubjectName }}
+      {{ selectedSubjectName }} - {{ selectedDifficultyLabel }}
     </div>
     <apexchart
-      height="500"
+      v-if="mounted"
+      height="400"
       type="bar"
       :options="chartOptions"
       :series="series"
     ></apexchart>
-  </div>
+  </a-spin>
 </template>
 
 <script>
@@ -34,12 +39,23 @@ export default {
   data() {
     return {
       selectedTopicId: 0,
-      subjectOptions: []
+      subjectOptions: [],
+      selectedDifficultyLevel: 0,
+      difficultyOptions: [
+        { value: 0, label: "All Difficulty Levels" },
+        { value: "adaptive", label: "Adaptive" },
+        { value: "easy", label: "Easy" },
+        { value: "medium", label: "Medium" },
+        { value: "hard", label: "Hard" }
+      ],
+      mounted: false,
+      loading: false
     };
   },
   async mounted() {
+    this.loading = true;
     await Promise.all([
-      this.getMyPerformances(0),
+      this.fetchData(),
       this.allSubjects.length ? undefined : this.getAllSubjects()
     ]);
     this.subjectOptions = this.allSubjects.map(subject => ({
@@ -47,48 +63,91 @@ export default {
       label: subject.subjectName
     }));
     this.subjectOptions.unshift({ value: 0, label: "All Subjects" });
+    this.mounted = true;
+    this.loading = false;
   },
   watch: {
     selectedTopicId(newVal) {
-      this.getMyPerformances(newVal);
+      this.fetchData();
+    },
+    selectedDifficultyLevel(newVal) {
+      this.fetchData();
     }
   },
   methods: {
     ...mapActions({
       getMyPerformances: "performance/getMyPerformances",
       getAllSubjects: "subjects/getAllSubjects"
-    })
+    }),
+    async fetchData() {
+      let performancePayload = {
+        subjectId: this.selectedTopicId,
+        difficultyLevel: this.selectedDifficultyLevel
+      };
+      this.loading = true;
+      await this.getMyPerformances(performancePayload);
+      this.loading = false;
+    }
   },
   computed: {
     ...mapState({
       myPerformances: state => state.performance.myPerformances,
       allSubjects: state => state.subjects.allSubjects
     }),
+    filteredPerformances() {
+      return this.myPerformances;
+    },
     series() {
       return [
         {
           name: "Number of correct answers",
           type: "column",
-          data: this.myPerformances.map(m => m.correctAnswerCount)
+          data: this.filteredPerformances.map(m => m.correctAnswerCount)
         },
         {
           name: "Number of questions",
           type: "column",
-          data: this.myPerformances.map(m => m.questionCount)
+          data: this.filteredPerformances.map(m => m.questionCount)
         },
         {
           name: "Correct percentage",
           type: "line",
-          data: this.myPerformances.map(m =>
+          data: this.filteredPerformances.map(m =>
             ((m.correctAnswerCount / m.questionCount) * 100).toFixed(0)
           )
         }
       ];
     },
+    categoryNames() {
+      let getDifficultyLabel = value =>
+        this.difficultyOptions.find(o => o.value == value).label;
+      let categoryNames = this.selectedTopicId
+        ? this.filteredPerformances.map(
+            m =>
+              `${this.$moment(m.startTime).format("YYYY/MM/DD HH:mm:ss")}
+            ${
+              this.selectedDifficultyLevel
+                ? ""
+                : "(" + getDifficultyLabel(m.difficultyLevel) + ")"
+            }`
+          )
+        : this.filteredPerformances.map(
+            m =>
+              `${
+                this.allSubjects.find(s => s.subjectId == m.subjectId)
+                  ?.subjectName
+              } ${
+                this.selectedDifficultyLevel
+                  ? ""
+                  : "(" + getDifficultyLabel(m.difficultyLevel) + ")"
+              }`
+          );
+      return categoryNames;
+    },
     chartOptions() {
       var options = {
         chart: {
-          height: 350,
+          height: 400,
           type: "line",
           stacked: false
         },
@@ -106,20 +165,12 @@ export default {
           }
         },
         xaxis: {
-          categories: this.selectedTopicId
-            ? this.myPerformances.map(m =>
-                this.$moment(m.startTime).format("YYYY/MM/DD HH:mm:ss")
-              )
-            : this.myPerformances.map(
-                m =>
-                  this.allSubjects.find(s => s.subjectId == m.subjectId)
-                    ?.subjectName
-              ),
+          categories: this.categoryNames,
           tooltip: {
             enabled: this.selectedTopicId == 0 ? true : false,
             formatter: (val, opts) => {
               return this.$moment(
-                this.myPerformances[opts.dataPointIndex].startTime
+                this.filteredPerformances[opts.dataPointIndex].startTime
               ).format("YYYY/MM/DD HH:mm:ss");
             }
           }
@@ -183,6 +234,11 @@ export default {
     selectedSubjectName() {
       return this.subjectOptions.find(s => s.value == this.selectedTopicId)
         ?.label;
+    },
+    selectedDifficultyLabel() {
+      return this.difficultyOptions.find(
+        d => d.value == this.selectedDifficultyLevel
+      )?.label;
     }
   }
 };

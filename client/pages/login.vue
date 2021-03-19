@@ -90,8 +90,14 @@ export default {
   data() {
     return {
       errMessage: "",
-      loading: false
+      loading: false,
+      rootScreen: null
     };
+  },
+  beforeRouteEnter(to, from, next) {
+    next(vm => {
+      vm.rootScreen = from.name;
+    });
   },
   methods: {
     ...mapMutations({
@@ -109,8 +115,11 @@ export default {
           try {
             let res = await this.$axios.post("/accounts/login", payload);
             if (res.status == 200) {
+              if (this.rootScreen == "index" || !this.rootScreen)
+                this.$router.push("/");
+              else this.$router.back();
+
               localStorage.setItem("token", res.data);
-              this.$router.push("/");
             }
           } catch (error) {
             this.errMessage = error.response.data;

@@ -9,8 +9,8 @@ export const mutations = {
 };
 
 export const actions = {
-  async getMyPerformances({ commit }, subjectId) {
-    const res = await this.$axios.get(`/performance?subjectId=${subjectId}`);
+  async getMyPerformances({ commit }, payload) {
+    const res = await this.$axios.post(`/performance`, payload);
     commit("setMyPerformances", res.data);
     return res;
   }

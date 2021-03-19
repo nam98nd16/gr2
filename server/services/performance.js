@@ -13,17 +13,15 @@ const getPerformance = async (req, res) => {
     req.headers.authorization.length
   );
   let reqUser = jwt.verify(token, jwtSecret);
-  let { subjectId } = req.query;
+  let { subjectId, difficultyLevel } = req.body;
   let performances;
-  if (subjectId == 0)
-    performances = await knex("test_results")
-      .select("*")
-      .where("testTakerId", "=", reqUser.userId);
-  else
-    performances = await knex("test_results")
-      .select("*")
-      .where("testTakerId", "=", reqUser.userId)
-      .where("subjectId", "=", subjectId);
+  let query = knex("test_results")
+    .select("*")
+    .where("testTakerId", "=", reqUser.userId);
+  if (subjectId != 0) query = query.where("subjectId", "=", subjectId);
+  if (difficultyLevel != 0)
+    query = query.where("difficultyLevel", "=", difficultyLevel);
+  performances = await query;
 
   res.json(performances);
 };
