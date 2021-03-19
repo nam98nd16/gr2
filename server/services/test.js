@@ -21,26 +21,31 @@ const getTestQuestions = async (req, res) => {
     .select()
     .from("questions")
     .where("subjectId", "=", subjectId)
-    .leftJoin("answers", "questions.questionId", "answers.questionId")
-    .limit(length * 4);
+    .limit(length);
 
-  questions = _.groupBy(questions, function (item) {
-    return item.questionId;
-  });
+  let answers = await knex("answers")
+    .select()
+    .whereIn(
+      "questionId",
+      questions.map((q) => q.questionId)
+    );
+
   let trueQuestions = new Array();
-  for (let questionId in questions) {
-    let index = questions[questionId].findIndex((q) => q.subjectId);
+
+  questions.forEach((q) => {
     trueQuestions.push({
-      questionId: questions[questionId][index].questionId,
-      questionString: questions[questionId][index].questionString,
-      difficultyLevel: questions[questionId][index].difficultyLevel,
-      timeAllowed: questions[questionId][index].timeAllowed,
-      answers: questions[questionId].map((ans) => ({
-        answerId: ans.answerId,
-        answerString: ans.answerString,
-      })),
+      questionId: q.questionId,
+      questionString: q.questionString,
+      difficultyLevel: q.difficultyLevel,
+      timeAllowed: q.timeAllowed,
+      answers: answers
+        .filter((a) => a.questionId == q.questionId)
+        .map((ans) => ({
+          answerId: ans.answerId,
+          answerString: ans.answerString,
+        })),
     });
-  }
+  });
 
   if (trueQuestions.length < length) {
     res.status(500).json("Not enough questions in the database!");
