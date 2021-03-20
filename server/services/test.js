@@ -66,6 +66,84 @@ const getTestQuestions = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const getRatedQuestion = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { subjectId } = req.body;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let originalRating = await knex("ratings")
+    .select()
+    .where("userId", "=", reqUser.userId)
+    .where("subjectId", "=", subjectId);
+
+  if (originalRating.length) originalRating = originalRating[0].rating;
+  else originalRating = 3;
+
+  originalRating = Math.round(originalRating);
+
+  if (originalRating < 1) originalRating = 1;
+  else if (originalRating > 9) originalRating = 9;
+
+  let question = await knex
+    .column()
+    .select()
+    .from("questions")
+    .where("subjectId", "=", subjectId)
+    .where("difficultyLevel", "=", originalRating)
+    .orderBy(knex.raw("RANDOM()"))
+    .limit(1);
+
+  question = question[0];
+
+  let answers = await knex("answers")
+    .select()
+    .where("questionId", "=", question.questionId);
+
+  answers.questionId = undefined;
+
+  let trueQuestion = {
+    questionId: question.questionId,
+    questionString: question.questionString,
+    difficultyLevel: question.difficultyLevel,
+    timeAllowed: question.timeAllowed,
+    answers: answers,
+  };
+
+  res.json(trueQuestion);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getRating = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { subjectId } = req.body;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let originalRating = await knex("ratings")
+    .select()
+    .where("userId", "=", reqUser.userId)
+    .where("subjectId", "=", subjectId);
+
+  if (originalRating.length) originalRating = originalRating[0].rating;
+  else originalRating = 3;
+
+  res.json(originalRating);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const submitAnswers = async (req, res) => {
   let token = req.headers.authorization.substring(
     7,
@@ -90,37 +168,34 @@ const submitAnswers = async (req, res) => {
     .from("questions")
     .whereIn("questionId", questionIds);
 
-  let originalRating = await knex("ratings")
-    .select()
-    .where("userId", "=", reqUser.userId)
-    .where("subjectId", "=", subjectId);
+  // let originalRating = await knex("ratings")
+  //   .select()
+  //   .where("userId", "=", reqUser.userId)
+  //   .where("subjectId", "=", subjectId);
 
-  let alreadyRated = false;
-  if (originalRating.length) {
-    originalRating = originalRating[0].rating;
-    alreadyRated = true;
-  } else originalRating = 3;
+  // if (originalRating.length) originalRating = originalRating[0].rating;
+  // else originalRating = 3;
 
-  let curRating = _.clone(originalRating);
+  // let curRating = _.clone(originalRating);
 
-  const powerConstant = 4;
-  const k = 0.2;
-  let expectedProbability = (currentRating, questionRating) =>
-    (1.0 * 1.0) /
-    (1 +
-      1.0 *
-        Math.pow(10, (1.0 * (questionRating - currentRating)) / powerConstant));
+  // const powerConstant = 10 / 7;
+  // const k = 0.2;
+  // let expectedProbability = (currentRating, questionRating) =>
+  //   (1.0 * 1.0) /
+  //   (1 +
+  //     1.0 *
+  //       Math.pow(10, (1.0 * (questionRating - currentRating)) / powerConstant));
 
-  let newRating = (currentRating, actualResult, expectedResult) =>
-    currentRating + k * (actualResult - expectedResult);
+  // let newRating = (currentRating, actualResult, expectedResult) =>
+  //   currentRating + k * (actualResult - expectedResult);
 
-  questions.forEach((q) => {
-    let expectedProb = expectedProbability(originalRating, q.difficultyLevel);
-    let actualRes =
-      answers.findIndex((a) => a.answeredKey == q.answerId) >= 0 ? 1 : 0;
-    curRating = newRating(curRating, actualRes, expectedProb);
-    if (curRating < 0) curRating = 0;
-  });
+  // questions.forEach((q) => {
+  //   let expectedProb = expectedProbability(originalRating, q.difficultyLevel);
+  //   let actualRes =
+  //     answers.findIndex((a) => a.answeredKey == q.answerId) >= 0 ? 1 : 0;
+  //   curRating = newRating(curRating, actualRes, expectedProb);
+  //   if (curRating < 0) curRating = 0;
+  // });
 
   let correctAnswerCount = 0;
   if (answers.length)
@@ -147,15 +222,15 @@ const submitAnswers = async (req, res) => {
     testId: testId,
   });
 
-  await knex("ratings")
-    .insert({
-      userId: reqUser.userId,
-      subjectId: subjectId,
-      rating: curRating,
-      lastUpdate: moment(),
-    })
-    .onConflict(["userId", "subjectId"])
-    .merge();
+  // await knex("ratings")
+  //   .insert({
+  //     userId: reqUser.userId,
+  //     subjectId: subjectId,
+  //     rating: curRating,
+  //     lastUpdate: moment(),
+  //   })
+  //   .onConflict(["userId", "subjectId"])
+  //   .merge();
 
   res.json(questions);
 };
@@ -163,4 +238,6 @@ const submitAnswers = async (req, res) => {
 module.exports = {
   getTestQuestions,
   submitAnswers,
+  getRatedQuestion,
+  getRating,
 };

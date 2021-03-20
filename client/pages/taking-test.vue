@@ -1,6 +1,6 @@
 <template>
   <div v-if="startTime && testQuestions.length">
-    <page-title :title="getCurrentSubjectName() + ' Test'" />
+    <page-title :title="getCurrentSubjectName() + ' Practice'" />
     <div v-if="!isReviewing" class="mb-4" style="text-align: center">
       <i class="fas fa-clock"></i> Time left for the current question:
       {{ countDown }}

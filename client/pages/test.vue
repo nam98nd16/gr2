@@ -13,36 +13,51 @@
     <br />
     <br />
 
-    Select test length
+    Select mode
     <br />
-    <a-select
-      style="min-width: 120px"
-      class="mb-2"
-      v-model="selectedLength"
-      :options="[
-        { value: 10, label: 'Short (10 questions)' },
-        { value: 20, label: 'Medium (20 questions)' },
-        { value: 30, label: 'Long (30 questions)' }
-      ]"
-    />
+    <a-radio-group :class="'mb-2'" v-model="selectedMode" button-style="solid">
+      <a-radio-button value="practice">
+        Practice
+      </a-radio-button>
+      <a-radio-button value="rated">
+        Rated
+      </a-radio-button>
+    </a-radio-group>
 
     <br />
     <br />
 
-    Select test difficulty
-    <br />
-    <a-select
-      style="min-width: 120px"
-      class="mb-2"
-      v-model="selectedDifficulty"
-      :options="[
-        { value: 'adaptive', label: 'Adaptive' },
-        { value: 'easy', label: 'Easy' },
-        { value: 'medium', label: 'Medium' },
-        { value: 'hard', label: 'Hard' }
-      ]"
-    />
-    <br /><br />
+    <div v-if="selectedMode == 'practice'">
+      Select test length
+      <br />
+      <a-select
+        style="min-width: 120px"
+        class="mb-2"
+        v-model="selectedLength"
+        :options="[
+          { value: 10, label: 'Short (10 questions)' },
+          { value: 20, label: 'Medium (20 questions)' },
+          { value: 30, label: 'Long (30 questions)' }
+        ]"
+      />
+
+      <br />
+      <br />
+
+      Select test difficulty
+      <br />
+      <a-select
+        style="min-width: 120px"
+        class="mb-2"
+        v-model="selectedDifficulty"
+        :options="[
+          { value: 'easy', label: 'Easy' },
+          { value: 'medium', label: 'Medium' },
+          { value: 'hard', label: 'Hard' }
+        ]"
+      />
+      <br /><br />
+    </div>
     <a-button type="primary" @click="handleStartingTest"
       ><i class="fas fa-hourglass-start mr-2"></i>Start</a-button
     >
@@ -58,8 +73,9 @@ export default {
     return {
       selectedTopic: 1,
       selectedLength: 20,
-      selectedDifficulty: "adaptive",
-      subjects: []
+      selectedDifficulty: "medium",
+      subjects: [],
+      selectedMode: "practice"
     };
   },
   async mounted() {
@@ -86,14 +102,22 @@ export default {
         difficulty: this.selectedDifficulty
       };
       try {
-        await this.getTestQuestions(payload);
-        this.$router.push({
-          name: "taking-test",
-          params: {
-            difficultyLevel: this.selectedDifficulty,
-            subjectId: this.selectedTopic
-          }
-        });
+        if (this.selectedMode == "practice") {
+          await this.getTestQuestions(payload);
+          this.$router.push({
+            name: "taking-test",
+            params: {
+              difficultyLevel: this.selectedDifficulty,
+              subjectId: this.selectedTopic
+            }
+          });
+        } else
+          this.$router.push({
+            name: "taking-rated-test",
+            params: {
+              subjectId: this.selectedTopic
+            }
+          });
       } catch (error) {
         this.$notification.error({ message: error.response.data });
       }

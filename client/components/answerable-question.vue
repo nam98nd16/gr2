@@ -2,7 +2,8 @@
   <div>
     <a-card size="small">
       <div slot="title">
-        {{ questionNumber }}. {{ question.questionString }}
+        {{ questionNumber ? questionNumber + ". " : ""
+        }}{{ question.questionString }}
       </div>
       <div slot="extra">
         <a-button size="small" type="primary" ghost @click="handleReport"
