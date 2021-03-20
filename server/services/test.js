@@ -1,6 +1,7 @@
 const knex = require("../config/database");
 const jwt = require("jsonwebtoken");
 const jwtSecret = require("../config/const");
+const moment = require("moment");
 var _ = require("lodash");
 
 /**
@@ -16,11 +17,20 @@ const getTestQuestions = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
 
+  let difficultyLevels =
+    difficulty == "easy"
+      ? [1, 2, 3]
+      : difficulty == "medium"
+      ? [4, 5, 6]
+      : [7, 8, 9];
+
   let questions = await knex
     .column()
     .select()
     .from("questions")
     .where("subjectId", "=", subjectId)
+    .whereIn("difficultyLevel", difficultyLevels)
+    .orderBy(knex.raw("RANDOM()"))
     .limit(length);
 
   let answers = await knex("answers")
@@ -76,9 +86,41 @@ const submitAnswers = async (req, res) => {
 
   let questions = await knex
     .column()
-    .select("questionId", "answerId")
+    .select("questionId", "answerId", "difficultyLevel")
     .from("questions")
     .whereIn("questionId", questionIds);
+
+  let originalRating = await knex("ratings")
+    .select()
+    .where("userId", "=", reqUser.userId)
+    .where("subjectId", "=", subjectId);
+
+  let alreadyRated = false;
+  if (originalRating.length) {
+    originalRating = originalRating[0].rating;
+    alreadyRated = true;
+  } else originalRating = 3;
+
+  let curRating = _.clone(originalRating);
+
+  const powerConstant = 4;
+  const k = 0.2;
+  let expectedProbability = (currentRating, questionRating) =>
+    (1.0 * 1.0) /
+    (1 +
+      1.0 *
+        Math.pow(10, (1.0 * (questionRating - currentRating)) / powerConstant));
+
+  let newRating = (currentRating, actualResult, expectedResult) =>
+    currentRating + k * (actualResult - expectedResult);
+
+  questions.forEach((q) => {
+    let expectedProb = expectedProbability(originalRating, q.difficultyLevel);
+    let actualRes =
+      answers.findIndex((a) => a.answeredKey == q.answerId) >= 0 ? 1 : 0;
+    curRating = newRating(curRating, actualRes, expectedProb);
+    if (curRating < 0) curRating = 0;
+  });
 
   let correctAnswerCount = 0;
   if (answers.length)
@@ -104,6 +146,16 @@ const submitAnswers = async (req, res) => {
     correctAnswerCount: correctAnswerCount,
     testId: testId,
   });
+
+  await knex("ratings")
+    .insert({
+      userId: reqUser.userId,
+      subjectId: subjectId,
+      rating: curRating,
+      lastUpdate: moment(),
+    })
+    .onConflict(["userId", "subjectId"])
+    .merge();
 
   res.json(questions);
 };
