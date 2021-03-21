@@ -83,6 +83,8 @@ const getRatedQuestion = async (req, res) => {
 
   question = question.rows[0];
 
+  if (!question) res.status(500).json("No question found!");
+
   let answers = await knex("answers")
     .select()
     .where("questionId", "=", question.questionId);
@@ -205,35 +207,6 @@ const submitAnswers = async (req, res) => {
     .from("questions")
     .whereIn("questionId", questionIds);
 
-  // let originalRating = await knex("ratings")
-  //   .select()
-  //   .where("userId", "=", reqUser.userId)
-  //   .where("subjectId", "=", subjectId);
-
-  // if (originalRating.length) originalRating = originalRating[0].rating;
-  // else originalRating = 3;
-
-  // let curRating = _.clone(originalRating);
-
-  // const powerConstant = 10 / 7;
-  // const k = 0.2;
-  // let expectedProbability = (currentRating, questionRating) =>
-  //   (1.0 * 1.0) /
-  //   (1 +
-  //     1.0 *
-  //       Math.pow(10, (1.0 * (questionRating - currentRating)) / powerConstant));
-
-  // let newRating = (currentRating, actualResult, expectedResult) =>
-  //   currentRating + k * (actualResult - expectedResult);
-
-  // questions.forEach((q) => {
-  //   let expectedProb = expectedProbability(originalRating, q.difficultyLevel);
-  //   let actualRes =
-  //     answers.findIndex((a) => a.answeredKey == q.answerId) >= 0 ? 1 : 0;
-  //   curRating = newRating(curRating, actualRes, expectedProb);
-  //   if (curRating < 0) curRating = 0;
-  // });
-
   let correctAnswerCount = 0;
   if (answers.length)
     answers.forEach((ans, index) => {
@@ -258,16 +231,6 @@ const submitAnswers = async (req, res) => {
     correctAnswerCount: correctAnswerCount,
     testId: testId,
   });
-
-  // await knex("ratings")
-  //   .insert({
-  //     userId: reqUser.userId,
-  //     subjectId: subjectId,
-  //     rating: curRating,
-  //     lastUpdate: moment(),
-  //   })
-  //   .onConflict(["userId", "subjectId"])
-  //   .merge();
 
   res.json(questions);
 };
