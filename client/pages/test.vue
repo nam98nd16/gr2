@@ -14,14 +14,32 @@
     <br />
 
     Select mode
+    <a-popover placement="right" :overlayClassName="'custom-tooltip'">
+      <template slot="content">
+        <div>There are 2 training modes:</div>
+        <div class="mt-2">
+          <span style="font-style: italic">Learning</span>: Practicing questions
+          with or without time regulation. No rating points earned or lost.
+          Suitable for those seeking to improve their knowledge about a
+          particular subject.
+        </div>
+        <div class="mt-2">
+          <span style="font-style: italic">Rated</span>: Answering timed
+          questions which are adaptively selected based on your current rating
+          of interested subject. Your rating will be changed depending on your
+          performance, specifically question difficulty and your current rating.
+          Suitable for those seeking to test their true level of knowledge about
+          a particular subject.
+        </div>
+      </template>
+      <i class="ml-1 far fa-question-circle"></i>
+    </a-popover>
     <br />
     <a-radio-group :class="'mb-2'" v-model="selectedMode" button-style="solid">
       <a-radio-button value="practice">
         Learning
       </a-radio-button>
-      <a-radio-button value="rated">
-        Rated
-      </a-radio-button>
+      <a-radio-button value="rated"> Rated </a-radio-button>
     </a-radio-group>
 
     <br />
@@ -158,3 +176,9 @@ export default {
   }
 };
 </script>
+
+<style>
+.custom-tooltip {
+  max-width: 1000px !important;
+}
+</style>

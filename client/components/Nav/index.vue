@@ -5,7 +5,7 @@
         <nuxt-link :to="'/'"> <a-icon type="home" />Home </nuxt-link>
       </a-menu-item>
       <a-menu-item key="test">
-        <nuxt-link :to="'/test'"> <a-icon type="edit" />Test </nuxt-link>
+        <nuxt-link :to="'/test'"> <a-icon type="edit" />Training </nuxt-link>
       </a-menu-item>
       <a-menu-item key="manage-question">
         <nuxt-link :to="'/manage-question'">
@@ -64,3 +64,18 @@ export default {
   }
 };
 </script>
+
+<style >
+.anticon {
+  display: inline-block;
+  color: inherit;
+  font-style: normal;
+  line-height: 0;
+  text-align: center;
+  text-transform: none;
+  vertical-align: 0em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+</style>
