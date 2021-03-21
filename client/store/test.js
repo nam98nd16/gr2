@@ -38,5 +38,9 @@ export const actions = {
     const res = await this.$axios.post(`/test/submit`, payload);
     commit("setTestQuestionAnswers", res.data);
     return res;
+  },
+  async submitRatedAnswer({ commit }, payload) {
+    const res = await this.$axios.post(`/test/submit-rated`, payload);
+    return res.data;
   }
 };

@@ -6,5 +6,6 @@ router.post("/get-questions", service.getTestQuestions);
 router.post("/get-rated-question", service.getRatedQuestion);
 router.post("/get-rating", service.getRating);
 router.post("/submit", service.submitAnswers);
+router.post("/submit-rated", service.submiteRatedAnswer);
 
 module.exports = router;

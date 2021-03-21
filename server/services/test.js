@@ -75,13 +75,7 @@ const getRatedQuestion = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
 
-  let originalRating = await knex("ratings")
-    .select()
-    .where("userId", "=", reqUser.userId)
-    .where("subjectId", "=", subjectId);
-
-  if (originalRating.length) originalRating = originalRating[0].rating;
-  else originalRating = 3;
+  let originalRating = await getOriginalRating(reqUser.userId, subjectId);
 
   let question = await knex.raw(
     `select * from questions where "subjectId" = ${subjectId} and abs(${originalRating} - "difficultyLevel") = (select min(abs(${originalRating} - "difficultyLevel")) from questions) order by random() limit 1`
@@ -110,6 +104,65 @@ const getRatedQuestion = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const submiteRatedAnswer = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { answeredId, questionId, startTime, totalTimeSpent } = req.body;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let question = await knex("questions")
+    .select()
+    .where("questionId", "=", questionId);
+  question = question[0];
+
+  let originalRating = await getOriginalRating(
+    reqUser.userId,
+    question.subjectId
+  );
+
+  let isCorrect = answeredId == question.answerId;
+
+  let curRating = _.clone(originalRating);
+
+  const powerConstant = 10 / 7;
+  const k = 0.2;
+  let expectedProbability = (currentRating, questionRating) =>
+    (1.0 * 1.0) /
+    (1 +
+      1.0 *
+        Math.pow(10, (1.0 * (questionRating - currentRating)) / powerConstant));
+
+  let newRating = (currentRating, actualResult, expectedResult) =>
+    currentRating + k * (actualResult - expectedResult);
+
+  let expectedProb = expectedProbability(
+    originalRating,
+    question.difficultyLevel
+  );
+  let actualRes = isCorrect ? 1 : 0;
+  curRating = newRating(curRating, actualRes, expectedProb);
+  if (curRating < 0) curRating = 0;
+
+  await knex("ratings")
+    .insert({
+      userId: reqUser.userId,
+      subjectId: question.subjectId,
+      rating: curRating,
+      lastUpdate: moment(),
+    })
+    .onConflict(["userId", "subjectId"])
+    .merge();
+
+  res.json(question.answerId);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const getRating = async (req, res) => {
   let token = req.headers.authorization.substring(
     7,
@@ -119,13 +172,7 @@ const getRating = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
 
-  let originalRating = await knex("ratings")
-    .select()
-    .where("userId", "=", reqUser.userId)
-    .where("subjectId", "=", subjectId);
-
-  if (originalRating.length) originalRating = originalRating[0].rating;
-  else originalRating = 3;
+  let originalRating = await getOriginalRating(reqUser.userId, subjectId);
 
   res.json(originalRating);
 };
@@ -225,9 +272,21 @@ const submitAnswers = async (req, res) => {
   res.json(questions);
 };
 
+let getOriginalRating = async (userId, subjectId) => {
+  let originalRating = await knex("ratings")
+    .select()
+    .where("userId", "=", userId)
+    .where("subjectId", "=", subjectId);
+
+  if (originalRating.length) originalRating = originalRating[0].rating;
+  else originalRating = 3;
+  return originalRating;
+};
+
 module.exports = {
   getTestQuestions,
   submitAnswers,
   getRatedQuestion,
   getRating,
+  submiteRatedAnswer,
 };

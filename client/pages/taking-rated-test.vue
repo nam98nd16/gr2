@@ -2,7 +2,7 @@
   <div v-if="currentQuestion">
     <page-title :title="getCurrentSubjectName() + ' Rated Test'" />
     <div v-if="currentRating" :class="hasSubmitted ? 'mb-4' : ''">
-      <i class="fas fa-medal"></i> Your rating:
+      <i class="fas fa-medal" style="color: blue"></i> Your rating:
       {{ currentRating.toFixed(2) }}
     </div>
     <div v-if="!hasSubmitted" class="mb-4" style="text-align: center">
@@ -13,21 +13,21 @@
     <answerable-question
       :questionNumber="null"
       :isReviewing="hasSubmitted"
-      :answer="null"
+      :answer="{ answeredKey: answeredId }"
       :question="currentQuestion"
       ref="question"
       @answer="handleAnswer"
     />
     <div class="mt-2">
       <div style="float: right">
-        <a-button type="primary" @click="handleNext"
+        <a-button type="primary" :disabled="!hasSubmitted" @click="handleNext"
           ><i class="fas fa-arrow-right mr-2"></i>Next</a-button
         >
         <a-button
           :disabled="hasSubmitted"
           type="primary"
           ghost
-          @click="handleSubmit"
+          @click="performSubmission"
           >Submit</a-button
         >
       </div>
@@ -45,7 +45,8 @@ export default {
     return {
       countDown: 30,
       hasSubmitted: false,
-      currentQuestion: null
+      currentQuestion: null,
+      answeredId: null
     };
   },
   async created() {
@@ -55,11 +56,7 @@ export default {
       this.getRating({
         subjectId: this.$route.params.subjectId
       });
-      this.currentQuestion = await this.getRatedQuestion({
-        subjectId: this.$route.params.subjectId
-      });
-      this.countDown = this.currentQuestion.timeAllowed;
-      this.startCountDownTimer();
+      this.fetchNewQuestion();
     }
   },
   computed: {
@@ -71,12 +68,22 @@ export default {
   methods: {
     ...mapActions({
       getRatedQuestion: "test/getRatedQuestion",
-      getRating: "test/getRating"
+      getRating: "test/getRating",
+      submitRatedAnswer: "test/submitRatedAnswer"
     }),
     getCurrentSubjectName() {
       return this.allSubjects.find(
         s => s.subjectId == this.$route.params.subjectId
       )?.subjectName;
+    },
+    async fetchNewQuestion() {
+      this.currentQuestion = await this.getRatedQuestion({
+        subjectId: this.$route.params.subjectId
+      });
+      this.countDown = this.currentQuestion.timeAllowed;
+      this.startCountDownTimer();
+      this.hasSubmitted = false;
+      this.answeredId = null;
     },
     async startCountDownTimer() {
       if (this.countDown > 0) {
@@ -88,12 +95,25 @@ export default {
         this.performSubmission();
       }
     },
-    performSubmission() {
+    async performSubmission() {
+      let payload = {
+        answeredId: this.answeredId,
+        questionId: this.currentQuestion.questionId
+      };
+      let correctAnsId = await this.submitRatedAnswer(payload);
+      this.currentQuestion.answerId = correctAnsId;
       this.hasSubmitted = true;
+      this.countDown = 0;
+      this.getRating({
+        subjectId: this.$route.params.subjectId
+      });
     },
-    handleNext() {},
-    handleSubmit() {},
-    handleAnswer() {}
+    async handleNext() {
+      await this.fetchNewQuestion();
+    },
+    handleAnswer(answeredKey) {
+      this.answeredId = answeredKey;
+    }
   }
 };
 </script>
