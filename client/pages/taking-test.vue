@@ -2,8 +2,10 @@
   <div v-if="startTime && testQuestions.length">
     <page-title :title="getCurrentSubjectName() + ' Practice'" />
     <div v-if="!isReviewing" class="mb-4" style="text-align: center">
-      <i class="fas fa-clock"></i> Time left for the current question:
-      {{ countDown }}
+      <span v-if="countDown != 0"
+        ><i class="fas fa-clock"></i> Time left for the current question:
+        {{ countDown }}</span
+      >
       <div>
         Questions unanswered: {{ testQuestions.length - answers.length }}
       </div>
@@ -26,7 +28,7 @@
       >
       <div style="float: right">
         <a-button
-          v-if="isReviewing"
+          v-if="isReviewing || !$route.params.timed"
           :disabled="currentQuestionNo == 1"
           type="primary"
           @click="handleBack"
@@ -69,7 +71,7 @@ export default {
   components: { AnswerableQuestion, PageTitle },
   data() {
     return {
-      countDown: 30,
+      countDown: 0,
       modalVisible: false,
       isReviewing: false,
       currentQuestionNo: 1,
@@ -84,8 +86,10 @@ export default {
       this.$router.push("/test");
     } else {
       this.startTime = this.$moment();
-      this.countDown = this.testQuestions[0].timeAllowed;
-      this.startCountDownTimer();
+      if (this.$route.params.timed) {
+        this.countDown = this.testQuestions[0].timeAllowed;
+        this.startCountDownTimer();
+      }
     }
   },
   mounted() {},
@@ -130,15 +134,17 @@ export default {
     handleNext() {
       if (this.currentQuestionNo < this.testQuestions.length)
         this.currentQuestionNo++;
-      if (!this.countDown) {
-        this.countDown = this.testQuestions[
-          this.currentQuestionNo - 1
-        ].timeAllowed;
-        this.startCountDownTimer();
-      } else
-        this.countDown = this.testQuestions[
-          this.currentQuestionNo - 1
-        ].timeAllowed;
+      if (this.$route.params.timed) {
+        if (!this.countDown) {
+          this.countDown = this.testQuestions[
+            this.currentQuestionNo - 1
+          ].timeAllowed;
+          this.startCountDownTimer();
+        } else
+          this.countDown = this.testQuestions[
+            this.currentQuestionNo - 1
+          ].timeAllowed;
+      }
       this.$refs.question.answeredKey = "";
     },
     handleBack() {

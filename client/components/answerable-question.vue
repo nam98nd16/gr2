@@ -13,7 +13,7 @@
       <a-radio-group
         class="mb-2 answerable"
         :value="
-          isReviewing && answer
+          answer
             ? answer.answeredKey
             : isReviewing && !answer
             ? ''

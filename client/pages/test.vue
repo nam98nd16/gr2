@@ -1,6 +1,6 @@
 <template>
   <div>
-    <page-title title="Test" />
+    <page-title title="Training" />
     Select topic
     <br />
     <a-select
@@ -17,7 +17,7 @@
     <br />
     <a-radio-group :class="'mb-2'" v-model="selectedMode" button-style="solid">
       <a-radio-button value="practice">
-        Practice
+        Learning
       </a-radio-button>
       <a-radio-button value="rated">
         Rated
@@ -28,7 +28,7 @@
     <br />
 
     <div v-if="selectedMode == 'practice'">
-      Select test length
+      Select length
       <br />
       <a-select
         style="min-width: 120px"
@@ -44,7 +44,7 @@
       <br />
       <br />
 
-      Select test difficulty
+      Select difficulty
       <br />
       <a-select
         style="min-width: 120px"
@@ -57,9 +57,26 @@
         ]"
       />
       <br /><br />
+      <a-switch
+        class="mb-2"
+        checked-children="Timed"
+        un-checked-children="Untimed"
+        default-unchecked
+        v-model="shouldBeTimed"
+      />
+      <br /><br />
+    </div>
+    <div v-else class="mb-2">
+      {{ getCurrentSubjectName() }} knowledge rating:
+      <i class="fas fa-medal" style="color: blue"></i>
+      {{ currentRating.toFixed(2) }} <br /><br />
     </div>
     <a-button type="primary" @click="handleStartingTest"
-      ><i class="fas fa-hourglass-start mr-2"></i>Start</a-button
+      ><i
+        v-if="selectedMode == 'rated' || shouldBeTimed"
+        class="fas fa-hourglass-start mr-2"
+      ></i
+      ><i v-else class="fas fa-bell-slash mr-2"></i>Start</a-button
     >
   </div>
 </template>
@@ -75,11 +92,15 @@ export default {
       selectedLength: 20,
       selectedDifficulty: "medium",
       subjects: [],
-      selectedMode: "practice"
+      selectedMode: "practice",
+      shouldBeTimed: false
     };
   },
   async mounted() {
-    this.allSubjects.length ? undefined : await this.getAllSubjects();
+    await Promise.all([
+      this.allSubjects.length ? undefined : this.getAllSubjects(),
+      this.getRating({ subjectId: this.selectedTopic })
+    ]);
     this.subjects = this.allSubjects.map(subject => ({
       value: subject.subjectId,
       label: subject.subjectName
@@ -87,14 +108,25 @@ export default {
   },
   computed: {
     ...mapState({
-      allSubjects: state => state.subjects.allSubjects
+      allSubjects: state => state.subjects.allSubjects,
+      currentRating: state => state.test.currentRating
     })
+  },
+  watch: {
+    selectedTopic(newVal) {
+      this.getRating({ subjectId: newVal });
+    }
   },
   methods: {
     ...mapActions({
       getAllSubjects: "subjects/getAllSubjects",
-      getTestQuestions: "test/getTestQuestions"
+      getTestQuestions: "test/getTestQuestions",
+      getRating: "test/getRating"
     }),
+    getCurrentSubjectName() {
+      return this.allSubjects.find(s => s.subjectId == this.selectedTopic)
+        ?.subjectName;
+    },
     async handleStartingTest() {
       let payload = {
         subjectId: this.selectedTopic,
@@ -108,7 +140,8 @@ export default {
             name: "taking-test",
             params: {
               difficultyLevel: this.selectedDifficulty,
-              subjectId: this.selectedTopic
+              subjectId: this.selectedTopic,
+              timed: this.shouldBeTimed
             }
           });
         } else

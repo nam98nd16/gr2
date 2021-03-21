@@ -2,8 +2,8 @@
   <div>
     <page-title :title="getCurrentSubjectName() + ' Rated Test'" />
     <div v-if="currentRating" :class="hasSubmitted ? 'mb-4' : ''">
-      <i class="fas fa-medal" style="color: blue"></i> Your
       {{ getCurrentSubjectName() }} knowledge rating:
+      <i class="fas fa-medal" style="color: blue"></i>
       {{ currentRating.toFixed(2) }}
     </div>
     <div
