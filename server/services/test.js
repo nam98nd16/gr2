@@ -83,21 +83,11 @@ const getRatedQuestion = async (req, res) => {
   if (originalRating.length) originalRating = originalRating[0].rating;
   else originalRating = 3;
 
-  originalRating = Math.round(originalRating);
+  let question = await knex.raw(
+    `select * from questions where "subjectId" = ${subjectId} and abs(${originalRating} - "difficultyLevel") = (select min(abs(${originalRating} - "difficultyLevel")) from questions) order by random() limit 1`
+  );
 
-  if (originalRating < 1) originalRating = 1;
-  else if (originalRating > 9) originalRating = 9;
-
-  let question = await knex
-    .column()
-    .select()
-    .from("questions")
-    .where("subjectId", "=", subjectId)
-    .where("difficultyLevel", "=", originalRating)
-    .orderBy(knex.raw("RANDOM()"))
-    .limit(1);
-
-  question = question[0];
+  question = question.rows[0];
 
   let answers = await knex("answers")
     .select()
