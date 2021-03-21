@@ -91,8 +91,8 @@ export default {
           subjectId: this.$route.params.subjectId
         });
         this.countDown = this.currentQuestion.timeAllowed;
-        this.startCountDownTimer();
         this.hasSubmitted = false;
+        this.startCountDownTimer();
         this.answeredId = null;
         this.errorMsg = "";
       } catch (error) {
@@ -100,6 +100,7 @@ export default {
       }
     },
     async startCountDownTimer() {
+      if (this.hasSubmitted) return;
       if (this.countDown > 0) {
         setTimeout(() => {
           this.countDown -= 1;
@@ -110,8 +111,8 @@ export default {
       }
     },
     async performSubmission() {
-      this.countDown = 0;
       this.hasSubmitted = true;
+      this.countDown = 0;
       let payload = {
         answeredId: this.answeredId,
         questionId: this.currentQuestion.questionId
@@ -130,7 +131,7 @@ export default {
     }
   },
   async beforeRouteLeave(to, from, next) {
-    if (!this.hasSubmitted && !this.errorMsg && this.questionId)
+    if (!this.hasSubmitted && !this.errorMsg && this.currentQuestion)
       await this.performSubmission();
     next();
   }

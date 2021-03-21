@@ -22,16 +22,40 @@
         @change="e => handleAnswer(e)"
       >
         <a-radio
-          v-for="(answer, index) in question.answers"
-          :class="answer.answerId == question.answerId ? 'correct-answer' : ''"
-          :key="answer.answerId"
-          :value="answer.answerId"
+          v-for="(ans, index) in question.answers"
+          :class="
+            isReviewing && ans.answerId == question.answerId
+              ? 'correct-answer'
+              : isReviewing &&
+                answer &&
+                ans.answerId == answer.answeredKey &&
+                ans.answerId != question.answerId
+              ? 'wrong-answer'
+              : ''
+          "
+          :key="ans.answerId"
+          :value="ans.answerId"
         >
           {{ String.fromCharCode(97 + index).toUpperCase() }}.
-          {{ answer.answerString }}
+          {{ ans.answerString }}
           <i
-            v-if="answer.answerId == question.answerId"
+            v-if="
+              isReviewing &&
+                answer &&
+                ans.answerId == answer.answeredKey &&
+                answer.answeredKey == question.answerId
+            "
             class="fas fa-check mr-2"
+          />
+          <i
+            v-else-if="
+              isReviewing &&
+                answer &&
+                ans.answerId == answer.answeredKey &&
+                answer.answeredKey != question.answerId
+            "
+            class="fas fa-times mr-2"
+            style="color: red"
           />
         </a-radio>
       </a-radio-group>
@@ -59,6 +83,11 @@ export default {
   },
   mounted() {},
   computed: {},
+  watch: {
+    isReviewing(newVal) {
+      if (newVal) this.answeredKey = null;
+    }
+  },
   methods: {
     handleReport() {
       this.modalVisible = true;
@@ -98,6 +127,11 @@ export default {
 
 .correct-answer {
   color: blue !important;
+  font-weight: bold;
+}
+
+.wrong-answer {
+  color: red !important;
   font-weight: bold;
 }
 </style>
