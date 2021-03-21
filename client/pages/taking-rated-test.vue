@@ -132,8 +132,18 @@ export default {
   },
   async beforeRouteLeave(to, from, next) {
     if (!this.hasSubmitted && !this.errorMsg && this.currentQuestion)
-      await this.performSubmission();
-    next();
+      this.$confirm({
+        title:
+          "Your answer will be submitted automatically if you leave. Please confirm!",
+        okText: "OK",
+        cancelText: "Back to the test",
+        onOk: async () => {
+          await this.performSubmission();
+          next();
+        },
+        onCancel() {}
+      });
+    else next();
   }
 };
 </script>
