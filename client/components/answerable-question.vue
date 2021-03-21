@@ -60,6 +60,9 @@
         </a-radio>
       </a-radio-group>
     </a-card>
+    <div v-if="isReviewing">
+      Question difficulty: {{ question.difficultyLevel }}
+    </div>
 
     <a-modal
       v-model="modalVisible"
