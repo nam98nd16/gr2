@@ -96,14 +96,14 @@ export default {
       }
     },
     async performSubmission() {
+      this.countDown = 0;
+      this.hasSubmitted = true;
       let payload = {
         answeredId: this.answeredId,
         questionId: this.currentQuestion.questionId
       };
       let correctAnsId = await this.submitRatedAnswer(payload);
       this.currentQuestion.answerId = correctAnsId;
-      this.hasSubmitted = true;
-      this.countDown = 0;
       this.getRating({
         subjectId: this.$route.params.subjectId
       });
@@ -114,6 +114,10 @@ export default {
     handleAnswer(answeredKey) {
       this.answeredId = answeredKey;
     }
+  },
+  async beforeRouteLeave(to, from, next) {
+    if (!this.hasSubmitted) await this.performSubmission();
+    next();
   }
 };
 </script>
