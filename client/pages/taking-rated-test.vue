@@ -2,7 +2,8 @@
   <div>
     <page-title :title="getCurrentSubjectName() + ' Rated Test'" />
     <div v-if="currentRating" :class="hasSubmitted ? 'mb-4' : ''">
-      <i class="fas fa-medal" style="color: blue"></i> Your rating:
+      <i class="fas fa-medal" style="color: blue"></i> Your
+      {{ getCurrentSubjectName() }} knowledge rating:
       {{ currentRating.toFixed(2) }}
     </div>
     <div
@@ -93,7 +94,7 @@ export default {
         this.startCountDownTimer();
         this.hasSubmitted = false;
         this.answeredId = null;
-        errorMsg = "";
+        this.errorMsg = "";
       } catch (error) {
         this.errorMsg = error.response.data;
       }
@@ -129,7 +130,8 @@ export default {
     }
   },
   async beforeRouteLeave(to, from, next) {
-    if (!this.hasSubmitted && !this.errorMsg) await this.performSubmission();
+    if (!this.hasSubmitted && !this.errorMsg && this.questionId)
+      await this.performSubmission();
     next();
   }
 };

@@ -111,7 +111,7 @@ const submiteRatedAnswer = async (req, res) => {
     7,
     req.headers.authorization.length
   );
-  let { answeredId, questionId, startTime, totalTimeSpent } = req.body;
+  let { answeredId, questionId } = req.body;
 
   let reqUser = jwt.verify(token, jwtSecret);
 
@@ -157,6 +157,16 @@ const submiteRatedAnswer = async (req, res) => {
     })
     .onConflict(["userId", "subjectId"])
     .merge();
+
+  await knex("rated_test_results").insert({
+    userId: reqUser.userId,
+    subjectId: question.subjectId,
+    questionId: question.questionId,
+    answeredId: answeredId,
+    submittedTime: moment(),
+    ratingChange: curRating - originalRating,
+    updatedRating: curRating,
+  });
 
   res.json(question.answerId);
 };
