@@ -149,7 +149,11 @@ export default {
       this.fetchData();
     },
     selectedRange(newVal) {
-      if (newVal != "custom") this.fetchData();
+      if (
+        newVal != "custom" ||
+        (newVal == "custom" && this.selectedRangeMoments.length)
+      )
+        this.fetchData();
     }
   },
   methods: {
