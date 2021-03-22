@@ -7,10 +7,10 @@
         v-model="selectedMode"
         button-style="solid"
       >
+        <a-radio-button value="rated"> Rated </a-radio-button>
         <a-radio-button value="practice">
           Learning
         </a-radio-button>
-        <a-radio-button value="rated"> Rated </a-radio-button>
       </a-radio-group>
       <a-select
         style="min-width: 120px"
@@ -29,14 +29,27 @@
         v-model="selectedDifficultyLevel"
         :options="difficultyOptions"
       />
+      <a-radio-group
+        :class="'mb-2'"
+        v-model="selectedRange"
+        button-style="solid"
+      >
+        <a-radio-button value="30 days"> 30 Days </a-radio-button>
+        <a-radio-button value="90 days">
+          90 Days
+        </a-radio-button>
+        <a-radio-button value="1 year">
+          1 Year
+        </a-radio-button>
+        <a-radio-button value="all time">
+          All Time
+        </a-radio-button>
+        <a-radio-button value="custom">
+          Custom
+        </a-radio-button>
+      </a-radio-group>
       <a-range-picker
-        :ranges="{
-          'All Time': [$moment('2000-01-01'), $moment('2099-12-31')],
-          'This Month': [$moment().startOf('month'), $moment().endOf('month')],
-          'Last 3 Months': [$moment().subtract(3, 'months'), $moment()],
-          'Last 6 Months': [$moment().subtract(6, 'months'), $moment()],
-          'Last 12 Months': [$moment().subtract(12, 'months'), $moment()]
-        }"
+        v-if="selectedRange == 'custom'"
         v-model="selectedRangeMoments"
       />
     </div>
@@ -99,10 +112,8 @@ export default {
           label: "Select range"
         }
       ],
-      selectedRangeMoments: [
-        this.$moment("2000-01-01"),
-        this.$moment("2099-12-31")
-      ],
+      selectedRangeMoments: [],
+      selectedRange: "30 days",
       mounted: false,
       loading: false,
       selectedMode: "rated"
@@ -136,6 +147,9 @@ export default {
       if (newVal == "practice") this.selectedTopicId = 0;
       else this.selectedTopicId = 1;
       this.fetchData();
+    },
+    selectedRange(newVal) {
+      if (newVal != "custom") this.fetchData();
     }
   },
   methods: {
@@ -144,26 +158,42 @@ export default {
       getMyRatedPerformances: "performance/getMyRatedPerformances",
       getAllSubjects: "subjects/getAllSubjects"
     }),
-    async fetchData() {
-      let selectedRange;
-      if (this.selectedRangeMoments.length)
-        selectedRange = {
-          startDate: this.selectedRangeMoments[0].format("YYYY-MM-DD"),
-          endDate: this.selectedRangeMoments[1].format("YYYY-MM-DD")
-        };
-      else
-        selectedRange = {
-          startDate: null,
-          endDate: null
-        };
+    getDateRange() {
+      let range = {
+        startDate: null,
+        endDate: null
+      };
+      if (this.selectedRange == "30 days")
+        range.startDate = this.$moment()
+          .subtract(30, "days")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRange == "90 days")
+        range.startDate = this.$moment()
+          .subtract(90, "days")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRange == "1 year")
+        range.startDate = this.$moment()
+          .subtract(1, "year")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRange == "all time")
+        range.startDate = this.$moment()
+          .subtract(20, "year")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRangeMoments.length) {
+        (range.startDate = this.selectedRangeMoments[0].format("YYYY-MM-DD")),
+          (range.endDate = this.selectedRangeMoments[1].format("YYYY-MM-DD"));
+      }
 
+      return range;
+    },
+    async fetchData() {
       let performancePayload = {
         subjectId: this.selectedTopicId,
         difficultyLevel:
           this.selectedMode == "rated"
             ? undefined
             : this.selectedDifficultyLevel,
-        ...selectedRange
+        ...this.getDateRange()
       };
       this.loading = true;
       if (this.selectedMode == "rated")
@@ -259,6 +289,9 @@ export default {
                 this.filteredPerformances[opts.dataPointIndex].startTime
               ).format("YYYY/MM/DD HH:mm:ss");
             }
+          },
+          labels: {
+            show: this.filteredPerformances.length > 50 ? false : true
           }
         },
         yaxis: [
@@ -341,10 +374,7 @@ export default {
         xaxis: {
           categories: this.filteredPerformances.map(p =>
             this.$moment(p.submittedTime).format(
-              this.selectedRangeMoments[0].format("YYYY-MM-DD") ==
-                this.selectedRangeMoments[1].format("YYYY-MM-DD")
-                ? "YYYY/MM/DD HH:mm:ss"
-                : "YYYY/MM/DD"
+              this.hasSelectedOnlyOneDay ? "YYYY/MM/DD HH:mm:ss" : "YYYY/MM/DD"
             )
           ),
           labels: {
@@ -371,6 +401,36 @@ export default {
       return this.difficultyOptions.find(
         d => d.value == this.selectedDifficultyLevel
       )?.label;
+    },
+    hasSelectedOnlyOneDay() {
+      let range = {
+        startDate: null,
+        endDate: null
+      };
+      if (this.selectedRange == "30 days")
+        range.startDate = this.$moment()
+          .subtract(30, "days")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRange == "90 days")
+        range.startDate = this.$moment()
+          .subtract(90, "days")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRange == "1 year")
+        range.startDate = this.$moment()
+          .subtract(1, "year")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRange == "all time")
+        range.startDate = this.$moment()
+          .subtract(20, "year")
+          .format("YYYY-MM-DD");
+      else if (this.selectedRangeMoments.length) {
+        (range.startDate = this.selectedRangeMoments[0].format("YYYY-MM-DD")),
+          (range.endDate = this.selectedRangeMoments[1].format("YYYY-MM-DD"));
+      }
+
+      return (
+        range.startDate && range.endDate && range.startDate == range.endDate
+      );
     }
   }
 };

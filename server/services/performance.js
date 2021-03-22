@@ -44,7 +44,7 @@ const getPastRatings = async (req, res) => {
   let { subjectId, startDate, endDate } = req.body;
 
   if (!startDate) startDate = moment("2000-01-01").format("YYYY-MM-DD");
-  if (!endDate) endDate = moment("2099-31-12").format("YYYY-MM-DD");
+  if (!endDate) endDate = moment("2099-12-31").format("YYYY-MM-DD");
 
   let pastRatings;
   let query;
