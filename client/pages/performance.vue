@@ -34,6 +34,7 @@
         v-model="selectedRange"
         button-style="solid"
       >
+        <a-radio-button value="today"> Today </a-radio-button>
         <a-radio-button value="30 days"> 30 Days </a-radio-button>
         <a-radio-button value="90 days">
           90 Days
@@ -183,7 +184,10 @@ export default {
         range.startDate = this.$moment()
           .subtract(20, "year")
           .format("YYYY-MM-DD");
-      else if (this.selectedRangeMoments.length) {
+      else if (this.selectedRange == "today") {
+        range.startDate = this.$moment().format("YYYY-MM-DD");
+        range.endDate = range.startDate;
+      } else if (this.selectedRangeMoments.length) {
         range.startDate = this.selectedRangeMoments[0].format("YYYY-MM-DD");
         range.endDate = this.selectedRangeMoments[1].format("YYYY-MM-DD");
       }
@@ -427,7 +431,10 @@ export default {
         range.startDate = this.$moment()
           .subtract(20, "year")
           .format("YYYY-MM-DD");
-      else if (this.selectedRangeMoments.length) {
+      else if (this.selectedRange == "today") {
+        range.startDate = this.$moment().format("YYYY-MM-DD");
+        range.endDate = range.startDate;
+      } else if (this.selectedRangeMoments.length) {
         (range.startDate = this.selectedRangeMoments[0].format("YYYY-MM-DD")),
           (range.endDate = this.selectedRangeMoments[1].format("YYYY-MM-DD"));
       }
