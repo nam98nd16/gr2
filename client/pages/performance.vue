@@ -300,7 +300,7 @@ export default {
             }
           },
           labels: {
-            show: this.filteredPerformances.length > 50 ? false : true
+            show: this.filteredPerformances.length > 20 ? false : true
           }
         },
         yaxis: [
@@ -387,7 +387,7 @@ export default {
             )
           ),
           labels: {
-            show: this.filteredPerformances.length > 50 ? false : true
+            show: this.filteredPerformances.length > 20 ? false : true
           }
         }
       };
