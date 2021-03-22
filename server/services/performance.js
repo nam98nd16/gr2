@@ -24,7 +24,10 @@ const getPerformance = async (req, res) => {
     query = query.where("difficultyLevel", "=", difficultyLevel);
   if (!startDate) startDate = "1901-01-01";
   if (!endDate) endDate = "2100-12-31";
-  query = query.whereBetween("startTime", [startDate, endDate]);
+  else endDate = moment(endDate).add(1, "days").format("YYYY-MM-DD");
+  query = query
+    .whereBetween("startTime", [startDate, endDate])
+    .orderBy("startTime", "asc");
 
   performances = await query;
 

@@ -180,8 +180,8 @@ export default {
           .subtract(20, "year")
           .format("YYYY-MM-DD");
       else if (this.selectedRangeMoments.length) {
-        (range.startDate = this.selectedRangeMoments[0].format("YYYY-MM-DD")),
-          (range.endDate = this.selectedRangeMoments[1].format("YYYY-MM-DD"));
+        range.startDate = this.selectedRangeMoments[0].format("YYYY-MM-DD");
+        range.endDate = this.selectedRangeMoments[1].format("YYYY-MM-DD");
       }
 
       return range;
