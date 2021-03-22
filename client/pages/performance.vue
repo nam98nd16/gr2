@@ -29,6 +29,7 @@
         v-model="selectedDifficultyLevel"
         :options="difficultyOptions"
       />
+      <br />
       <a-radio-group
         :class="'mb-2'"
         v-model="selectedRange"
