@@ -2,13 +2,28 @@
   <a-spin :spinning="loading">
     <page-title title="Performance monitor" />
     <div>
+      <a-radio-group
+        :class="'mb-2'"
+        v-model="selectedMode"
+        button-style="solid"
+      >
+        <a-radio-button value="practice">
+          Learning
+        </a-radio-button>
+        <a-radio-button value="rated"> Rated </a-radio-button>
+      </a-radio-group>
       <a-select
         style="min-width: 120px"
         class="mb-2"
         v-model="selectedTopicId"
-        :options="subjectOptions"
+        :options="
+          selectedMode == 'rated'
+            ? subjectOptions.filter(s => s.value)
+            : subjectOptions
+        "
       />
       <a-select
+        v-if="selectedMode == 'practice'"
         style="min-width: 120px"
         class="mb-2"
         v-model="selectedDifficultyLevel"
@@ -27,14 +42,23 @@
     </div>
 
     <div class="chart-title">
-      {{ selectedSubjectName }} - {{ selectedDifficultyLabel }}
+      {{ selectedSubjectName }}
+      {{ selectedMode == "rated" ? "rating" : " - " + selectedDifficultyLabel }}
     </div>
     <apexchart
-      v-if="mounted"
+      v-if="mounted && selectedMode == 'practice' && !loading"
       height="400"
       type="bar"
       :options="chartOptions"
       :series="series"
+    ></apexchart>
+
+    <apexchart
+      v-else-if="mounted && selectedMode == 'rated' && !loading"
+      height="400"
+      type="line"
+      :options="ratedChartOptions"
+      :series="ratedSeries"
     ></apexchart>
   </a-spin>
 </template>
@@ -46,7 +70,7 @@ export default {
   components: { pageTitle },
   data() {
     return {
-      selectedTopicId: 0,
+      selectedTopicId: 1,
       subjectOptions: [],
       selectedDifficultyLevel: 0,
       difficultyOptions: [
@@ -80,7 +104,8 @@ export default {
         this.$moment("2099-12-31")
       ],
       mounted: false,
-      loading: false
+      loading: false,
+      selectedMode: "rated"
     };
   },
   async mounted() {
@@ -106,11 +131,17 @@ export default {
     },
     selectedRangeMoments(newVal) {
       this.fetchData();
+    },
+    selectedMode(newVal) {
+      if (newVal == "practice") this.selectedTopicId = 0;
+      else this.selectedTopicId = 1;
+      this.fetchData();
     }
   },
   methods: {
     ...mapActions({
       getMyPerformances: "performance/getMyPerformances",
+      getMyRatedPerformances: "performance/getMyRatedPerformances",
       getAllSubjects: "subjects/getAllSubjects"
     }),
     async fetchData() {
@@ -128,21 +159,29 @@ export default {
 
       let performancePayload = {
         subjectId: this.selectedTopicId,
-        difficultyLevel: this.selectedDifficultyLevel,
+        difficultyLevel:
+          this.selectedMode == "rated"
+            ? undefined
+            : this.selectedDifficultyLevel,
         ...selectedRange
       };
       this.loading = true;
-      await this.getMyPerformances(performancePayload);
+      if (this.selectedMode == "rated")
+        await this.getMyRatedPerformances(performancePayload);
+      else await this.getMyPerformances(performancePayload);
       this.loading = false;
     }
   },
   computed: {
     ...mapState({
       myPerformances: state => state.performance.myPerformances,
+      myRatedPerformances: state => state.performance.myRatedPerformances,
       allSubjects: state => state.subjects.allSubjects
     }),
     filteredPerformances() {
-      return this.myPerformances;
+      return this.selectedMode == "rated"
+        ? this.myRatedPerformances
+        : this.myPerformances;
     },
     series() {
       return [
@@ -277,6 +316,52 @@ export default {
         }
       };
       return options;
+    },
+    ratedChartOptions() {
+      let options = {
+        chart: {
+          height: 400,
+          type: "line",
+          zoom: {
+            enabled: false
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: "straight"
+        },
+        grid: {
+          row: {
+            colors: ["#f3f3f3", "transparent"], // takes an array which will be repeated on columns
+            opacity: 0.5
+          }
+        },
+        xaxis: {
+          categories: this.filteredPerformances.map(p =>
+            this.$moment(p.submittedTime).format(
+              this.selectedRangeMoments[0].format("YYYY-MM-DD") ==
+                this.selectedRangeMoments[1].format("YYYY-MM-DD")
+                ? "YYYY/MM/DD HH:mm:ss"
+                : "YYYY/MM/DD"
+            )
+          ),
+          labels: {
+            show: this.filteredPerformances.length > 50 ? false : true
+          }
+        }
+      };
+
+      return options;
+    },
+    ratedSeries() {
+      return [
+        {
+          name: this.selectedSubjectName + " rating",
+          data: this.filteredPerformances.map(p => p.updatedRating.toFixed(2))
+        }
+      ];
     },
     selectedSubjectName() {
       return this.subjectOptions.find(s => s.value == this.selectedTopicId)
