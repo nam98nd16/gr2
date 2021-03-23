@@ -123,7 +123,7 @@ export default {
     columns() {
       return [
         {
-          title: "No",
+          title: "No.",
           scopedSlots: { customRender: "no" }
         },
         {

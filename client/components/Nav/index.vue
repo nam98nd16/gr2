@@ -12,6 +12,11 @@
           <a-icon type="question-circle" />Question Management
         </nuxt-link>
       </a-menu-item>
+      <a-menu-item v-if="isAdmin" key="manage-subject">
+        <nuxt-link :to="'/manage-subject'">
+          <a-icon type="read" />Subject Management
+        </nuxt-link>
+      </a-menu-item>
       <a-menu-item key="performance">
         <nuxt-link :to="'/performance'">
           <a-icon type="line-chart" />Performance
