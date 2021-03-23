@@ -48,7 +48,30 @@ const getSubjects = async (req, res) => {
   res.json(subjects);
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getNonExpertUsers = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let { key } = req.query;
+  let users = await knex()
+    .select("username", "userId")
+    .from("accounts")
+    .whereIn("role", [1, 2, 3])
+    .where("username", "like", `%${key}%`)
+    .where(knex.raw(`"subjectId" is null`))
+    .limit(10);
+  res.json(users);
+};
+
 module.exports = {
   getAllSubjects,
   getSubjects,
+  getNonExpertUsers,
 };

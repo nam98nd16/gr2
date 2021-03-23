@@ -1,7 +1,9 @@
 <template>
   <div>
     <page-title title="Subject management" />
-    Total: {{ subjects.length }}
+    <a-button class="mb-2" type="primary" @click="modalVisible = true">
+      <i class="fas fa-plus mr-2"></i> Add subject</a-button
+    ><br />Total: {{ subjects.length }}
     <span style="float: right">
       <span v-show="isEditing"
         ><a-button type="primary" ghost size="small" @click="handleResetData"
@@ -38,6 +40,63 @@
         record.experts.map(e => e.username).join(", ")
       }}</template>
     </a-table>
+    <a-modal
+      v-model="modalVisible"
+      centered
+      :title="'Add new subject'"
+      @ok="handleAddNewSubject"
+    >
+      <a-form>
+        <a-form-item label="Subject title" v-bind="formItemLayout">
+          <a-input
+            style="width: 80%"
+            v-model="subjectTitle"
+            placeholder="Input subject title"
+          />
+        </a-form-item>
+
+        <a-form-item label="Subject leader" v-bind="formItemLayout">
+          <a-select
+            show-search
+            placeholder="Search for subject leader"
+            :default-active-first-option="false"
+            :show-arrow="false"
+            :filter-option="false"
+            :not-found-content="null"
+            style="min-width: 100px; max-width: 200px"
+            @search="handleSearch"
+            allowClear
+            v-model="selectedLeader"
+          >
+            <a-select-option
+              v-for="assignee in availableAssignees"
+              :key="assignee.userId"
+              >{{ assignee.username }}</a-select-option
+            >
+          </a-select>
+        </a-form-item>
+
+        <a-form-item label="Subject experts" v-bind="formItemLayout">
+          <a-select
+            placeholder="Search for subject experts"
+            mode="multiple"
+            style="min-width: 100px"
+            :default-active-first-option="false"
+            :show-arrow="false"
+            :filter-option="false"
+            :not-found-content="null"
+            @search="handleSearchForExperts"
+            v-model="selectedExperts"
+          >
+            <a-select-option
+              v-for="assignee in availableAssignees2"
+              :key="assignee.userId"
+              >{{ assignee.username }}</a-select-option
+            >
+          </a-select>
+        </a-form-item>
+      </a-form>
+    </a-modal>
   </div>
 </template>
 
@@ -49,13 +108,29 @@ export default {
   components: { pageTitle },
   data() {
     return {
+      formItemLayout: {
+        labelCol: {
+          md: 6,
+          sm: 24
+        },
+        wrapperCol: {
+          md: 18,
+          sm: 24
+        }
+      },
       isEditing: false,
       editableDataSource: [],
       pagination: {
         pageSize: 10,
         total: 0,
         current: 1
-      }
+      },
+      modalVisible: false,
+      subjectTitle: "",
+      selectedLeader: undefined,
+      selectedExperts: [],
+      availableAssignees: [],
+      availableAssignees2: []
     };
   },
   async mounted() {
@@ -65,7 +140,8 @@ export default {
   computed: {
     ...mapState({
       allSubjects: state => state.subjects.allSubjects,
-      subjects: state => state.subjects.subjects
+      subjects: state => state.subjects.subjects,
+      nonExpertUsers: state => state.subjects.nonExpertUsers
     }),
     columns() {
       return [
@@ -103,7 +179,8 @@ export default {
   methods: {
     ...mapActions({
       getAllSubjects: "subjects/getAllSubjects",
-      getSubjects: "subjects/getSubjects"
+      getSubjects: "subjects/getSubjects",
+      getNonExpertUsers: "subjects/getNonExpertUsers"
     }),
     handleResetData() {},
     handleSave() {},
@@ -111,7 +188,28 @@ export default {
       const pager = { ...this.pagination };
       pager.current = pagination.current;
       this.pagination = pager;
+    },
+    handleAddNewSubject() {
+      this.modalVisible = false;
+    },
+    async handleSearch(value) {
+      this.availableAssignees = await this.getNonExpertUsers(value);
+      this.availableAssignees = this.availableAssignees.filter(
+        a => !this.selectedExperts.includes(a.userId)
+      );
+    },
+    async handleSearchForExperts(value) {
+      this.availableAssignees2 = await this.getNonExpertUsers(value);
+      this.availableAssignees2 = this.availableAssignees2.filter(
+        a => a.userId != this.selectedLeader
+      );
     }
   }
 };
 </script>
+
+<style scoped>
+.ant-form-item {
+  margin-bottom: unset;
+}
+</style>

@@ -1,6 +1,7 @@
 export const state = () => ({
   allSubjects: [],
-  subjects: []
+  subjects: [],
+  nonExpertUsers: []
 });
 
 export const mutations = {
@@ -9,6 +10,9 @@ export const mutations = {
   },
   setSubjects(state, subjects) {
     state.subjects = subjects;
+  },
+  setNonExpertUsers(state, nonExpertUsers) {
+    state.nonExpertUsers = nonExpertUsers;
   }
 };
 
@@ -20,5 +24,10 @@ export const actions = {
   async getSubjects({ commit} , payload) {
     const res = await this.$axios.post(`/subjects`, payload);
     commit("setSubjects", res.data);
+  },
+  async getNonExpertUsers({ commit} , keyword) {
+    const res = await this.$axios.get(`/subjects/non-experts?key=${keyword}`);
+    commit("setNonExpertUsers", res.data);
+    return res.data;
   }
 };
