@@ -5,6 +5,13 @@
       {{ getCurrentSubjectName() }} knowledge rating:
       <i class="fas fa-medal" style="color: blue"></i>
       {{ currentRating.toFixed(2) }}
+
+      <a-switch
+        checked-children="Live rating chart on"
+        un-checked-children="Live rating chart off"
+        default-unchecked
+        v-model="shouldDisplayLiveRatingChart"
+      />
     </div>
     <div
       v-if="!hasSubmitted && countDown != 0"
@@ -38,6 +45,14 @@
           >
         </div>
       </div>
+      <apexchart
+        v-show="shouldDisplayLiveRatingChart"
+        class="mt-5"
+        height="300"
+        type="line"
+        :options="chartOptions"
+        :series="series"
+      ></apexchart>
     </div>
     <div v-else-if="errorMsg" style="text-align: center">{{ errorMsg }}</div>
   </div>
@@ -55,16 +70,16 @@ export default {
       hasSubmitted: false,
       currentQuestion: null,
       answeredId: null,
-      errorMsg: ""
+      errorMsg: "",
+      ratings: [],
+      shouldDisplayLiveRatingChart: false
     };
   },
   async created() {
     if (!this.$route.params?.subjectId) {
       this.$router.push("/test");
     } else {
-      this.getRating({
-        subjectId: this.$route.params.subjectId
-      });
+      this.fetchRating();
       this.fetchNewQuestion();
     }
   },
@@ -72,7 +87,46 @@ export default {
     ...mapState({
       allSubjects: state => state.subjects.allSubjects,
       currentRating: state => state.test.currentRating
-    })
+    }),
+    chartOptions() {
+      let options = {
+        chart: {
+          height: 300,
+          type: "line",
+          zoom: {
+            enabled: false
+          }
+        },
+        dataLabels: {
+          enabled: false
+        },
+        stroke: {
+          curve: "straight"
+        },
+        grid: {
+          row: {
+            colors: ["#f3f3f3", "transparent"], // takes an array which will be repeated on columns
+            opacity: 0.5
+          }
+        },
+        xaxis: {
+          categories: this.ratings.map(p => p.timestamp),
+          labels: {
+            show: this.ratings.length > 10 ? false : true
+          }
+        }
+      };
+
+      return options;
+    },
+    series() {
+      return [
+        {
+          name: this.getCurrentSubjectName() + " rating",
+          data: this.ratings.map(p => p.rating.toFixed(2))
+        }
+      ];
+    }
   },
   methods: {
     ...mapActions({
@@ -80,6 +134,15 @@ export default {
       getRating: "test/getRating",
       submitRatedAnswer: "test/submitRatedAnswer"
     }),
+    async fetchRating() {
+      await this.getRating({
+        subjectId: this.$route.params.subjectId
+      });
+      this.ratings.push({
+        rating: this.currentRating,
+        timestamp: this.$moment().format("HH:mm:ss")
+      });
+    },
     getCurrentSubjectName() {
       return this.allSubjects.find(
         s => s.subjectId == this.$route.params.subjectId
@@ -119,9 +182,7 @@ export default {
       };
       let correctAnsId = await this.submitRatedAnswer(payload);
       this.currentQuestion.answerId = correctAnsId;
-      this.getRating({
-        subjectId: this.$route.params.subjectId
-      });
+      this.fetchRating();
     },
     async handleNext() {
       await this.fetchNewQuestion();
