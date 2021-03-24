@@ -29,5 +29,9 @@ export const actions = {
     const res = await this.$axios.get(`/subjects/non-experts?key=${keyword}`);
     commit("setNonExpertUsers", res.data);
     return res.data;
+  },
+  async addSubject({ commit} , payload) {
+    const res = await this.$axios.post(`/subjects/add`, payload);
+    return res.data;
   }
 };

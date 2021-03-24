@@ -36,8 +36,6 @@ const getSubjects = async (req, res) => {
       subjects.map((s) => s.subjectId)
     );
 
-  console.log("e", experts);
-
   subjects.forEach((s) => {
     s.leader = experts.find((e) => e.role == 1 && e.subjectId == s.subjectId);
     s.experts = experts.filter(
@@ -70,8 +68,48 @@ const getNonExpertUsers = async (req, res) => {
   res.json(users);
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const addSubject = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let { subjectTitle, subjectLeaderId, subjectExpertIds } = req.body;
+  let insertedSubject = await knex("subjects")
+    .insert({
+      subjectName: subjectTitle,
+    })
+    .returning("*");
+
+  insertedSubject = insertedSubject[0];
+
+  if (subjectLeaderId)
+    await knex("accounts")
+      .update({
+        role: 1,
+        subjectId: insertedSubject.subjectId,
+      })
+      .where("userId", "=", subjectLeaderId);
+
+  if (subjectExpertIds.length)
+    await knex("accounts")
+      .update({
+        role: 2,
+        subjectId: insertedSubject.subjectId,
+      })
+      .whereIn("userId", subjectExpertIds);
+
+  res.json("success");
+};
+
 module.exports = {
   getAllSubjects,
   getSubjects,
   getNonExpertUsers,
+  addSubject,
 };

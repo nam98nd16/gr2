@@ -40,10 +40,12 @@
         record.experts.map(e => e.username).join(", ")
       }}</template>
     </a-table>
+
     <a-modal
       v-model="modalVisible"
       centered
       :title="'Add new subject'"
+      :okButtonProps="{ props: { disabled: isAddingSubject } }"
       @ok="handleAddNewSubject"
     >
       <a-form>
@@ -58,7 +60,7 @@
         <a-form-item label="Subject leader" v-bind="formItemLayout">
           <a-select
             show-search
-            placeholder="Search for subject leader"
+            placeholder="Select subject leader"
             :default-active-first-option="false"
             :show-arrow="false"
             :filter-option="false"
@@ -78,7 +80,7 @@
 
         <a-form-item label="Subject experts" v-bind="formItemLayout">
           <a-select
-            placeholder="Search for subject experts"
+            placeholder="Select subject experts"
             mode="multiple"
             style="min-width: 100px"
             :default-active-first-option="false"
@@ -130,12 +132,24 @@ export default {
       selectedLeader: undefined,
       selectedExperts: [],
       availableAssignees: [],
-      availableAssignees2: []
+      availableAssignees2: [],
+      isAddingSubject: false
     };
   },
+  watch: {
+    selectedLeader() {
+      this.availableAssignees2 = this.availableAssignees2.filter(
+        a => a.userId != this.selectedLeader
+      );
+    },
+    selectedExperts() {
+      this.availableAssignees = this.availableAssignees.filter(
+        a => !this.selectedExperts.includes(a.userId)
+      );
+    }
+  },
   async mounted() {
-    await this.getSubjects({ subjectId: null });
-    this.editableDataSource = _.cloneDeep(this.subjects);
+    this.fetchSubjects();
   },
   computed: {
     ...mapState({
@@ -180,8 +194,13 @@ export default {
     ...mapActions({
       getAllSubjects: "subjects/getAllSubjects",
       getSubjects: "subjects/getSubjects",
-      getNonExpertUsers: "subjects/getNonExpertUsers"
+      getNonExpertUsers: "subjects/getNonExpertUsers",
+      addSubject: "subjects/addSubject"
     }),
+    async fetchSubjects() {
+      await this.getSubjects({ subjectId: null });
+      this.editableDataSource = _.cloneDeep(this.subjects);
+    },
     handleResetData() {},
     handleSave() {},
     handleTableChange(pagination, filters, sorter) {
@@ -189,8 +208,32 @@ export default {
       pager.current = pagination.current;
       this.pagination = pager;
     },
-    handleAddNewSubject() {
-      this.modalVisible = false;
+    async handleAddNewSubject() {
+      this.isAddingSubject = true;
+      if (
+        this.editableDataSource.findIndex(
+          s => s.subjectName == this.subjectTitle
+        ) >= 0
+      )
+        this.$notification.error({
+          message: "A subject having that name already existed!"
+        });
+      else {
+        let payload = {
+          subjectTitle: this.subjectTitle,
+          subjectLeaderId: this.selectedLeader,
+          subjectExpertIds: this.selectedExperts
+        };
+        await this.addSubject(payload);
+        this.$notification.success({ message: "Added successfully!" });
+        this.fetchSubjects();
+        this.modalVisible = false;
+        this.selectedLeader = undefined;
+        this.selectedExperts = [];
+        this.availableAssignees = [];
+        this.availableAssignees2 = [];
+      }
+      this.isAddingSubject = false;
     },
     async handleSearch(value) {
       this.availableAssignees = await this.getNonExpertUsers(value);
