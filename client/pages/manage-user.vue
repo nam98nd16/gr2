@@ -73,6 +73,10 @@ const roleOptions = [
   { value: 4, label: "Preliminary Reviewer" },
   { value: 3, label: "None" }
 ];
+
+const count = arr => arr.reduce((a, b) => ({ ...a, [b]: (a[b] || 0) + 1 }), {}); // don't forget to initialize the accumulator
+
+const duplicates = dict => Object.keys(dict).filter(a => dict[a] > 1);
 export default {
   middleware: "user-management-guard",
   components: { pageTitle },
@@ -210,24 +214,37 @@ export default {
       this.editableDataSource = _.cloneDeep(this.allUsers);
     },
     async handleSave() {
-      let updatedUsers = this.editableDataSource.filter(
-        x =>
-          this.allUsers.findIndex(
-            user =>
-              user.userId == x.userId &&
-              (user.role != x.role || user.subjectId != x.subjectId)
-          ) >= 0
+      let duplicatedLeadersOfASubject = duplicates(
+        count(
+          this.editableDataSource.filter(u => u.role == 1).map(u => u.subjectId)
+        )
       );
-      if (updatedUsers.length) {
-        await this.updateUsersRole({ users: updatedUsers });
-        this.allUsers = this.editableDataSource;
-        this.$notification.success({
-          message: "Updated successfully!"
+      if (duplicatedLeadersOfASubject.length)
+        this.$notification.error({
+          message: `Subject ${this.getUserSubject(
+            duplicatedLeadersOfASubject[0]
+          )} cannot have more than 1 leader!`
         });
-      } else
-        this.$notification.info({
-          message: "Nothing to update!"
-        });
+      else {
+        let updatedUsers = this.editableDataSource.filter(
+          x =>
+            this.allUsers.findIndex(
+              user =>
+                user.userId == x.userId &&
+                (user.role != x.role || user.subjectId != x.subjectId)
+            ) >= 0
+        );
+        if (updatedUsers.length) {
+          await this.updateUsersRole({ users: updatedUsers });
+          this.allUsers = _.cloneDeep(this.editableDataSource);
+          this.$notification.success({
+            message: "Updated successfully!"
+          });
+        } else
+          this.$notification.info({
+            message: "Nothing to update!"
+          });
+      }
     }
   }
 };
