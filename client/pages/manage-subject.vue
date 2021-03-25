@@ -5,18 +5,10 @@
       <i class="fas fa-plus mr-2"></i> Add subject</a-button
     ><br />Total: {{ subjects.length }}
     <span style="float: right">
-      <span v-show="isEditing"
-        ><a-button type="primary" ghost size="small" @click="handleResetData"
-          ><i class="fas fa-recycle mr-1"></i>Reset</a-button
-        >
-        <a-button type="primary" size="small" @click="handleSave"
-          ><i class="fas fa-check mr-1"></i>Save</a-button
-        ></span
-      >
       <a-switch
         class="mb-1"
         checked-children="Editing"
-        un-checked-children="Not Editing"
+        un-checked-children="Viewing"
         default-unchecked
         v-model="isEditing"
       />
@@ -39,6 +31,14 @@
       <template slot="subjectExperts" slot-scope="text, record">{{
         record.experts.map(e => e.username).join(", ")
       }}</template>
+      <div style="text-align: center" slot="actions" slot-scope="text, record">
+        <span
+          ><a-button type="danger" @click="handleDeletion(record)"
+            >Delete</a-button
+          ></span
+        >
+        <span><a-button type="primary">Edit</a-button></span>
+      </div>
     </a-table>
 
     <a-modal
@@ -186,8 +186,13 @@ export default {
           title: "Subject Experts",
           dataIndex: "leader.experts",
           scopedSlots: { customRender: "subjectExperts" }
+        },
+        {
+          title: "Actions",
+          scopedSlots: { customRender: "actions" },
+          width: "180px"
         }
-      ];
+      ].filter(c => (!this.isEditing ? c.title != "Actions" : true));
     }
   },
   methods: {
@@ -195,7 +200,8 @@ export default {
       getAllSubjects: "subjects/getAllSubjects",
       getSubjects: "subjects/getSubjects",
       getNonExpertUsers: "subjects/getNonExpertUsers",
-      addSubject: "subjects/addSubject"
+      addSubject: "subjects/addSubject",
+      removeSubject: "subjects/removeSubject"
     }),
     async fetchSubjects() {
       await this.getSubjects({ subjectId: null });
@@ -246,6 +252,19 @@ export default {
       this.availableAssignees2 = this.availableAssignees2.filter(
         a => a.userId != this.selectedLeader
       );
+    },
+    async handleDeletion(subject) {
+      this.$confirm({
+        title: "Are you sure to remove the subject from the system?",
+        okText: "OK",
+        cancelText: "Cancel",
+        onOk: async () => {
+          let res = await this.removeSubject(subject.subjectId);
+          this.$notification.info({ message: res });
+          if (res == "Deleted successfully!") this.fetchSubjects();
+        },
+        onCancel() {}
+      });
     }
   }
 };

@@ -107,9 +107,44 @@ const addSubject = async (req, res) => {
   res.json("success");
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const removeSubject = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let { subjectId } = req.query;
+
+  let questions = await knex("questions")
+    .where("subjectId", "=", subjectId)
+    .limit(1);
+
+  if (questions.length)
+    res.json("Unable to delete subjects already having proposed questions!");
+  else {
+    await Promise.all([
+      knex("subjects").where("subjectId", "=", subjectId).del(),
+      knex("accounts")
+        .where("subjectId", "=", subjectId)
+        .whereIn("role", [1, 2])
+        .update({
+          role: 3,
+          subjectId: null,
+        }),
+    ]);
+    res.json("Deleted successfully!");
+  }
+};
+
 module.exports = {
   getAllSubjects,
   getSubjects,
   getNonExpertUsers,
   addSubject,
+  removeSubject,
 };
