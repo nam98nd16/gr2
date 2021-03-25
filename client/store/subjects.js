@@ -34,6 +34,10 @@ export const actions = {
     const res = await this.$axios.post(`/subjects/add`, payload);
     return res.data;
   },
+  async updateSubject({ commit} , payload) {
+    const res = await this.$axios.post(`/subjects/update`, payload);
+    return res.data;
+  },
   async removeSubject({ commit} , subjectId) {
     const res = await this.$axios.delete(`/subjects?subjectId=${subjectId}`);
     return res.data;

@@ -23,7 +23,7 @@ const getSubjects = async (req, res) => {
   let { subjectName } = req.body;
 
   let reqUser = jwt.verify(token, jwtSecret);
-  let query = knex.column().select().from("subjects");
+  let query = knex.column().select().from("subjects").orderBy("subjectId");
   if (subjectName)
     query = query.where("subjectName", "like", `%${subjectName}%`);
   let subjects = await query;
@@ -111,6 +111,49 @@ const addSubject = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const updateSubject = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let { subjectId, subjectTitle, subjectLeaderId, subjectExpertIds } = req.body;
+  await Promise.all([
+    knex("subjects")
+      .where("subjectId", "=", subjectId)
+      .update({ subjectName: subjectTitle }),
+    knex("accounts")
+      .update({
+        role: 3,
+        subjectId: null,
+      })
+      .where("subjectId", "=", subjectId),
+  ]);
+
+  if (subjectLeaderId)
+    await knex("accounts")
+      .update({
+        role: 1,
+        subjectId: subjectId,
+      })
+      .where("userId", "=", subjectLeaderId);
+
+  if (subjectExpertIds.length)
+    await knex("accounts")
+      .update({
+        role: 2,
+        subjectId: subjectId,
+      })
+      .whereIn("userId", subjectExpertIds);
+
+  res.json("success");
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const removeSubject = async (req, res) => {
   let token = req.headers.authorization.substring(
     7,
@@ -147,4 +190,5 @@ module.exports = {
   getNonExpertUsers,
   addSubject,
   removeSubject,
+  updateSubject,
 };

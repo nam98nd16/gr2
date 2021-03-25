@@ -37,7 +37,11 @@
             >Delete</a-button
           ></span
         >
-        <span><a-button type="primary">Edit</a-button></span>
+        <span
+          ><a-button type="primary" @click="handleEdit(record)"
+            >Edit</a-button
+          ></span
+        >
       </div>
     </a-table>
 
@@ -46,7 +50,8 @@
       centered
       :title="'Add new subject'"
       :okButtonProps="{ props: { disabled: isAddingSubject } }"
-      @ok="handleAddNewSubject"
+      @ok="handleSave"
+      @cancel="handleCancel"
     >
       <a-form>
         <a-form-item label="Subject title" v-bind="formItemLayout">
@@ -133,7 +138,10 @@ export default {
       selectedExperts: [],
       availableAssignees: [],
       availableAssignees2: [],
-      isAddingSubject: false
+      isAddingSubject: false,
+      currentlyEditingSubjectExperts: [],
+      isEditingSubject: false,
+      currentlyEditingSubject: null
     };
   },
   watch: {
@@ -201,6 +209,7 @@ export default {
       getSubjects: "subjects/getSubjects",
       getNonExpertUsers: "subjects/getNonExpertUsers",
       addSubject: "subjects/addSubject",
+      updateSubject: "subjects/updateSubject",
       removeSubject: "subjects/removeSubject"
     }),
     async fetchSubjects() {
@@ -208,11 +217,28 @@ export default {
       this.editableDataSource = _.cloneDeep(this.subjects);
     },
     handleResetData() {},
-    handleSave() {},
+    async handleSave() {
+      if (!this.isEditingSubject) await this.handleAddNewSubject();
+      else {
+        await this.handleUpdateSubject();
+        this.fetchSubjects();
+        this.handleCancel();
+      }
+    },
     handleTableChange(pagination, filters, sorter) {
       const pager = { ...this.pagination };
       pager.current = pagination.current;
       this.pagination = pager;
+    },
+    async handleUpdateSubject() {
+      let payload = {
+        subjectId: this.currentlyEditingSubject.subjectId,
+        subjectTitle: this.subjectTitle,
+        subjectLeaderId: this.selectedLeader,
+        subjectExpertIds: this.selectedExperts
+      };
+      await this.updateSubject(payload);
+      this.$notification.success({ message: "Updated successfully!" });
     },
     async handleAddNewSubject() {
       this.isAddingSubject = true;
@@ -233,22 +259,24 @@ export default {
         await this.addSubject(payload);
         this.$notification.success({ message: "Added successfully!" });
         this.fetchSubjects();
-        this.modalVisible = false;
-        this.selectedLeader = undefined;
-        this.selectedExperts = [];
-        this.availableAssignees = [];
-        this.availableAssignees2 = [];
+        this.handleCancel();
       }
       this.isAddingSubject = false;
     },
     async handleSearch(value) {
       this.availableAssignees = await this.getNonExpertUsers(value);
+      this.availableAssignees = this.availableAssignees.concat(
+        this.currentlyEditingSubjectExperts
+      );
       this.availableAssignees = this.availableAssignees.filter(
         a => !this.selectedExperts.includes(a.userId)
       );
     },
     async handleSearchForExperts(value) {
       this.availableAssignees2 = await this.getNonExpertUsers(value);
+      this.availableAssignees2 = this.availableAssignees2.concat(
+        this.currentlyEditingSubjectExperts
+      );
       this.availableAssignees2 = this.availableAssignees2.filter(
         a => a.userId != this.selectedLeader
       );
@@ -261,10 +289,50 @@ export default {
         onOk: async () => {
           let res = await this.removeSubject(subject.subjectId);
           this.$notification.info({ message: res });
-          if (res == "Deleted successfully!") this.fetchSubjects();
+          if (res == "Deleted successfully!") await this.fetchSubjects();
+          if (this.editableDataSource.length % 10 === 0)
+            this.pagination.current = this.pagination.current - 1;
         },
         onCancel() {}
       });
+    },
+    handleEdit(subject) {
+      this.isEditingSubject = true;
+      this.currentlyEditingSubject = subject;
+      let leader = subject.leader
+        ? {
+            userId: subject.leader?.userId,
+            username: subject.leader?.username
+          }
+        : undefined;
+      this.subjectTitle = subject.subjectName;
+      this.selectedLeader = subject.leader?.userId;
+      this.selectedExperts = subject.experts?.map(e => e.userId) ?? [];
+      if (subject.leader) this.availableAssignees.push(leader);
+      this.availableAssignees2 = this.availableAssignees2.concat(
+        subject.experts.map(e => ({ userId: e.userId, username: e.username }))
+      );
+      this.currentlyEditingSubjectExperts = this.currentlyEditingSubjectExperts.concat(
+        [
+          ...subject.experts.map(e => ({
+            userId: e.userId,
+            username: e.username
+          }))
+        ]
+      );
+      if (leader) this.currentlyEditingSubjectExperts.push(leader);
+      this.modalVisible = true;
+    },
+    handleCancel() {
+      this.modalVisible = false;
+      this.subjectTitle = "";
+      this.selectedLeader = undefined;
+      this.selectedExperts = [];
+      this.currentlyEditingSubjectExperts = [];
+      this.availableAssignees = [];
+      this.availableAssignees2 = [];
+      this.isEditingSubject = false;
+      this.currentlyEditingSubject = null;
     }
   }
 };
