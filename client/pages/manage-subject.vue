@@ -253,22 +253,15 @@ export default {
     },
     async handleAddNewSubject() {
       this.isAddingSubject = true;
-      if (
-        this.editableDataSource.findIndex(
-          s => s.subjectName == this.subjectTitle
-        ) >= 0
-      )
-        this.$notification.error({
-          message: "A subject having that name already existed!"
-        });
-      else {
-        let payload = {
-          subjectTitle: this.subjectTitle,
-          subjectLeaderId: this.selectedLeader,
-          subjectExpertIds: this.selectedExperts
-        };
-        await this.addSubject(payload);
-        this.$notification.success({ message: "Added successfully!" });
+
+      let payload = {
+        subjectTitle: this.subjectTitle,
+        subjectLeaderId: this.selectedLeader,
+        subjectExpertIds: this.selectedExperts
+      };
+      let res = await this.addSubject(payload);
+      this.$notification.info({ message: res });
+      if (res == "Added successfully!") {
         this.fetchSubjects();
         this.fetchSubjectCount();
         this.handleCancel();

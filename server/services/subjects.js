@@ -104,6 +104,18 @@ const addSubject = async (req, res) => {
   let reqUser = jwt.verify(token, jwtSecret);
 
   let { subjectTitle, subjectLeaderId, subjectExpertIds } = req.body;
+
+  let existedSubjects = await knex("subjects").where(
+    "subjectName",
+    "ilike",
+    subjectTitle
+  );
+
+  if (existedSubjects.length) {
+    res.json("A subject having that name already existed!");
+    return;
+  }
+
   let insertedSubject = await knex("subjects")
     .insert({
       subjectName: subjectTitle,
@@ -128,7 +140,7 @@ const addSubject = async (req, res) => {
       })
       .whereIn("userId", subjectExpertIds);
 
-  res.json("success");
+  res.json("Added successfully!");
 };
 
 /**
