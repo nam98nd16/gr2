@@ -43,14 +43,14 @@
           ></span
         >
       </div>
-      <template slot="subjectNameTitle"
+      <span slot="subjectNameTitle"
         >Name
         <a-input
           v-model="filteredTitle"
           @click="e => e.stopPropagation()"
           @change="fetchFilteredData"
         ></a-input
-      ></template>
+      ></span>
     </a-table>
 
     <a-modal
@@ -150,7 +150,9 @@ export default {
       currentlyEditingSubjectExperts: [],
       isEditingSubject: false,
       currentlyEditingSubject: null,
-      filteredTitle: ""
+      filteredTitle: "",
+      sortKey: "subjectId",
+      sortOrder: "asc"
     };
   },
   watch: {
@@ -185,21 +187,21 @@ export default {
         {
           title: "Unique ID",
           dataIndex: "subjectId",
+          key: "subjectId",
           scopedSlots: { customRender: "uniqueId" },
-          sorter: (a, b) => a.subjectId - b.subjectId
+          sorter: true
         },
         {
+          key: "subjectName",
           dataIndex: "subjectName",
           slots: { title: "subjectNameTitle" },
-          scopedSlots: { customRender: "subjectName" },
-          sorter: (a, b) => a.subjectName.localeCompare(b.subjectName)
+          sorter: true
         },
         {
           title: "Subject Leader",
           dataIndex: "leader.username",
-          scopedSlots: { customRender: "subjectLeader" },
-          sorter: (a, b) =>
-            a.leader?.username?.localeCompare(b.leader?.username)
+          key: "leader",
+          scopedSlots: { customRender: "subjectLeader" }
         },
         {
           title: "Subject Experts",
@@ -227,6 +229,8 @@ export default {
     async fetchSubjects() {
       await this.getSubjects({
         subjectName: this.filteredTitle,
+        sortKey: this.sortKey,
+        sortOrder: this.sortOrder,
         perPage: this.pagination.pageSize,
         currentPage: this.pagination.current
       });
@@ -252,6 +256,8 @@ export default {
       }
     },
     handleTableChange(pagination, filters, sorter) {
+      this.sortOrder = sorter.order == "descend" ? "desc" : "asc";
+      this.sortKey = sorter.columnKey;
       const pager = { ...this.pagination };
       pager.current = pagination.current;
       this.pagination = pager;

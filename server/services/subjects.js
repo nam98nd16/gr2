@@ -20,10 +20,14 @@ const getSubjects = async (req, res) => {
     7,
     req.headers.authorization.length
   );
-  let { subjectName, perPage, currentPage } = req.body;
+  let { subjectName, sortKey, sortOrder, perPage, currentPage } = req.body;
 
   let reqUser = jwt.verify(token, jwtSecret);
-  let query = knex.column().select().from("subjects").orderBy("subjectId");
+  let query = knex
+    .column()
+    .select()
+    .from("subjects")
+    .orderBy(sortKey, sortOrder);
 
   if (subjectName)
     query = query.where("subjectName", "ilike", `%${subjectName}%`);
