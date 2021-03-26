@@ -43,6 +43,14 @@
           ></span
         >
       </div>
+      <template slot="subjectNameTitle"
+        >Name
+        <a-input
+          v-model="filteredTitle"
+          @click="e => e.stopPropagation()"
+          @change="fetchFilteredData"
+        ></a-input
+      ></template>
     </a-table>
 
     <a-modal
@@ -141,7 +149,8 @@ export default {
       isAddingSubject: false,
       currentlyEditingSubjectExperts: [],
       isEditingSubject: false,
-      currentlyEditingSubject: null
+      currentlyEditingSubject: null,
+      filteredTitle: ""
     };
   },
   watch: {
@@ -180,8 +189,8 @@ export default {
           sorter: (a, b) => a.subjectId - b.subjectId
         },
         {
-          title: "Name",
           dataIndex: "subjectName",
+          slots: { title: "subjectNameTitle" },
           scopedSlots: { customRender: "subjectName" },
           sorter: (a, b) => a.subjectName.localeCompare(b.subjectName)
         },
@@ -217,14 +226,21 @@ export default {
     }),
     async fetchSubjects() {
       await this.getSubjects({
-        subjectName: null,
+        subjectName: this.filteredTitle,
         perPage: this.pagination.pageSize,
         currentPage: this.pagination.current
       });
       this.editableDataSource = _.cloneDeep(this.subjects);
     },
     async fetchSubjectCount() {
-      this.pagination.total = await this.getSubjectCount({ subjectName: null });
+      this.pagination.total = await this.getSubjectCount({
+        subjectName: this.filteredTitle
+      });
+    },
+    async fetchFilteredData() {
+      this.pagination.current = 1;
+      this.fetchSubjects();
+      this.fetchSubjectCount();
     },
     handleResetData() {},
     async handleSave() {

@@ -24,10 +24,11 @@ const getSubjects = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
   let query = knex.column().select().from("subjects").orderBy("subjectId");
+
+  if (subjectName)
+    query = query.where("subjectName", "ilike", `%${subjectName}%`);
   if (perPage && currentPage)
     query = query.paginate({ perPage: perPage, currentPage: currentPage });
-  if (subjectName)
-    query = query.where("subjectName", "like", `%${subjectName}%`);
   let subjects = await query;
   if (perPage && currentPage) subjects = subjects.data;
 
