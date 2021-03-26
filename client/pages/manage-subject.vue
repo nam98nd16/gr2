@@ -3,7 +3,7 @@
     <page-title title="Subject management" />
     <a-button class="mb-2" type="primary" @click="modalVisible = true">
       <i class="fas fa-plus mr-2"></i> Add subject</a-button
-    ><br />Total: {{ subjects.length }}
+    ><br />Total: {{ subjectCount }}
     <span style="float: right">
       <a-switch
         class="mb-1"
@@ -158,11 +158,13 @@ export default {
   },
   async mounted() {
     this.fetchSubjects();
+    this.fetchSubjectCount();
   },
   computed: {
     ...mapState({
       allSubjects: state => state.subjects.allSubjects,
       subjects: state => state.subjects.subjects,
+      subjectCount: state => state.subjects.subjectCount,
       nonExpertUsers: state => state.subjects.nonExpertUsers
     }),
     columns() {
@@ -207,14 +209,22 @@ export default {
     ...mapActions({
       getAllSubjects: "subjects/getAllSubjects",
       getSubjects: "subjects/getSubjects",
+      getSubjectCount: "subjects/getSubjectCount",
       getNonExpertUsers: "subjects/getNonExpertUsers",
       addSubject: "subjects/addSubject",
       updateSubject: "subjects/updateSubject",
       removeSubject: "subjects/removeSubject"
     }),
     async fetchSubjects() {
-      await this.getSubjects({ subjectId: null });
+      await this.getSubjects({
+        subjectName: null,
+        perPage: this.pagination.pageSize,
+        currentPage: this.pagination.current
+      });
       this.editableDataSource = _.cloneDeep(this.subjects);
+    },
+    async fetchSubjectCount() {
+      this.pagination.total = await this.getSubjectCount({ subjectName: null });
     },
     handleResetData() {},
     async handleSave() {
@@ -229,6 +239,7 @@ export default {
       const pager = { ...this.pagination };
       pager.current = pagination.current;
       this.pagination = pager;
+      this.fetchSubjects();
     },
     async handleUpdateSubject() {
       let payload = {
@@ -259,6 +270,7 @@ export default {
         await this.addSubject(payload);
         this.$notification.success({ message: "Added successfully!" });
         this.fetchSubjects();
+        this.fetchSubjectCount();
         this.handleCancel();
       }
       this.isAddingSubject = false;
@@ -290,8 +302,11 @@ export default {
           let res = await this.removeSubject(subject.subjectId);
           this.$notification.info({ message: res });
           if (res == "Deleted successfully!") await this.fetchSubjects();
-          if (this.editableDataSource.length % 10 === 0)
+          if (this.editableDataSource.length % 10 === 0) {
             this.pagination.current = this.pagination.current - 1;
+            this.fetchSubjects();
+          }
+          this.fetchSubjectCount();
         },
         onCancel() {}
       });

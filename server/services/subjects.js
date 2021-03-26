@@ -20,13 +20,16 @@ const getSubjects = async (req, res) => {
     7,
     req.headers.authorization.length
   );
-  let { subjectName } = req.body;
+  let { subjectName, perPage, currentPage } = req.body;
 
   let reqUser = jwt.verify(token, jwtSecret);
   let query = knex.column().select().from("subjects").orderBy("subjectId");
+  if (perPage && currentPage)
+    query = query.paginate({ perPage: perPage, currentPage: currentPage });
   if (subjectName)
     query = query.where("subjectName", "like", `%${subjectName}%`);
   let subjects = await query;
+  if (perPage && currentPage) subjects = subjects.data;
 
   let experts = await knex("accounts")
     .select("userId", "username", "role", "subjectId")
@@ -44,6 +47,27 @@ const getSubjects = async (req, res) => {
   });
 
   res.json(subjects);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getSubjectsCount = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { subjectName } = req.body;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+  let query = knex("subjects").count();
+
+  if (subjectName)
+    query = query.where("subjectName", "ilike", `%${subjectName}%`);
+  let count = await query;
+
+  res.json(parseInt(count[0].count));
 };
 
 /**
@@ -191,4 +215,5 @@ module.exports = {
   addSubject,
   removeSubject,
   updateSubject,
+  getSubjectsCount,
 };
