@@ -22,6 +22,11 @@
           <a-icon type="line-chart" />Performance
         </nuxt-link>
       </a-menu-item>
+      <a-menu-item key="leaderboard">
+        <nuxt-link :to="'/leaderboard'">
+          <a-icon type="crown" />Leaderboard
+        </nuxt-link>
+      </a-menu-item>
       <a-menu-item v-if="isAdmin" key="manage-user">
         <nuxt-link :to="'/manage-user'">
           <a-icon type="usergroup-add" />User Management

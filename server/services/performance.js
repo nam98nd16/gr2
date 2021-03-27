@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const jwtSecret = require("../config/const");
 const moment = require("moment");
 var _ = require("lodash");
+const { sub } = require("../config/const");
 
 /**
  * @param {Request} req Request object from express
@@ -69,7 +70,29 @@ const getPastRatings = async (req, res) => {
   res.json(pastRatings);
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getTopRatings = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let { subjectId } = req.query;
+
+  let topRatings = await knex("ratings")
+    .where("subjectId", "=", subjectId)
+    .orderBy("rating", "desc")
+    .limit(10);
+
+  res.json(topRatings);
+};
+
 module.exports = {
   getPerformance,
   getPastRatings,
+  getTopRatings,
 };
