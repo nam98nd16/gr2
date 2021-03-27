@@ -109,6 +109,58 @@ const getAllUsers = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const getUsers = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+  let { username, userId, sortKey, sortOrder, perPage, currentPage } = req.body;
+
+  let query = knex("accounts").select(
+    "userId",
+    "username",
+    "role",
+    "subjectId"
+  );
+
+  if (sortOrder && sortKey) query = query.orderBy(sortKey, sortOrder);
+
+  if (username) query = query.where("username", "ilike", `%${username}%`);
+  if (userId) query = query.whereRaw(`"userId"::varchar like '%${userId}%'`);
+  if (perPage && currentPage)
+    query = query.paginate({ perPage: perPage, currentPage: currentPage });
+  let users = await query;
+  if (perPage && currentPage) users = users.data;
+
+  res.json(users);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getUsersCount = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let { username, userId } = req.body;
+
+  let reqUser = jwt.verify(token, jwtSecret);
+  let query = knex("accounts").count();
+
+  if (username) query = query.where("username", "ilike", `%${username}%`);
+  if (userId) query = query.whereRaw(`"userId"::varchar like '%${userId}%'`);
+  let count = await query;
+
+  res.json(parseInt(count[0].count));
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const updateUsersRole = async (req, res) => {
   let { users } = req.body;
   let queries = [];
@@ -125,10 +177,38 @@ const updateUsersRole = async (req, res) => {
   res.json("success");
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const updateUserRole = async (req, res) => {
+  let { user } = req.body;
+
+  if (user.role == 1) {
+    let existedLeader = await knex("accounts")
+      .where("subjectId", "=", user.subjectId)
+      .where("role", "=", 1);
+    if (existedLeader.length) {
+      res.json("The subject already has a leader!");
+      return;
+    }
+  }
+
+  await knex("accounts")
+    .where("userId", "=", user.userId)
+    .update("role", user.role)
+    .update("subjectId", user.subjectId);
+
+  res.json("Updated successfully!");
+};
+
 module.exports = {
   register,
   login,
   updateProfile,
   getAllUsers,
   updateUsersRole,
+  updateUserRole,
+  getUsers,
+  getUsersCount,
 };

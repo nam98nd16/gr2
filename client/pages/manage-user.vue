@@ -1,16 +1,8 @@
 <template>
   <div>
     <page-title title="User management" />
-    Total: {{ allUsers.length }}
+    Total: {{ usersCount }}
     <span style="float: right">
-      <span v-show="isEditing"
-        ><a-button type="primary" ghost size="small" @click="handleResetData"
-          ><i class="fas fa-recycle mr-1"></i>Reset</a-button
-        >
-        <a-button type="primary" size="small" @click="handleSave"
-          ><i class="fas fa-check mr-1"></i>Save</a-button
-        ></span
-      >
       <a-switch
         class="mb-1"
         checked-children="Editing"
@@ -59,6 +51,32 @@
           {{ index + (pagination.current - 1) * pagination.pageSize + 1 }}
         </div>
       </template>
+
+      <span slot="usernameTitle"
+        >Username
+        <a-input
+          v-model="filteredUsername"
+          @click="e => e.stopPropagation()"
+          @change="search"
+        ></a-input
+      ></span>
+
+      <span slot="userIdTitle"
+        >Unique ID
+        <a-input
+          v-model="filteredUserId"
+          @click="e => e.stopPropagation()"
+          @change="search"
+        ></a-input
+      ></span>
+
+      <div style="text-align: center" slot="actions" slot-scope="text, record">
+        <span
+          ><a-button type="primary" @click="handleSave(record)"
+            >Save</a-button
+          ></span
+        >
+      </div>
     </a-table>
   </div>
 </template>
@@ -73,10 +91,6 @@ const roleOptions = [
   { value: 4, label: "Preliminary Reviewer" },
   { value: 3, label: "None" }
 ];
-
-const count = arr => arr.reduce((a, b) => ({ ...a, [b]: (a[b] || 0) + 1 }), {}); // don't forget to initialize the accumulator
-
-const duplicates = dict => Object.keys(dict).filter(a => dict[a] > 1);
 export default {
   middleware: "user-management-guard",
   components: { pageTitle },
@@ -91,7 +105,14 @@ export default {
       },
       roleOptions,
       subjectOptions: [],
-      editableDataSource: []
+      editableDataSource: [],
+      sortKey: "userId",
+      sortOrder: "asc",
+      filteredUsername: "",
+      filteredUserId: "",
+      search: _.debounce(() => {
+        this.fetchFilteredData();
+      }, 300)
     };
   },
   watch: {
@@ -102,19 +123,15 @@ export default {
     }
   },
   async mounted() {
-    await Promise.all([
-      this.allUsers.length ? {} : this.getAllUsers(),
-      this.allSubjects.length ? {} : this.getAllSubjects()
-    ]);
-    this.editableDataSource = _.cloneDeep(this.allUsers);
-    this.subjectOptions = this.allSubjects.map(subject => ({
-      value: subject.subjectId,
-      label: subject.subjectName
-    }));
+    this.initSubjectOptions();
+    this.fetchUsers();
+    this.fetchUserCount();
   },
   computed: {
     ...mapState({
-      allSubjects: state => state.subjects.allSubjects
+      allSubjects: state => state.subjects.allSubjects,
+      users: state => state.users,
+      usersCount: state => state.usersCount
     }),
     allUsers: {
       get() {
@@ -131,38 +148,38 @@ export default {
           scopedSlots: { customRender: "no" }
         },
         {
-          title: "Unique ID",
+          slots: { title: "userIdTitle" },
           dataIndex: "userId",
+          key: "userId",
           scopedSlots: { customRender: "uniqueId" },
-          sorter: (a, b) => a.userId - b.userId
+          sorter: true
         },
         {
-          title: "Username",
+          slots: { title: "usernameTitle" },
           dataIndex: "username",
+          key: "username",
           scopedSlots: { customRender: "username" },
-          sorter: (a, b) => a.username.localeCompare(b.username)
+          sorter: true
         },
         {
           title: "Privilege",
           dataIndex: "role",
+          key: "role",
           scopedSlots: { customRender: "privilege" },
-          sorter: (a, b) => {
-            if (a.role == 3) return 1;
-            if (b.role == 3) return -1;
-            return a.role - b.role;
-          }
+          sorter: true
         },
         {
           title: "Subject",
           dataIndex: "subjectId",
+          key: "subjectId",
           scopedSlots: { customRender: "subject" },
-          sorter: (a, b, order) => {
-            if (!a.subjectId) return 1;
-            if (!b.subjectId) return -1;
-            return a.subjectId - b.subjectId;
-          }
+          sorter: true
+        },
+        {
+          title: "Actions",
+          scopedSlots: { customRender: "actions" }
         }
-      ];
+      ].filter(c => (!this.isEditing ? c.title != "Actions" : true));
     },
     operationColWidth() {
       return this.isEditing ? 280 : 100;
@@ -172,11 +189,21 @@ export default {
     ...mapActions({
       getAllUsers: "getAllUsers",
       getAllSubjects: "subjects/getAllSubjects",
-      updateUsersRole: "updateUsersRole"
+      updateUsersRole: "updateUsersRole",
+      updateUserRole: "updateUserRole",
+      getUsers: "getUsers",
+      getUsersCount: "getUsersCount"
     }),
     ...mapMutations({
       setAllUsers: "setAllUsers"
     }),
+    async initSubjectOptions() {
+      this.allSubjects.length ? {} : await this.getAllSubjects();
+      this.subjectOptions = this.allSubjects.map(subject => ({
+        value: subject.subjectId,
+        label: subject.subjectName
+      }));
+    },
     getUserRoleText(r) {
       let role = "";
       switch (r) {
@@ -201,50 +228,52 @@ export default {
       return this.allSubjects.find(subj => subj.subjectId == subjectId)
         ?.subjectName;
     },
+    async fetchUsers() {
+      await this.getUsers({
+        username: this.filteredUsername,
+        userId: this.filteredUserId,
+        sortKey: this.sortKey ?? "userId",
+        sortOrder: this.sortOrder ?? "asc",
+        perPage: this.pagination.pageSize,
+        currentPage: this.pagination.current
+      });
+      this.editableDataSource = _.cloneDeep(this.users);
+    },
+    async fetchUserCount() {
+      this.pagination.total = await this.getUsersCount({
+        username: this.filteredUsername,
+        userId: this.filteredUserId
+      });
+    },
+    async fetchFilteredData() {
+      this.pagination.current = 1;
+      this.fetchUsers();
+      this.fetchUserCount();
+    },
     handleTableChange(pagination, filters, sorter) {
+      if (sorter.order) {
+        this.sortOrder = sorter.order == "descend" ? "desc" : "asc";
+        this.sortKey = sorter.columnKey;
+      } else {
+        this.sortOrder = "asc";
+        this.sortKey = "userId";
+      }
       const pager = { ...this.pagination };
       pager.current = pagination.current;
       this.pagination = pager;
+      this.fetchUsers();
     },
     handleRoleChange(user, selectedRole) {
       if ([0, 1, 2].includes(selectedRole)) user.subjectId = 1;
       else user.subjectId = null;
     },
     handleResetData() {
-      this.editableDataSource = _.cloneDeep(this.allUsers);
+      this.editableDataSource = _.cloneDeep(this.users);
     },
-    async handleSave() {
-      let duplicatedLeadersOfASubject = duplicates(
-        count(
-          this.editableDataSource.filter(u => u.role == 1).map(u => u.subjectId)
-        )
-      );
-      if (duplicatedLeadersOfASubject.length)
-        this.$notification.error({
-          message: `Subject ${this.getUserSubject(
-            duplicatedLeadersOfASubject[0]
-          )} cannot have more than 1 leader!`
-        });
-      else {
-        let updatedUsers = this.editableDataSource.filter(
-          x =>
-            this.allUsers.findIndex(
-              user =>
-                user.userId == x.userId &&
-                (user.role != x.role || user.subjectId != x.subjectId)
-            ) >= 0
-        );
-        if (updatedUsers.length) {
-          await this.updateUsersRole({ users: updatedUsers });
-          this.allUsers = _.cloneDeep(this.editableDataSource);
-          this.$notification.success({
-            message: "Updated successfully!"
-          });
-        } else
-          this.$notification.info({
-            message: "Nothing to update!"
-          });
-      }
+    async handleSave(user) {
+      let res = await this.updateUserRole({ user: user });
+      this.$notification.info({ message: res });
+      if (res == "Updated successfully!") this.fetchUsers();
     }
   }
 };
