@@ -115,7 +115,16 @@ const getUsers = async (req, res) => {
     req.headers.authorization.length
   );
   let reqUser = jwt.verify(token, jwtSecret);
-  let { username, userId, sortKey, sortOrder, perPage, currentPage } = req.body;
+  let {
+    username,
+    userId,
+    sortKey,
+    sortOrder,
+    perPage,
+    currentPage,
+    role,
+    subjectId,
+  } = req.body;
 
   let query = knex("accounts").select(
     "userId",
@@ -127,6 +136,8 @@ const getUsers = async (req, res) => {
   if (sortOrder && sortKey) query = query.orderBy(sortKey, sortOrder);
 
   if (username) query = query.where("username", "ilike", `%${username}%`);
+  if ([0, 1, 2, 3, 4].includes(role)) query = query.where("role", "=", role);
+  if (subjectId) query = query.where("subjectId", "=", subjectId);
   if (userId) query = query.whereRaw(`"userId"::varchar like '%${userId}%'`);
   if (perPage && currentPage)
     query = query.paginate({ perPage: perPage, currentPage: currentPage });
@@ -145,13 +156,15 @@ const getUsersCount = async (req, res) => {
     7,
     req.headers.authorization.length
   );
-  let { username, userId } = req.body;
+  let { username, userId, role, subjectId } = req.body;
 
   let reqUser = jwt.verify(token, jwtSecret);
   let query = knex("accounts").count();
 
   if (username) query = query.where("username", "ilike", `%${username}%`);
   if (userId) query = query.whereRaw(`"userId"::varchar like '%${userId}%'`);
+  if ([0, 1, 2, 3, 4].includes(role)) query = query.where("role", "=", role);
+  if (subjectId) query = query.where("subjectId", "=", subjectId);
   let count = await query;
 
   res.json(parseInt(count[0].count));

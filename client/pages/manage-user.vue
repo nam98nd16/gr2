@@ -110,6 +110,8 @@ export default {
       sortOrder: "asc",
       filteredUsername: "",
       filteredUserId: "",
+      role: null,
+      subjectId: null,
       search: _.debounce(() => {
         this.fetchFilteredData();
       }, 300)
@@ -166,14 +168,24 @@ export default {
           dataIndex: "role",
           key: "role",
           scopedSlots: { customRender: "privilege" },
-          sorter: true
+          sorter: true,
+          filterMultiple: false,
+          filters: this.roleOptions.map(r => ({
+            text: r.label,
+            value: r.value
+          }))
         },
         {
           title: "Subject",
           dataIndex: "subjectId",
           key: "subjectId",
           scopedSlots: { customRender: "subject" },
-          sorter: true
+          sorter: true,
+          filterMultiple: false,
+          filters: this.subjectOptions.map(r => ({
+            text: r.label,
+            value: r.value
+          }))
         },
         {
           title: "Actions",
@@ -234,6 +246,8 @@ export default {
         userId: this.filteredUserId,
         sortKey: this.sortKey ?? "userId",
         sortOrder: this.sortOrder ?? "asc",
+        role: this.role,
+        subjectId: this.subjectId,
         perPage: this.pagination.pageSize,
         currentPage: this.pagination.current
       });
@@ -242,7 +256,9 @@ export default {
     async fetchUserCount() {
       this.pagination.total = await this.getUsersCount({
         username: this.filteredUsername,
-        userId: this.filteredUserId
+        userId: this.filteredUserId,
+        role: this.role,
+        subjectId: this.subjectId
       });
     },
     async fetchFilteredData() {
@@ -257,6 +273,10 @@ export default {
       } else {
         this.sortOrder = "asc";
         this.sortKey = "userId";
+      }
+      if (!_.isEmpty(filters)) {
+        for (let columnKey in filters) this[columnKey] = filters[columnKey][0];
+        this.fetchUserCount();
       }
       const pager = { ...this.pagination };
       pager.current = pagination.current;
