@@ -56,7 +56,7 @@
     <a-modal
       v-model="modalVisible"
       centered
-      :title="'Add new subject'"
+      :title="isEditingSubject ? 'Update subject' : 'Add new subject'"
       :okButtonProps="{ props: { disabled: isAddingSubject } }"
       @ok="handleSave"
       @cancel="handleCancel"
