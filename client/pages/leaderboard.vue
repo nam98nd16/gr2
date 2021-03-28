@@ -36,7 +36,9 @@
         >
       </template>
       <template slot="rating" slot-scope="text, record, index">
-        <span :style="getStyle(index)">{{ text.toFixed(2) }}</span>
+        <span :style="getStyle(index)"
+          ><i class="fas fa-medal mr-1"></i>{{ text.toFixed(2) }}</span
+        >
       </template>
     </a-table>
   </div>
