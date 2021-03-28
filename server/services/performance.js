@@ -84,7 +84,9 @@ const getTopRatings = async (req, res) => {
   let { subjectId } = req.query;
 
   let topRatings = await knex("ratings")
-    .where("subjectId", "=", subjectId)
+    .select("username", "rating")
+    .join("accounts", "ratings.userId", "=", "accounts.userId")
+    .where("ratings.subjectId", "=", subjectId)
     .orderBy("rating", "desc")
     .limit(10);
 

@@ -29,7 +29,7 @@ export const actions = {
     return res;
   },
   async getTopRatings({ commit }, subjectId) {
-    const res = await this.$axios.post(`/performance/top-ratings?subjectId=${subjectId}`);
+    const res = await this.$axios.get(`/performance/top-ratings?subjectId=${subjectId}`);
     commit("setTopRatings", res.data);
     return res;
   }
