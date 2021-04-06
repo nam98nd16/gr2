@@ -278,6 +278,161 @@ const getAllQuestions = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
+const getViewableQuestions = async (req, res) => {
+  let {
+    keyword,
+    wfReviewFiltered,
+    wfAssigneeFiltered,
+    reportedFiltered,
+    myQuestionsFiltered,
+    perPage,
+    currentPage,
+  } = req.body;
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let isNormalUser = () => {
+    return reqUser.role === 3;
+  };
+  let isAdmin = () => {
+    return reqUser.role === 0;
+  };
+  let isSubjectExpert = () => {
+    return reqUser.role === 2;
+  };
+  let isSubjectLeader = () => {
+    return reqUser.role === 1;
+  };
+  let isPreliminaryReviewer = () => {
+    return reqUser.role === 4;
+  };
+
+  let query = knex.column().select().from("questions");
+
+  if (keyword) query = query.where("questionString", "ilike", `%${keyword}%`);
+
+  if (
+    !wfReviewFiltered &&
+    !wfAssigneeFiltered &&
+    !reportedFiltered &&
+    !myQuestionsFiltered
+  ) {
+    if (isNormalUser()) query = query.whereRaw("1=0");
+    else if (!isAdmin())
+      query = query.where({
+        passedFinalReview: 1,
+        subjectId: reqUser.subjectId,
+      });
+  } else {
+    if (wfReviewFiltered) {
+      if (isPreliminaryReviewer())
+        query = query.where({ passedPreliminaryReview: 0, hasBeenRejected: 0 });
+      else if (isSubjectExpert() || isSubjectLeader() || isAdmin()) {
+        let peerReviews = await knex("peer_review_results").where(
+          "reviewerId",
+          "=",
+          reqUser.userId
+        );
+        console.log("p", peerReviews);
+        if (isSubjectExpert())
+          query = query
+            .where({
+              subjectId: reqUser.subjectId,
+              hasBeenAssigned: 1,
+              passedPeerReview: 0,
+              hasBeenRejected: 0,
+            })
+            .whereIn(
+              "questionId",
+              peerReviews
+                .filter((r) => r.hasApproved === "0" && r.hasRejected === "0")
+                .map((q) => parseInt(q.questionId))
+            );
+        else if (isAdmin() || isSubjectLeader())
+          query = query
+            .where(function () {
+              this.where({ hasBeenAssigned: 1, hasBeenRejected: 0 }).whereIn(
+                "questionId",
+                peerReviews
+                  .filter((r) => r.hasApproved === "0" && r.hasRejected === "0")
+                  .map((q) => parseInt(q.questionId))
+              );
+            })
+            .orWhere({
+              subjectId: reqUser.subjectId,
+              passedPreliminaryReview: 1,
+              passedPeerReview: 1,
+              passedFinalReview: 0,
+              hasBeenRejected: 0,
+            });
+      }
+    }
+    if (reportedFiltered)
+      query = query.where({ hasBeenReported: 1, subjectId: reqUser.subjectId });
+    if (wfAssigneeFiltered)
+      query = query.where({
+        passedPreliminaryReview: 1,
+        hasBeenAssigned: 0,
+        subjectId: reqUser.subjectId,
+        hasBeenRejected: 0,
+      });
+    if (myQuestionsFiltered) query = query.where({ creatorId: reqUser.userId });
+  }
+
+  if (perPage && currentPage)
+    query = query.paginate({ perPage: perPage, currentPage: currentPage });
+
+  questions = await query;
+  if (perPage && currentPage) questions = questions.data;
+
+  let peerReviewResults = await knex("peer_review_results").whereIn(
+    "questionId",
+    questions.map((q) => q.questionId)
+  );
+
+  let answers = await knex("answers").whereIn(
+    "questionId",
+    questions.map((q) => q.questionId)
+  );
+
+  let reports = await knex
+    .column()
+    .select("reporterId", "reason", "username", "questionId")
+    .from("reports")
+    .leftJoin("accounts", "reports.reporterId", "accounts.userId")
+    .whereIn(
+      "questionId",
+      questions.map((q) => q.questionId)
+    );
+
+  questions.forEach((question) => {
+    question.answers = answers
+      .filter((ans) => ans.questionId == question.questionId)
+      .map((a) => ({
+        answerId: a.answerId,
+        answerString: a.answerString,
+        isCorrect: a.answerId == question.answerId,
+      }));
+
+    question.assignees = peerReviewResults
+      .filter((re) => re.questionId == question.questionId)
+      .map((a) => ({ ...a, questionId: undefined }));
+
+    question.reports = reports
+      .filter((re) => re.questionId == question.questionId)
+      .map((r) => ({ ...r, questionId: undefined }));
+  });
+
+  res.json(questions);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
 const approveQuestion = async (req, res) => {
   let {
     isForPreliminaryReview,
@@ -424,4 +579,5 @@ module.exports = {
   rejectQuestion,
   getAvailableAssignees,
   setAssignees,
+  getViewableQuestions,
 };
