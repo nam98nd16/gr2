@@ -5,7 +5,7 @@
       placeholder="Search for questions"
       style="width: 400px"
       v-model="filterText"
-      @search="onSearch"
+      @change="search"
     />
 
     <a-button type="primary" @click="modalVisible = true"
@@ -119,7 +119,6 @@
           { value: 9, label: '9' }
         ]"
         v-model="difficultyLevel"
-        @change="handleChange"
       />
 
       <br />
@@ -162,25 +161,26 @@
     <br /><br />
 
     <Question
-      v-for="question in filteredQuestions"
+      v-for="question in viewableQuestions"
       :key="question.questionId"
       :question="question"
-      @approve="getAllQuestions"
-      @assign="getAllQuestions"
-      @reject="getAllQuestions"
-      @delete="getAllQuestions"
-      @ignore="getAllQuestions"
+      @approve="fetchViewableQuestions"
+      @assign="fetchViewableQuestions"
+      @reject="fetchViewableQuestions"
+      @delete="fetchViewableQuestions"
+      @ignore="fetchViewableQuestions"
       @update="handleUpdate"
       class="mt-2"
     />
 
-    <!-- <a-pagination
+    <a-pagination
       class="mt-2"
       style="float: right"
       v-model="currentPage"
-      :total="50"
-      show-less-items
-    /> -->
+      :pageSize="perPage"
+      showLessItems
+      :total="viewableQuestionsCount"
+    />
   </div>
 </template>
 
@@ -198,6 +198,7 @@ export default {
       allowedTime: 30,
       difficultyLevel: 1,
       currentPage: 1,
+      perPage: 5,
       answer1: {
         string: "",
         isCorrect: true
@@ -222,13 +223,17 @@ export default {
       wfAssigneeFiltered: false,
       myQuestionsFiltered: false,
       questionToUpdate: null,
-      filterText: ""
+      filterText: "",
+      search: _.debounce(() => {
+        this.currentPage = 1;
+        this.fetchViewableQuestions();
+      }, 300)
     };
   },
   async mounted() {
     await Promise.all([
       this.allSubjects.length ? undefined : this.getAllSubjects(),
-      this.getAllQuestions(),
+      this.fetchViewableQuestions(),
       this.getAvailableAssignees()
     ]);
     this.subjects = this.allSubjects.map(subject => ({
@@ -243,6 +248,8 @@ export default {
     ...mapState({
       allSubjects: state => state.subjects.allSubjects,
       allQuestions: state => state.questions.allQuestions,
+      viewableQuestions: state => state.questions.viewableQuestions,
+      viewableQuestionsCount: state => state.questions.viewableQuestionsCount,
       availableAssignees: state => state.questions.availableAssignees
     }),
     isNormalUser() {
@@ -259,92 +266,11 @@ export default {
     },
     isPreliminaryReviewer() {
       return this.currentUser.role === 4;
-    },
-    filteredQuestions() {
-      let filteredQuestions = this.allQuestions.filter(question => {
-        if (
-          !question.questionString
-            .toUpperCase()
-            .includes(this.filterText.toUpperCase())
-        )
-          return false;
-        if (
-          !this.wfReviewFiltered &&
-          !this.wfAssigneeFiltered &&
-          !this.reportedFiltered &&
-          !this.myQuestionsFiltered
-        ) {
-          if (this.isNormalUser) return false;
-          else if (this.isAdmin) return true;
-          else
-            return (
-              question.passedFinalReview === "1" &&
-              question.subjectId == this.currentUser.subjectId
-            );
-        }
-        let isRenderedWfReview = true;
-        if (this.wfReviewFiltered) {
-          if (this.isPreliminaryReviewer)
-            isRenderedWfReview =
-              question.passedPreliminaryReview === "0" &&
-              question.hasBeenRejected === "0";
-          else if (this.isSubjectExpert) {
-            let assigneeIndex = question.assignees?.findIndex(
-              assignee => assignee.reviewerId == this.currentUser.userId
-            );
-            let isAuthorizedForPeerReview =
-              assigneeIndex >= 0 &&
-              question.assignees[assigneeIndex].hasApproved === "0";
-            let hasRejected =
-              assigneeIndex >= 0 &&
-              question.assignees[assigneeIndex].hasRejected === "1";
-            isRenderedWfReview =
-              question.hasBeenAssigned === "1" &&
-              isAuthorizedForPeerReview &&
-              !hasRejected &&
-              question.passedPeerReview === "0" &&
-              question.hasBeenRejected === "0";
-          } else if (this.isSubjectLeader || this.isAdmin) {
-            let assigneeIndex = question.assignees?.findIndex(
-              assignee => assignee.reviewerId == this.currentUser.userId
-            );
-            let isAuthorizedForPeerReview =
-              assigneeIndex >= 0 &&
-              question.assignees[assigneeIndex].hasApproved === "0";
-            isRenderedWfReview =
-              ((question.subjectId == this.currentUser.subjectId &&
-                question.passedPreliminaryReview === "1" &&
-                question.passedPeerReview === "1" &&
-                question.passedFinalReview === "0") ||
-                (question.hasBeenAssigned === "1" &&
-                  isAuthorizedForPeerReview)) &&
-              question.hasBeenRejected === "0";
-          }
-        }
-        let isRenderedReported = true;
-        if (this.reportedFiltered)
-          isRenderedReported =
-            question.hasBeenReported === "1" &&
-            question.subjectId == this.currentUser.subjectId;
-        let isRenderedWfAssignee = true;
-        if (this.wfAssigneeFiltered)
-          isRenderedWfAssignee =
-            question.passedPreliminaryReview === "1" &&
-            question.hasBeenAssigned === "0" &&
-            question.subjectId == this.currentUser.subjectId &&
-            question.hasBeenRejected === "0";
-        let isRenderedMyQuestions = true;
-        if (this.myQuestionsFiltered)
-          isRenderedMyQuestions = question.creatorId == this.currentUser.userId;
-        return (
-          isRenderedWfReview &&
-          isRenderedReported &&
-          isRenderedWfAssignee &&
-          isRenderedMyQuestions
-        );
-      });
-      console.log("filtered", filteredQuestions);
-      return filteredQuestions;
+    }
+  },
+  watch: {
+    currentPage(newVal) {
+      this.fetchViewableQuestions();
     }
   },
   methods: {
@@ -353,9 +279,23 @@ export default {
       proposeQuestion: "questions/proposeQuestion",
       updateQuestion: "questions/updateQuestion",
       getAllQuestions: "questions/getAllQuestions",
+      getViewableQuestions: "questions/getViewableQuestions",
+      getViewableQuestionsCount: "questions/getViewableQuestionsCount",
       getAvailableAssignees: "questions/getAvailableAssignees"
     }),
-    onSearch() {},
+    fetchViewableQuestions() {
+      let payload = {
+        keyword: this.filterText,
+        wfReviewFiltered: this.wfReviewFiltered,
+        wfAssigneeFiltered: this.wfAssigneeFiltered,
+        reportedFiltered: this.reportedFiltered,
+        myQuestionsFiltered: this.myQuestionsFiltered,
+        perPage: this.perPage,
+        currentPage: this.currentPage
+      };
+      this.getViewableQuestions(payload);
+      this.getViewableQuestionsCount(payload);
+    },
     async handleProposeQuestion() {
       if (
         !this.selectedTopic ||
@@ -392,10 +332,13 @@ export default {
           message: "Successfully proposed the question!"
         });
       }
-      this.getAllQuestions();
+      this.fetchViewableQuestions();
       this.modalVisible = false;
     },
-    handleChange() {},
+    handleChange() {
+      this.currentPage = 1;
+      this.fetchViewableQuestions();
+    },
     handleCorrectAnswerChange(answer, checked) {
       if (checked) {
         let answersTitle = ["answer1", "answer2", "answer3", "answer4"];

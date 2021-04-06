@@ -294,99 +294,21 @@ const getViewableQuestions = async (req, res) => {
   );
   let reqUser = jwt.verify(token, jwtSecret);
 
-  let isNormalUser = () => {
-    return reqUser.role === 3;
-  };
-  let isAdmin = () => {
-    return reqUser.role === 0;
-  };
-  let isSubjectExpert = () => {
-    return reqUser.role === 2;
-  };
-  let isSubjectLeader = () => {
-    return reqUser.role === 1;
-  };
-  let isPreliminaryReviewer = () => {
-    return reqUser.role === 4;
-  };
-
   let query = knex.column().select().from("questions");
 
-  if (keyword) query = query.where("questionString", "ilike", `%${keyword}%`);
-
-  if (
-    !wfReviewFiltered &&
-    !wfAssigneeFiltered &&
-    !reportedFiltered &&
-    !myQuestionsFiltered
-  ) {
-    if (isNormalUser()) query = query.whereRaw("1=0");
-    else if (!isAdmin())
-      query = query.where({
-        passedFinalReview: 1,
-        subjectId: reqUser.subjectId,
-      });
-  } else {
-    if (wfReviewFiltered) {
-      if (isPreliminaryReviewer())
-        query = query.where({ passedPreliminaryReview: 0, hasBeenRejected: 0 });
-      else if (isSubjectExpert() || isSubjectLeader() || isAdmin()) {
-        let peerReviews = await knex("peer_review_results").where(
-          "reviewerId",
-          "=",
-          reqUser.userId
-        );
-        console.log("p", peerReviews);
-        if (isSubjectExpert())
-          query = query
-            .where({
-              subjectId: reqUser.subjectId,
-              hasBeenAssigned: 1,
-              passedPeerReview: 0,
-              hasBeenRejected: 0,
-            })
-            .whereIn(
-              "questionId",
-              peerReviews
-                .filter((r) => r.hasApproved === "0" && r.hasRejected === "0")
-                .map((q) => parseInt(q.questionId))
-            );
-        else if (isAdmin() || isSubjectLeader())
-          query = query
-            .where(function () {
-              this.where({ hasBeenAssigned: 1, hasBeenRejected: 0 }).whereIn(
-                "questionId",
-                peerReviews
-                  .filter((r) => r.hasApproved === "0" && r.hasRejected === "0")
-                  .map((q) => parseInt(q.questionId))
-              );
-            })
-            .orWhere({
-              subjectId: reqUser.subjectId,
-              passedPreliminaryReview: 1,
-              passedPeerReview: 1,
-              passedFinalReview: 0,
-              hasBeenRejected: 0,
-            });
-      }
-    }
-    if (reportedFiltered)
-      query = query.where({ hasBeenReported: 1, subjectId: reqUser.subjectId });
-    if (wfAssigneeFiltered)
-      query = query.where({
-        passedPreliminaryReview: 1,
-        hasBeenAssigned: 0,
-        subjectId: reqUser.subjectId,
-        hasBeenRejected: 0,
-      });
-    if (myQuestionsFiltered) query = query.where({ creatorId: reqUser.userId });
-  }
-
-  if (perPage && currentPage)
-    query = query.paginate({ perPage: perPage, currentPage: currentPage });
+  query = await getUpdatedQuery(
+    query,
+    keyword,
+    wfReviewFiltered,
+    wfAssigneeFiltered,
+    reportedFiltered,
+    myQuestionsFiltered,
+    reqUser,
+    perPage,
+    currentPage
+  );
 
   questions = await query;
-  if (perPage && currentPage) questions = questions.data;
 
   let peerReviewResults = await knex("peer_review_results").whereIn(
     "questionId",
@@ -427,6 +349,41 @@ const getViewableQuestions = async (req, res) => {
   });
 
   res.json(questions);
+};
+
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getViewableQuestionsCount = async (req, res) => {
+  let {
+    keyword,
+    wfReviewFiltered,
+    wfAssigneeFiltered,
+    reportedFiltered,
+    myQuestionsFiltered,
+  } = req.body;
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let query = knex("questions").count();
+
+  query = await getUpdatedQuery(
+    query,
+    keyword,
+    wfReviewFiltered,
+    wfAssigneeFiltered,
+    reportedFiltered,
+    myQuestionsFiltered,
+    reqUser
+  );
+
+  let count = await query;
+
+  res.json(parseInt(count[0].count));
 };
 
 /**
@@ -568,6 +525,110 @@ const setAssignees = async (req, res) => {
   res.json("success");
 };
 
+let getUpdatedQuery = async (
+  query,
+  keyword,
+  wfReviewFiltered,
+  wfAssigneeFiltered,
+  reportedFiltered,
+  myQuestionsFiltered,
+  reqUser,
+  perPage,
+  currentPage
+) => {
+  let isNormalUser = () => {
+    return reqUser.role === 3;
+  };
+  let isAdmin = () => {
+    return reqUser.role === 0;
+  };
+  let isSubjectExpert = () => {
+    return reqUser.role === 2;
+  };
+  let isSubjectLeader = () => {
+    return reqUser.role === 1;
+  };
+  let isPreliminaryReviewer = () => {
+    return reqUser.role === 4;
+  };
+
+  if (keyword) query = query.where("questionString", "ilike", `%${keyword}%`);
+
+  if (
+    !wfReviewFiltered &&
+    !wfAssigneeFiltered &&
+    !reportedFiltered &&
+    !myQuestionsFiltered
+  ) {
+    if (isNormalUser()) query = query.whereRaw("1=0");
+    else if (!isAdmin())
+      query = query.where({
+        passedFinalReview: 1,
+        subjectId: reqUser.subjectId,
+      });
+  } else {
+    if (wfReviewFiltered) {
+      if (isPreliminaryReviewer())
+        query = query.where({ passedPreliminaryReview: 0, hasBeenRejected: 0 });
+      else if (isSubjectExpert() || isSubjectLeader() || isAdmin()) {
+        let peerReviews = await knex("peer_review_results").where(
+          "reviewerId",
+          "=",
+          reqUser.userId
+        );
+        if (isSubjectExpert())
+          query = query
+            .where({
+              subjectId: reqUser.subjectId,
+              hasBeenAssigned: 1,
+              passedPeerReview: 0,
+              hasBeenRejected: 0,
+            })
+            .whereIn(
+              "questionId",
+              peerReviews
+                .filter((r) => r.hasApproved === "0" && r.hasRejected === "0")
+                .map((q) => parseInt(q.questionId))
+            );
+        else if (isAdmin() || isSubjectLeader())
+          query = query
+            .where(function () {
+              this.where({ hasBeenAssigned: 1, hasBeenRejected: 0 }).whereIn(
+                "questionId",
+                peerReviews
+                  .filter((r) => r.hasApproved === "0" && r.hasRejected === "0")
+                  .map((q) => parseInt(q.questionId))
+              );
+            })
+            .orWhere({
+              subjectId: reqUser.subjectId,
+              passedPreliminaryReview: 1,
+              passedPeerReview: 1,
+              passedFinalReview: 0,
+              hasBeenRejected: 0,
+            });
+      }
+    }
+    if (reportedFiltered)
+      query = query.where({ hasBeenReported: 1, subjectId: reqUser.subjectId });
+    if (wfAssigneeFiltered)
+      query = query.where({
+        passedPreliminaryReview: 1,
+        hasBeenAssigned: 0,
+        subjectId: reqUser.subjectId,
+        hasBeenRejected: 0,
+      });
+    if (myQuestionsFiltered) query = query.where({ creatorId: reqUser.userId });
+  }
+  if (perPage && currentPage) {
+    query = query.paginate({ perPage: perPage, currentPage: currentPage });
+    query = await query;
+    query = query.data;
+  }
+
+  return query;
+};
+
 module.exports = {
   proposeQuestion,
   updateQuestion,
@@ -580,4 +641,5 @@ module.exports = {
   getAvailableAssignees,
   setAssignees,
   getViewableQuestions,
+  getViewableQuestionsCount,
 };

@@ -1,6 +1,8 @@
 export const state = () => ({
   allQuestions: [],
-  availableAssignees: []
+  availableAssignees: [],
+  viewableQuestions: [],
+  viewableQuestionsCount: 0
 });
 
 export const mutations = {
@@ -9,7 +11,13 @@ export const mutations = {
   },
   setAvailableAssignees(state, assignees) {
     state.availableAssignees = assignees;
-  }
+  },
+  setViewableQuestions(state, questions) {
+    state.viewableQuestions = questions;
+  },
+  setViewableQuestionsCount(state, count) {
+    state.viewableQuestionsCount = count;
+  },
 };
 
 export const actions = {
@@ -38,6 +46,16 @@ export const actions = {
   async getAllQuestions({ commit }) {
     const res = await this.$axios.get(`/questions/all`);
     commit("setAllQuestions", res.data);
+    return res;
+  },
+  async getViewableQuestions({ commit }, payload) {
+    const res = await this.$axios.post(`/questions/all-viewable`, payload);
+    commit("setViewableQuestions", res.data);
+    return res;
+  },
+  async getViewableQuestionsCount({ commit }, payload) {
+    const res = await this.$axios.post(`/questions/all-viewable/count`, payload);
+    commit("setViewableQuestionsCount", res.data);
     return res;
   },
   async approveQuestions({ commit }, payload) {
