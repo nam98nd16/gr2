@@ -231,6 +231,8 @@ export default {
     };
   },
   async mounted() {
+    if (this.isNormalUser) this.myQuestionsFiltered = true;
+    else if (this.isPreliminaryReviewer) this.wfReviewFiltered = true;
     await Promise.all([
       this.allSubjects.length ? undefined : this.getAllSubjects(),
       this.fetchViewableQuestions(),
@@ -241,8 +243,6 @@ export default {
       label: subject.subjectName
     }));
     this.subjects.unshift({ value: "", label: "Select a topic" });
-    if (this.isNormalUser) this.myQuestionsFiltered = true;
-    else if (this.isPreliminaryReviewer) this.wfReviewFiltered = true;
   },
   computed: {
     ...mapState({
