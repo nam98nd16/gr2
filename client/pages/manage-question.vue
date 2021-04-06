@@ -167,7 +167,7 @@
       @approve="fetchViewableQuestions"
       @assign="fetchViewableQuestions"
       @reject="fetchViewableQuestions"
-      @delete="fetchViewableQuestions"
+      @delete="fetchViewableQuestions(true)"
       @ignore="fetchViewableQuestions"
       @update="handleUpdate"
       class="mt-2"
@@ -283,7 +283,7 @@ export default {
       getViewableQuestionsCount: "questions/getViewableQuestionsCount",
       getAvailableAssignees: "questions/getAvailableAssignees"
     }),
-    fetchViewableQuestions() {
+    async fetchViewableQuestions(afterDeletion) {
       let payload = {
         keyword: this.filterText,
         wfReviewFiltered: this.wfReviewFiltered,
@@ -294,7 +294,13 @@ export default {
         currentPage: this.currentPage
       };
       this.getViewableQuestions(payload);
-      this.getViewableQuestionsCount(payload);
+      await this.getViewableQuestionsCount(payload);
+      if (
+        this.viewableQuestionsCount % 5 == 0 &&
+        afterDeletion &&
+        this.currentPage > 1
+      )
+        this.currentPage--;
     },
     async handleProposeQuestion() {
       if (
