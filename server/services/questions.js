@@ -609,16 +609,20 @@ let getUpdatedQuery = async (
             });
       }
     }
-    if (reportedFiltered)
+    if (reportedFiltered) {
       query = query.where({ hasBeenReported: 1, subjectId: reqUser.subjectId });
-    if (wfAssigneeFiltered)
+    }
+    if (wfAssigneeFiltered) {
       query = query.where({
         passedPreliminaryReview: 1,
         hasBeenAssigned: 0,
         subjectId: reqUser.subjectId,
         hasBeenRejected: 0,
       });
-    if (myQuestionsFiltered) query = query.where({ creatorId: reqUser.userId });
+    }
+    if (myQuestionsFiltered) {
+      query = query.where({ creatorId: reqUser.userId });
+    }
   }
   if (perPage && currentPage) {
     query = query.paginate({ perPage: perPage, currentPage: currentPage });

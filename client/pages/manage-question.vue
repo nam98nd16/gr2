@@ -137,25 +137,28 @@
       v-if="!isNormalUser"
       class="mt-2"
       v-model="wfReviewFiltered"
-      @change="handleChange"
+      @change="e => handleChange(e, 'wfReviewFiltered')"
     >
       Questions waiting for my review
     </a-checkable-tag>
     <a-checkable-tag
       v-if="isAdmin || isSubjectLeader"
       v-model="reportedFiltered"
-      @change="handleChange"
+      @change="e => handleChange(e, 'reportedFiltered')"
     >
       Reported questions
     </a-checkable-tag>
     <a-checkable-tag
       v-if="isSubjectLeader || isAdmin"
       v-model="wfAssigneeFiltered"
-      @change="handleChange"
+      @change="e => handleChange(e, 'wfAssigneeFiltered')"
     >
       Questions waiting for assignee
     </a-checkable-tag>
-    <a-checkable-tag v-model="myQuestionsFiltered" @change="handleChange">
+    <a-checkable-tag
+      v-model="myQuestionsFiltered"
+      @change="e => handleChange(e, 'myQuestionsFiltered')"
+    >
       My proposed questions
     </a-checkable-tag>
     <br /><br />
@@ -341,7 +344,21 @@ export default {
       this.fetchViewableQuestions();
       this.modalVisible = false;
     },
-    handleChange() {
+    handleChange(e, type) {
+      if (e) {
+        let excludedFilters = [
+          "wfReviewFiltered",
+          "reportedFiltered",
+          "wfAssigneeFiltered",
+          "myQuestionsFiltered"
+        ];
+        excludedFilters = excludedFilters.filter(e => e != type);
+
+        excludedFilters.forEach(e => {
+          this[e] = false;
+        });
+      }
+
       this.currentPage = 1;
       this.fetchViewableQuestions();
     },
