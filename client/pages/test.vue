@@ -24,12 +24,12 @@
           particular subject.
         </div>
         <div class="mt-2">
-          <span style="font-style: italic">Rated</span>: Answering timed
-          questions which are adaptively selected based on your current rating
-          of interested subject. Your rating will be changed depending on your
-          performance, specifically question difficulty and your current rating.
-          Suitable for those seeking to test their true level of knowledge about
-          a particular subject.
+          <span style="font-style: italic">Rated (adaptive)</span>: Answering
+          timed questions which are adaptively selected based on your current
+          rating of interested subject. Your rating will be changed depending on
+          your performance, specifically question difficulty and your current
+          rating. Suitable for those seeking to test their true level of
+          knowledge about a particular subject.
         </div>
       </template>
       <i class="ml-1 far fa-question-circle"></i>
@@ -39,7 +39,7 @@
       <a-radio-button value="practice">
         Learning
       </a-radio-button>
-      <a-radio-button value="rated"> Rated </a-radio-button>
+      <a-radio-button value="rated"> Rated (adaptive) </a-radio-button>
     </a-radio-group>
 
     <br />

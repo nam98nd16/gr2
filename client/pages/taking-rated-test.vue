@@ -1,7 +1,10 @@
 <template>
   <div>
     <page-title :title="getCurrentSubjectName() + ' Rated Test'" />
-    <div v-if="currentRating" :class="hasSubmitted ? 'mb-4' : ''">
+    <div
+      v-if="currentRating !== null && currentRating !== undefined"
+      :class="hasSubmitted ? 'mb-4' : ''"
+    >
       {{ getCurrentSubjectName() }} knowledge rating:
       <i class="fas fa-medal" style="color: blue"></i>
       {{ currentRating.toFixed(2) }}
