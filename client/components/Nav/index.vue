@@ -83,7 +83,7 @@ export default {
   line-height: 0;
   text-align: center;
   text-transform: none;
-  vertical-align: 0em;
+  vertical-align: 0.1em;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
