@@ -115,7 +115,11 @@ export default {
           try {
             let res = await this.$axios.post("/accounts/login", payload);
             if (res.status == 200) {
-              if (this.rootScreen == "index" || !this.rootScreen)
+              if (
+                this.rootScreen == "index" ||
+                !this.rootScreen ||
+                this.rootScreen == "register"
+              )
                 this.$router.push("/");
               else this.$router.back();
 
