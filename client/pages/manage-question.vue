@@ -167,11 +167,11 @@
       v-for="question in viewableQuestions"
       :key="question.questionId"
       :question="question"
-      @approve="fetchViewableQuestions"
-      @assign="fetchViewableQuestions"
-      @reject="fetchViewableQuestions"
+      @approve="fetchViewableQuestions(true)"
+      @assign="fetchViewableQuestions(true)"
+      @reject="fetchViewableQuestions(true)"
       @delete="fetchViewableQuestions(true)"
-      @ignore="fetchViewableQuestions"
+      @ignore="fetchViewableQuestions(true)"
       @update="handleUpdate"
       class="mt-2"
     />
@@ -301,7 +301,8 @@ export default {
       if (
         this.viewableQuestionsCount % 5 == 0 &&
         afterDeletion &&
-        this.currentPage > 1
+        this.currentPage > 1 &&
+        this.currentPage == this.viewableQuestionsCount / 5 + 1
       )
         this.currentPage--;
     },
