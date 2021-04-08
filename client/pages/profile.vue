@@ -424,7 +424,7 @@ export default {
   border-radius: 50%;
   font-size: 24px;
   height: 168px;
-  line-height: 120px;
+  line-height: 168px;
   width: 168px !important;
   color: #fff;
   cursor: pointer;
