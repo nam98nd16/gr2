@@ -15,7 +15,7 @@ const searchFriends = async (req, res) => {
     7,
     req.headers.authorization.length
   );
-  let { keyword, perPage, currentPage } = req.body;
+  let { keyword, filteredOption, perPage, currentPage } = req.body;
 
   let reqUser = jwt.verify(token, jwtSecret);
 
@@ -23,20 +23,16 @@ const searchFriends = async (req, res) => {
     .select("username", "userId", "fullName", "role", "subjectId")
     .where("userId", "<>", reqUser.userId);
 
-  if (keyword)
-    query = query.where(function () {
-      this.where("username", "ilike", `%${keyword}%`).orWhere(
-        "fullName",
-        "ilike",
-        `%${keyword}%`
-      );
-    });
-  if (perPage && currentPage)
-    query = query.paginate({ perPage: perPage, currentPage: currentPage });
+  query = await getUpdatedQuery(
+    query,
+    keyword,
+    filteredOption,
+    reqUser,
+    perPage,
+    currentPage
+  );
 
   let users = await query;
-
-  if (perPage && currentPage) users = users.data;
 
   let possibleFriends = await knex("friends")
     .where(function () {
@@ -74,19 +70,71 @@ const getSearchedFriendsCount = async (req, res) => {
     7,
     req.headers.authorization.length
   );
-  let { keyword } = req.body;
+  let { keyword, filteredOption } = req.body;
 
   let reqUser = jwt.verify(token, jwtSecret);
 
   let query = knex("accounts").count();
 
+  query = await getUpdatedQuery(query, keyword, filteredOption, reqUser);
+  let count = await query;
+  res.json(parseInt(count[0].count));
+};
+
+let getUpdatedQuery = async (
+  query,
+  keyword,
+  filteredOption,
+  reqUser,
+  perPage,
+  currentPage
+) => {
   if (keyword)
     query = query
       .where("username", "ilike", `%${keyword}%`)
       .orWhere("fullName", "ilike", `%${keyword}%`);
 
-  let count = await query;
-  res.json(parseInt(count[0].count));
+  if (filteredOption == "onlyMyFriends") {
+    let friendships = await knex("friends")
+      .where(function () {
+        this.where({ userId1: reqUser.userId }).orWhere({
+          userId2: reqUser.userId,
+        });
+      })
+      .andWhere({ confirmed: 1 });
+    query = query.whereIn(
+      "userId",
+      friendships.map((f) =>
+        f.userId1 == reqUser.userId ? f.userId2 : f.userId1
+      )
+    );
+  } else if (filteredOption == "friendRequests") {
+    let friendships = await knex("friends")
+      .where(function () {
+        this.where({ userId1: reqUser.userId });
+      })
+      .andWhere({ confirmed: 0 });
+    query = query.whereIn(
+      "userId",
+      friendships.map((f) => f.userId2)
+    );
+  } else if (filteredOption == "requestedFriends") {
+    let friendships = await knex("friends")
+      .where(function () {
+        this.where({ userId2: reqUser.userId });
+      })
+      .andWhere({ confirmed: 0 });
+    query = query.whereIn(
+      "userId",
+      friendships.map((f) => f.userId1)
+    );
+  }
+  if (perPage && currentPage) {
+    query = query.paginate({ perPage: perPage, currentPage: currentPage });
+    query = await query;
+    query = query.data;
+  }
+  return query;
 };
 
 /**

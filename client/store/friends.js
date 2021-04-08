@@ -1,6 +1,6 @@
 export const state = () => ({
   searchedFriends: [],
-  searchedFriendsCount: []
+  searchedFriendsCount: 0
 });
 
 export const mutations = {
@@ -9,6 +9,10 @@ export const mutations = {
   },
   setSearchedFriendsCount(state, searchedFriendsCount) {
     state.searchedFriendsCount = searchedFriendsCount;
+  },
+  resetSearchedResults(state) {
+    state.searchedFriends = [];
+    state.searchedFriendsCount = 0;
   }
 };
 

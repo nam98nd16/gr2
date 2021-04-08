@@ -1,6 +1,6 @@
 <template>
   <div class="person-card">
-    <a-card class="mt-1" hoverable style="width: 300px">
+    <a-card class="mt-1" hoverable>
       <div class="username">
         {{ person.username }}
       </div>
@@ -33,11 +33,7 @@
         ><i class="fas fa-user-times mr-2"></i>Cancel Request</a-button
       >
       <a-popover v-else trigger="click" placement="right">
-        <a-button
-          slot="content"
-          ghost
-          type="primary"
-          @click="handleDeleteFriend"
+        <a-button slot="content" ghost type="danger" @click="handleUnfriend"
           ><i class="fas fa-user-times mr-2"></i>Unfriend</a-button
         >
         <a-button style="float: right" ghost type="primary"
@@ -77,6 +73,20 @@ export default {
     async handleDeleteFriend() {
       await this.deleteFriend(this.person.userId);
       this.$emit("deletedFriend");
+    },
+    handleUnfriend() {
+      this.$confirm({
+        title: `Are you sure you want to remove ${this.person.username} ${
+          this.person.fullName ? "(" + this.person.fullName + ")" : ""
+        } as your friend?`,
+        okText: "OK",
+        cancelText: "Cancel",
+        onOk: async () => {
+          await this.handleDeleteFriend();
+          this.$emit("delete");
+        },
+        onCancel() {}
+      });
     }
   }
 };
