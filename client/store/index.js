@@ -1,7 +1,7 @@
 export const state = () => ({
   allUsers: [],
   users: [],
-  usersCount: [],
+  usersCount: []
 });
 
 export const mutations = {
@@ -31,8 +31,8 @@ export const actions = {
     commit("setUsers", res.data);
     return res;
   },
-  async getUsersCount({ commit },payload) {
-    const res = await this.$axios.post(`/accounts/users/count`,payload);
+  async getUsersCount({ commit }, payload) {
+    const res = await this.$axios.post(`/accounts/users/count`, payload);
     commit("setUsersCount", res.data);
     return res.data;
   },
@@ -42,6 +42,10 @@ export const actions = {
   },
   async updateUserRole({ commit }, payload) {
     const res = await this.$axios.post(`/accounts/update-role`, payload);
+    return res.data;
+  },
+  async updateAvatar({ commit }, payload) {
+    const res = await this.$axios.post(`/accounts/update-avatar`, payload);
     return res.data;
   }
 };

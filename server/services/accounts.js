@@ -231,6 +231,14 @@ const updateAvatar = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
 
+  let preImagePath = await knex("accounts")
+    .where("userId", "=", reqUser.userId)
+    .select("avatarImagePath");
+
+  preImagePath = preImagePath[0].avatarImagePath;
+
+  fs.unlink(path.join(__dirname, `../public/${preImagePath}`), () => {});
+
   var form = new multiparty.Form();
 
   form.parse(req, function (err, fields, files) {
@@ -245,7 +253,9 @@ const updateAvatar = async (req, res) => {
       await knex("accounts")
         .where("userId", "=", reqUser.userId)
         .update({ avatarImagePath: pathToStore });
-      res.json(pathToStore);
+
+      let fullImgPath = `${process.env.baseURL}${pathToStore}`;
+      res.json(fullImgPath);
     });
   });
 };

@@ -2,6 +2,84 @@
   <a-spin :spinning="pageLoading">
     <page-title title="Profile" />
     <div v-if="currentUser" class="container">
+      <a-form>
+        <input
+          style="display: none"
+          ref="input"
+          type="file"
+          name="image"
+          accept="image/*"
+          @change="setImage"
+        />
+        <a-form-item :colon="false" v-bind="formItemLayout">
+          <span slot="label" style="display: none">
+            Final image
+          </span>
+          <a-popover
+            v-model="popoverVisible"
+            v-if="avatarURL"
+            placement="bottom"
+          >
+            <div class="p-2" slot="content">
+              <a-button type="primary" @click.prevent="showFileChooser">
+                Upload avatar
+              </a-button>
+              <a-button @click="openPopConfirm" type="danger">Delete</a-button>
+            </div>
+            <div class="profile-img-container">
+              <img
+                :style="popoverVisible ? 'opacity: 0.8' : ''"
+                :src="avatarURL"
+                :class="'ghx-avatar-img'"
+              />
+              <a
+                :style="popoverVisible ? 'opacity: 1; top: 0;z-index: 500' : ''"
+              >
+                <span
+                  :class="[
+                    'fas fa-camera fa-2x',
+                    popoverVisible ? 'popover-visible-camera-icon' : ''
+                  ]"
+                ></span>
+              </a>
+            </div>
+          </a-popover>
+          <div
+            v-else
+            @click.prevent="showFileChooser"
+            class="profile-img-container"
+          >
+            <span :class="'ghx-avatar-img null-avatar'" @click="visible = true">
+              {{ currentUser.username.charAt(0) }}
+            </span>
+            <a>
+              <span class="fas fa-camera fa-2x"></span>
+            </a>
+          </div>
+          <a-modal
+            v-model="visible"
+            :okButtonProps="{
+              props: { loading: uploading, disabled: !imgSrc }
+            }"
+            :cancelButtonProps="{ props: { loading: uploading } }"
+            :okText="'OK'"
+            :cancelText="'Cancel'"
+            :centered="true"
+            @ok="handleOk"
+            @cancel="handleCancel"
+          >
+            <vue-cropper
+              class="mt-2"
+              v-if="imgSrc"
+              ref="cropper"
+              :aspect-ratio="1"
+              :src="imgSrc"
+              preview=".preview"
+              :viewMode="1"
+            ></vue-cropper>
+          </a-modal>
+        </a-form-item>
+      </a-form>
       <a-form :form="form" @submit="handleSubmit">
         <a-form-item :label="'Username'" v-bind="formItemLayout">
           {{ currentUser.username }}
@@ -141,8 +219,10 @@ import { mapState, mapMutations, mapActions } from "vuex";
 import jwt_decode from "jwt-decode";
 import PageTitle from "../components/page-title.vue";
 import PrivilegeTag from "../components/privilege-tag.vue";
+import VueCropper from "vue-cropperjs";
+import "cropperjs/dist/cropper.css";
 export default {
-  components: { PageTitle, PrivilegeTag },
+  components: { PageTitle, PrivilegeTag, VueCropper },
   data() {
     return {
       formItemLayout: {
@@ -158,7 +238,13 @@ export default {
       user: null,
       currentUser: null,
       loading: false,
-      pageLoading: false
+      pageLoading: false,
+      popoverVisible: false,
+      avatarURL: null,
+      visible: false,
+      uploading: false,
+      imgSrc: null,
+      uploadedFile: null
     };
   },
   beforeCreate() {
@@ -177,7 +263,8 @@ export default {
     ...mapMutations({}),
     ...mapActions({
       updateProfile: "updateProfile",
-      getAllSubjects: "subjects/getAllSubjects"
+      getAllSubjects: "subjects/getAllSubjects",
+      updateAvatar: "updateAvatar"
     }),
     handleSubmit(e) {
       e.preventDefault();
@@ -212,6 +299,101 @@ export default {
           }
         }
       });
+    },
+    showFileChooser() {
+      this.$refs.input.click();
+    },
+    setImage(e) {
+      this.uploadedFile = e.target.files[0];
+      if (this.uploadedFile) {
+        if (this.uploadedFile.type.indexOf("image/") === -1) {
+          alert("Please select an image file");
+          return;
+        }
+        if (typeof FileReader === "function") {
+          const reader = new FileReader();
+          reader.onload = async event => {
+            this.imgSrc = event.target.result;
+            await this.$nextTick();
+            // rebuild cropperjs with the updated source
+            this.$refs.cropper.replace(event.target.result);
+          };
+          reader.readAsDataURL(this.uploadedFile);
+        } else {
+          alert("Sorry, FileReader API not supported");
+        }
+        this.visible = true;
+        e.target.value = "";
+      }
+    },
+    cropImage() {
+      // get image data for post processing, e.g. upload or setting image src
+      this.cropImg = this.$refs.cropper
+        .getCroppedCanvas({
+          width: 256,
+          height: 256,
+          minWidth: 128,
+          minHeight: 128,
+          maxWidth: 4096,
+          maxHeight: 4096,
+          imageSmoothingEnabled: true,
+          imageSmoothingQuality: "high"
+        })
+        .toDataURL();
+    },
+    dataURLtoFile(dataurl, filename) {
+      var arr = dataurl.split(","),
+        mime = arr[0].match(/:(.*?);/)[1],
+        bstr = atob(arr[1]),
+        n = bstr.length,
+        u8arr = new Uint8Array(n);
+
+      while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+      }
+
+      return new File([u8arr], filename, { type: mime });
+    },
+    async handleOk() {
+      this.uploading = true;
+      this.cropImage();
+      var file = this.dataURLtoFile(this.cropImg, this.uploadedFile.name);
+      let formData = new FormData();
+      formData.append("image", file);
+      this.avatarURL = await this.updateAvatar(formData);
+      //await this.updateAvatar({ avatar: this.cropImg });
+      // await Promise.all([
+      //   this.getAvatar({ isOriginal: true, empCode: this.decodedUser.user_id }),
+      //   this.getUserAvatar({
+      //     isOriginal: false,
+      //     empCode: this.decodedUser.user_id
+      //   })
+      // ]);
+      // this.$notification["success"]({
+      //   message: "Uploaded avatar successfully!"
+      // });
+      //this.image = this.avatar;
+      this.uploading = false;
+      this.visible = false;
+    },
+    handleCancel() {},
+    openPopConfirm() {
+      this.$confirm({
+        title: "Are you sure you want to delete your avatar?",
+        onOk: async () => {
+          // await this.updateAvatar({ avatar: null });
+          // this.image = null;
+          // this.getUserAvatar({
+          //   isOriginal: false,
+          //   empCode: this.decodedUser.user_id
+          // });
+          // this.$notification["success"]({
+          //   message: this.$t("info_daily_002_delete_successfully"),
+          //   duration: 2
+          // });
+        },
+        onCancel() {}
+      });
     }
   }
 };
@@ -227,5 +409,80 @@ export default {
 
 .container .ant-form-item {
   margin-bottom: unset;
+}
+
+.cropper {
+  height: 600px;
+  background: #ddd;
+}
+
+.ghx-avatar-img {
+  -webkit-border-radius: 50%;
+  border-radius: 50%;
+  font-size: 24px;
+  height: 168px;
+  line-height: 120px;
+  width: 168px !important;
+  color: #fff;
+  cursor: pointer;
+  display: inline-block;
+  text-align: center;
+  text-transform: uppercase;
+  vertical-align: middle;
+}
+
+.null-avatar {
+  background-color: lightblue;
+  font: Arial;
+  font-size: 48px;
+  font-weight: 500;
+  color: white;
+}
+
+.profile-img-container {
+  position: relative;
+  display: inline-block; /* added */
+  overflow: hidden; /* added */
+}
+
+.profile-img-container img {
+  width: 100%;
+} /* remove if using in grid system */
+
+.profile-img-container:hover img {
+  opacity: 0.8;
+}
+.profile-img-container:hover a {
+  opacity: 1; /* added */
+  top: 0; /* added */
+  z-index: 500;
+}
+/* added */
+.profile-img-container:hover a span {
+  top: 50%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+}
+/* added */
+.profile-img-container a {
+  display: block;
+  position: absolute;
+  top: -100%;
+  opacity: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  text-align: center;
+  color: inherit;
+}
+
+.popover-visible-camera-icon {
+  top: 50%;
+  position: absolute;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
 }
 </style>

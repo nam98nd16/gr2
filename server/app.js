@@ -6,6 +6,7 @@ var logger = require("morgan");
 var expressJwt = require("express-jwt");
 const jwtSecret = require("./config/const");
 const cors = require("cors");
+if (!process.env.PORT) require("dotenv-flow").config({ path: "environments/" });
 
 var app = express();
 
