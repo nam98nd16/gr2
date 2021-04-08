@@ -47,5 +47,9 @@ export const actions = {
   async updateAvatar({ commit }, payload) {
     const res = await this.$axios.post(`/accounts/update-avatar`, payload);
     return res.data;
+  },
+  async getAvatar({ commit }) {
+    const res = await this.$axios.get(`/accounts/avatar`);
+    return res.data;
   }
 };

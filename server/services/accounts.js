@@ -278,6 +278,27 @@ const handleError = (err, res) => {
   res.status(500).json("Oops! Something went wrong!");
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getAvatar = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let avatar = await knex("accounts")
+    .where("userId", "=", reqUser.userId)
+    .select("avatarImagePath");
+
+  avatar = avatar.length ? avatar[0].avatarImagePath : null;
+
+  res.json(avatar ? `${process.env.baseURL}${avatar}` : null);
+};
+
 module.exports = {
   register,
   login,
@@ -288,4 +309,5 @@ module.exports = {
   getUsers,
   getUsersCount,
   updateAvatar,
+  getAvatar,
 };

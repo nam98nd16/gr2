@@ -65,6 +65,7 @@
             :okText="'OK'"
             :cancelText="'Cancel'"
             :centered="true"
+            :maskClosable="false"
             @ok="handleOk"
             @cancel="handleCancel"
           >
@@ -250,9 +251,10 @@ export default {
   beforeCreate() {
     this.form = this.$form.createForm(this, { name: "profile" });
   },
-  mounted() {
+  async mounted() {
     this.currentUser = jwt_decode(localStorage.getItem("token"));
     this.allSubjects.length ? {} : this.getAllSubjects();
+    this.avatarURL = await this.getAvatar();
   },
   computed: {
     ...mapState({
@@ -264,7 +266,8 @@ export default {
     ...mapActions({
       updateProfile: "updateProfile",
       getAllSubjects: "subjects/getAllSubjects",
-      updateAvatar: "updateAvatar"
+      updateAvatar: "updateAvatar",
+      getAvatar: "getAvatar"
     }),
     handleSubmit(e) {
       e.preventDefault();
