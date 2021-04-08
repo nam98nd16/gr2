@@ -8,5 +8,6 @@ router.use("/questions", require("./questions"));
 router.use("/test", require("./test"));
 router.use("/subjects", require("./subjects"));
 router.use("/performance", require("./performance"));
+router.use("/friends", require("./friends"));
 
 module.exports = router;

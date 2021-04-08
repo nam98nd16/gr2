@@ -41,8 +41,7 @@
       </a-menu-item>
       <a-menu-item key="profile">
         <nuxt-link :to="'/profile'">
-          <i class="fas fa-user mr-2"></i>
-          {{ getProfileName }}
+          <i class="fas fa-user mr-2"></i>{{ getProfileName }}
         </nuxt-link>
       </a-menu-item>
       <a-menu-item @click="handleLogout" key="logout">
