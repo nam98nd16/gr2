@@ -11,6 +11,9 @@
       v-for="person in searchedFriends"
       :key="person.username"
       :person="person"
+      @addedFriend="fetchFriends(true)"
+      @deletedFriend="fetchFriends(true)"
+      @confirmedFriend="fetchFriends(true)"
     />
   </div>
 </template>
@@ -25,10 +28,15 @@ export default {
     return {
       keyword: "",
       perPage: 10,
-      currentPage: 1
+      currentPage: 1,
+      search: _.debounce(() => {
+        this.fetchFriends();
+      }, 300)
     };
   },
-  async mounted() {},
+  async mounted() {
+    this.fetchFriends();
+  },
   computed: {
     ...mapState({
       searchedFriends: state => state.friends.searchedFriends,
@@ -40,14 +48,14 @@ export default {
       searchFriends: "friends/searchFriends",
       getSearchedFriendsCount: "friends/getSearchedFriendsCount"
     }),
-    search() {
+    fetchFriends(shouldNotRecount) {
       let payload = {
         keyword: this.keyword,
         perPage: this.perPage,
         currentPage: this.currentPage
       };
       this.searchFriends(payload);
-      this.getSearchedFriendsCount(payload);
+      if (!shouldNotRecount) this.getSearchedFriendsCount(payload);
     }
   }
 };
