@@ -1,6 +1,10 @@
 const knex = require("../config/database");
 const jwt = require("jsonwebtoken");
 const jwtSecret = require("../config/const");
+var multiparty = require("multiparty");
+var util = require("util");
+const path = require("path");
+const fs = require("fs");
 const validDays = 7;
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
@@ -215,6 +219,55 @@ const updateUserRole = async (req, res) => {
   res.json("Updated successfully!");
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const updateAvatar = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  var form = new multiparty.Form();
+
+  form.parse(req, function (err, fields, files) {
+    let image = files.image[0];
+    let randomImageName = makeid(5) + path.extname(image.originalFilename);
+    let pathToStore = `images/${randomImageName}`;
+    const tempPath = image.path;
+    const targetPath = path.join(__dirname, `../public/${pathToStore}`);
+
+    fs.rename(tempPath, targetPath, async (err) => {
+      if (err) return handleError(err, res);
+      await knex("accounts")
+        .where("userId", "=", reqUser.userId)
+        .update({ avatarImagePath: pathToStore });
+      res.json(pathToStore);
+    });
+  });
+};
+
+function makeid(length) {
+  var result = [];
+  var characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  var charactersLength = characters.length;
+  for (var i = 0; i < length; i++) {
+    result.push(
+      characters.charAt(Math.floor(Math.random() * charactersLength))
+    );
+  }
+  return result.join("");
+}
+
+const handleError = (err, res) => {
+  console.log("err", err);
+  res.status(500).json("Oops! Something went wrong!");
+};
+
 module.exports = {
   register,
   login,
@@ -224,4 +277,5 @@ module.exports = {
   updateUserRole,
   getUsers,
   getUsersCount,
+  updateAvatar,
 };

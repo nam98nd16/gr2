@@ -17,6 +17,7 @@
           @confirmedFriend="fetchFriends(true)"
         />
         <a-pagination
+          style="float: right"
           v-show="searchedFriendsCount > perPage"
           class="mt-2"
           v-model="currentPage"
@@ -35,7 +36,7 @@
             All people
           </a-radio-button>
           <a-radio-button value="onlyMyFriends">
-            Only my friends
+            My friends
           </a-radio-button>
           <a-radio-button value="friendRequests">
             Friend requests

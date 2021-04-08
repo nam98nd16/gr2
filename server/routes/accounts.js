@@ -10,5 +10,6 @@ router.post("/users", service.getUsers);
 router.post("/users/count", service.getUsersCount);
 router.post("/update-roles", service.updateUsersRole);
 router.post("/update-role", service.updateUserRole);
+router.post("/update-avatar", service.updateAvatar);
 
 module.exports = router;
