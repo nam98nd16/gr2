@@ -1,7 +1,7 @@
 <template>
-  <div v-if="profile">
-    <a-form class="profile-form">
-      <a-form-item :colon="false" v-bind="formItemLayout">
+  <a-card v-if="profile">
+    <a-form class="profile-form" v-bind="formItemLayout">
+      <a-form-item :colon="false">
         <span style="display: none" slot="label" class="profile-label"
           >Avatar</span
         >
@@ -19,81 +19,42 @@
           </div>
         </div>
       </a-form-item>
-      <a-form-item v-bind="formItemLayout">
-        <span slot="label" class="profile-label"
-          ><i class="fas fa-id-card mr-1"></i>Full name</span
-        >
-        <span class="profile-text">{{
-          profile.fullName ? profile.fullName : "No full name to show"
-        }}</span>
-      </a-form-item>
 
-      <a-form-item v-bind="formItemLayout">
-        <span slot="label" class="profile-label"
-          ><i class="fas fa-envelope mr-1"></i>Email</span
-        >
-        <span class="profile-text">{{
-          profile.email ? profile.email : "No email to show"
-        }}</span>
-      </a-form-item>
-
-      <a-form-item v-bind="formItemLayout">
-        <span slot="label" class="profile-label"
-          ><i class="fas fa-mobile-alt mr-1"></i>Phone number</span
-        >
-        <span class="profile-text">{{
-          profile.phoneNumber ? profile.phoneNumber : "No phone number to show"
-        }}</span>
-      </a-form-item>
-
-      <a-form-item v-bind="formItemLayout">
-        <span slot="label" class="profile-label"
-          ><i class="fas fa-birthday-cake mr-1"></i>Birthday</span
-        >
-        <span class="profile-text">{{
+      <form-text icon="id-card" label="Full name" :value="profile.fullName" />
+      <form-text icon="envelope" label="Email" :value="profile.email" />
+      <form-text
+        icon="mobile-alt"
+        label="Phone number"
+        :value="profile.phoneNumber"
+      />
+      <form-text
+        icon="birthday-cake"
+        label="Birthday"
+        :value="
           profile.birthday
             ? $moment(profile.birthday)
-                .add(7, "hours")
-                .format("YYYY/MM/DD")
-            : "No birthday to show"
-        }}</span>
-      </a-form-item>
-
-      <a-form-item v-bind="formItemLayout">
-        <span slot="label" class="profile-label"
-          ><i class="fas fa-house-user mr-1"></i>Address</span
-        >
-        <span class="profile-text">{{
-          profile.address ? profile.address : "No address to show"
-        }}</span>
-      </a-form-item>
-
-      <a-form-item v-bind="formItemLayout">
-        <span slot="label" class="profile-label"
-          ><i class="fas fa-venus-mars mr-1"></i>Gender</span
-        >
-        <span class="profile-text">{{
-          profile.gender ? profileGenderText : "No gender to show"
-        }}</span>
-      </a-form-item>
-
-      <a-form-item v-bind="formItemLayout">
-        <span slot="label" class="profile-label"
-          ><i class="fas fa-book-reader mr-1"></i>Bio</span
-        >
-        <span class="profile-text">{{
-          profile.autobiography ? profile.autobiography : "No bio to show"
-        }}</span>
-      </a-form-item>
+                .add(7, 'hours')
+                .format('YYYY/MM/DD')
+            : null
+        "
+      />
+      <form-text icon="house-user" label="Address" :value="profile.address" />
+      <form-text icon="venus-mars" label="Gender" :value="profile.gender" />
+      <form-text
+        icon="book-reader"
+        label="Bio"
+        :value="profile.autobiography"
+      />
     </a-form>
-  </div>
+  </a-card>
 </template>
 
 <script>
 import { mapState, mapActions, mapMutations } from "vuex";
 import avatar from "./avatar.vue";
+import FormText from "./form-text.vue";
 export default {
-  components: { avatar },
+  components: { avatar, FormText },
   props: ["userId"],
   data() {
     return {
@@ -103,7 +64,7 @@ export default {
           sm: 24
         },
         wrapperCol: {
-          md: 6,
+          md: 14,
           sm: 24
         }
       },
@@ -134,8 +95,14 @@ export default {
     }),
     async fetchProfile() {
       this.profile = await this.getProfile(this.userId);
-      console.log("p", this.profile);
     }
   }
 };
 </script>
+
+<style scoped>
+.ant-card-bordered {
+  border: 1px solid #e8e8e8;
+  border-radius: 4px;
+}
+</style>

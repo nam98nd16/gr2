@@ -18,6 +18,12 @@
   margin-bottom: unset;
 }
 
+.profile-form {
+  float: center;
+  justify-content: center;
+  align-items: center;
+}
+
 .profile-form .ant-form-item {
   margin-bottom: unset;
 }

@@ -29,7 +29,7 @@
       </a-col>
       <a-col :span="18">
         <a-radio-group
-          class="mb-2"
+          class="mb-1"
           v-model="filteredOption"
           button-style="solid"
         >
@@ -116,9 +116,6 @@ export default {
       };
       this.searchFriends(payload);
       if (!shouldNotRecount) this.getSearchedFriendsCount(payload);
-    },
-    test() {
-      console.log("sdasd");
     }
   },
   beforeDestroy() {
