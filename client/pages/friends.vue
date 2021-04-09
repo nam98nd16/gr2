@@ -13,15 +13,27 @@
           :key="person.username"
           :person="person"
           @addedFriend="
-            fetchFriends(true, person.userId == selectedUser.userId)
+            fetchFriends(
+              true,
+              'added',
+              selectedUser && person.userId == selectedUser.userId
+            )
           "
           @deletedFriend="
-            fetchFriends(true, person.userId == selectedUser.userId)
+            fetchFriends(
+              true,
+              'deleted',
+              selectedUser && person.userId == selectedUser.userId
+            )
           "
           @confirmedFriend="
-            fetchFriends(true, person.userId == selectedUser.userId)
+            fetchFriends(
+              true,
+              'confirmed',
+              selectedUser && person.userId == selectedUser.userId
+            )
           "
-          @click.native="selectedUser = person"
+          @click.native="selectedUser = _.cloneDeep(person)"
         />
         <a-pagination
           style="float: right"
@@ -56,9 +68,9 @@
         <viewable-profile
           v-if="selectedUser"
           :user="selectedUser"
-          @addedFriend="fetchFriends(true, true)"
-          @deletedFriend="fetchFriends(true, true)"
-          @confirmedFriend="fetchFriends(true, true)"
+          @addedFriend="fetchFriends(true, 'added', true)"
+          @deletedFriend="fetchFriends(true, 'deleted', true)"
+          @confirmedFriend="fetchFriends(true, 'confirmed', true)"
         />
 
         <div
@@ -119,7 +131,7 @@ export default {
     ...mapMutations({
       resetSearchedResults: "friends/resetSearchedResults"
     }),
-    async fetchFriends(shouldNotRecount, shouldRefreshCurrentPerson) {
+    async fetchFriends(shouldNotRecount, refreshReason, shouldRefresh) {
       let payload = {
         keyword: this.keyword,
         filteredOption: this.filteredOption,
@@ -127,11 +139,21 @@ export default {
         currentPage: this.currentPage
       };
       if (!shouldNotRecount) this.getSearchedFriendsCount(payload);
-      await this.searchFriends(payload);
-      if (shouldRefreshCurrentPerson)
-        this.selectedUser = this.searchedFriends.find(
-          f => f.userId == this.selectedUser.userId
-        );
+      this.searchFriends(payload);
+      if (this.selectedUser && shouldRefresh) {
+        if (refreshReason == "added") {
+          delete this.selectedUser.hasRequested;
+          delete this.selectedUser.hasBeenRequested;
+          this.$set(this.selectedUser, "hasBeenRequested", { confirmed: "0" });
+        } else if (refreshReason == "deleted") {
+          this.selectedUser.hasRequested = undefined;
+          this.selectedUser.hasBeenRequested = undefined;
+        } else if (refreshReason == "confirmed") {
+          if (this.selectedUser.hasRequested)
+            this.selectedUser.hasRequested.confirmed = "1";
+          else this.selectedUser.hasBeenRequested.confirmed = "1";
+        }
+      }
     }
   },
   beforeDestroy() {
