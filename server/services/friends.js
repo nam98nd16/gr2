@@ -90,9 +90,13 @@ let getUpdatedQuery = async (
   currentPage
 ) => {
   if (keyword)
-    query = query
-      .where("username", "ilike", `%${keyword}%`)
-      .orWhere("fullName", "ilike", `%${keyword}%`);
+    query = query.where(function () {
+      this.where("username", "ilike", `%${keyword}%`).orWhere(
+        "fullName",
+        "ilike",
+        `%${keyword}%`
+      );
+    });
 
   if (filteredOption == "onlyMyFriends") {
     let friendships = await knex("friends")
