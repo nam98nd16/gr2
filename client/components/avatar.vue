@@ -1,18 +1,13 @@
 <template>
   <span>
-    <style>
-      :root {
-        --diameter: {{ diameter }};
-        --line-height: {{ lineHeight}};
-        --null-avatar-font-size: {{nullAvatarFontsize}};
-        --null-avatar-font-weight: {{nullAvatarFontweight}};
-      }
-    </style>
     <div v-if="avatarURL" class="profile-img-container">
-      <img :src="avatarURL" :class="'ghx-avatar-img'" />
+      <img :src="avatarURL" :class="'ghx-avatar-img'" :style="avatarStyle" />
     </div>
     <div v-else class="profile-img-container">
-      <span :class="'ghx-avatar-img null-avatar'">
+      <span
+        :class="'ghx-avatar-img null-avatar'"
+        :style="nullAvatarStyle + avatarStyle"
+      >
         {{ username.charAt(0) }}
       </span>
     </div>
@@ -47,7 +42,13 @@ export default {
   computed: {
     ...mapState({
       avatar: state => state.avatar
-    })
+    }),
+    avatarStyle() {
+      return `height: ${this.diameter}; line-height: ${this.lineHeight}; width: ${this.diameter} !important;`;
+    },
+    nullAvatarStyle() {
+      return `font-size: ${this.nullAvatarFontsize}; font-weight: ${this.nullAvatarFontweight};`;
+    }
   },
   methods: {
     ...mapActions({
@@ -62,9 +63,6 @@ export default {
   -webkit-border-radius: 50%;
   border-radius: 50%;
   font-size: 24px;
-  height: var(--diameter);
-  line-height: var(--line-height);
-  width: var(--diameter) !important;
   color: #fff;
   cursor: pointer;
   display: inline-block;
@@ -76,8 +74,6 @@ export default {
 .null-avatar {
   background-color: lightblue;
   font: Arial;
-  font-size: var(--null-avatar-font-size);
-  font-weight: var(--null-avatar-font-weight);
   color: white;
 }
 
