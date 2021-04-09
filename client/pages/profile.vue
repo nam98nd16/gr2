@@ -364,18 +364,10 @@ export default {
       let formData = new FormData();
       formData.append("image", file);
       this.avatarURL = await this.updateAvatar(formData);
-      //await this.updateAvatar({ avatar: this.cropImg });
-      // await Promise.all([
-      //   this.getAvatar({ isOriginal: true, empCode: this.decodedUser.user_id }),
-      //   this.getUserAvatar({
-      //     isOriginal: false,
-      //     empCode: this.decodedUser.user_id
-      //   })
-      // ]);
-      // this.$notification["success"]({
-      //   message: "Uploaded avatar successfully!"
-      // });
-      //this.image = this.avatar;
+
+      this.$notification["success"]({
+        message: "Uploaded avatar successfully!"
+      });
       this.uploading = false;
       this.visible = false;
     },
@@ -384,16 +376,11 @@ export default {
       this.$confirm({
         title: "Are you sure you want to delete your avatar?",
         onOk: async () => {
-          // await this.updateAvatar({ avatar: null });
-          // this.image = null;
-          // this.getUserAvatar({
-          //   isOriginal: false,
-          //   empCode: this.decodedUser.user_id
-          // });
-          // this.$notification["success"]({
-          //   message: this.$t("info_daily_002_delete_successfully"),
-          //   duration: 2
-          // });
+          await this.updateAvatar(new FormData());
+          this.$notification["success"]({
+            message: "Removed avatar successfully!"
+          });
+          this.avatarURL = null;
         },
         onCancel() {}
       });

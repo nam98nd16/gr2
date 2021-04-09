@@ -241,22 +241,29 @@ const updateAvatar = async (req, res) => {
 
   var form = new multiparty.Form();
 
-  form.parse(req, function (err, fields, files) {
-    let image = files.image[0];
-    let randomImageName = makeid(5) + path.extname(image.originalFilename);
-    let pathToStore = `images/${randomImageName}`;
-    const tempPath = image.path;
-    const targetPath = path.join(__dirname, `../public/${pathToStore}`);
+  form.parse(req, async function (err, fields, files) {
+    if (files.image) {
+      let image = files.image[0];
+      let randomImageName = makeid(5) + path.extname(image.originalFilename);
+      let pathToStore = `images/${randomImageName}`;
+      const tempPath = image.path;
+      const targetPath = path.join(__dirname, `../public/${pathToStore}`);
 
-    fs.rename(tempPath, targetPath, async (err) => {
-      if (err) return handleError(err, res);
+      fs.rename(tempPath, targetPath, async (err) => {
+        if (err) return handleError(err, res);
+        await knex("accounts")
+          .where("userId", "=", reqUser.userId)
+          .update({ avatarImagePath: pathToStore });
+
+        let fullImgPath = `${process.env.baseURL}${pathToStore}`;
+        res.json(fullImgPath);
+      });
+    } else {
       await knex("accounts")
         .where("userId", "=", reqUser.userId)
-        .update({ avatarImagePath: pathToStore });
-
-      let fullImgPath = `${process.env.baseURL}${pathToStore}`;
-      res.json(fullImgPath);
-    });
+        .update({ avatarImagePath: null });
+      res.json("");
+    }
   });
 };
 
