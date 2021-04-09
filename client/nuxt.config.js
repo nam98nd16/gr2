@@ -1,3 +1,8 @@
+const { parsed } = require("dotenv").config({
+  path:
+    "environments/.env" +
+    (process.env.NODE_ENV == "development" ? "" : "." + process.env.NODE_ENV)
+});
 export default {
   // Disable server-side rendering (https://go.nuxtjs.dev/ssr-mode)
   ssr: false,
@@ -35,9 +40,10 @@ export default {
   modules: ["@nuxtjs/axios"],
   axios: {
     // See https://github.com/nuxt-community/axios-module#options
-    baseURL: "http://localhost:3000/"
+    baseURL: process.env.baseURL
   },
 
   // Build Configuration (https://go.nuxtjs.dev/config-build)
-  build: {}
+  build: {},
+  env: { ...parsed }
 };
