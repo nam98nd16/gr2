@@ -12,9 +12,15 @@
           v-for="person in searchedFriends"
           :key="person.username"
           :person="person"
-          @addedFriend="fetchFriends(true)"
-          @deletedFriend="fetchFriends(true)"
-          @confirmedFriend="fetchFriends(true)"
+          @addedFriend="
+            fetchFriends(true, person.userId == selectedUser.userId)
+          "
+          @deletedFriend="
+            fetchFriends(true, person.userId == selectedUser.userId)
+          "
+          @confirmedFriend="
+            fetchFriends(true, person.userId == selectedUser.userId)
+          "
           @click.native="selectedUser = person"
         />
         <a-pagination
@@ -47,7 +53,13 @@
           </a-radio-button>
         </a-radio-group>
 
-        <viewable-profile v-if="selectedUser" :user="selectedUser" />
+        <viewable-profile
+          v-if="selectedUser"
+          :user="selectedUser"
+          @addedFriend="fetchFriends(true, true)"
+          @deletedFriend="fetchFriends(true, true)"
+          @confirmedFriend="fetchFriends(true, true)"
+        />
 
         <div
           v-else
@@ -107,15 +119,19 @@ export default {
     ...mapMutations({
       resetSearchedResults: "friends/resetSearchedResults"
     }),
-    fetchFriends(shouldNotRecount) {
+    async fetchFriends(shouldNotRecount, shouldRefreshCurrentPerson) {
       let payload = {
         keyword: this.keyword,
         filteredOption: this.filteredOption,
         perPage: this.perPage,
         currentPage: this.currentPage
       };
-      this.searchFriends(payload);
       if (!shouldNotRecount) this.getSearchedFriendsCount(payload);
+      await this.searchFriends(payload);
+      if (shouldRefreshCurrentPerson)
+        this.selectedUser = this.searchedFriends.find(
+          f => f.userId == this.selectedUser.userId
+        );
     }
   },
   beforeDestroy() {

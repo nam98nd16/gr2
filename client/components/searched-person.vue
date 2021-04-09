@@ -20,10 +20,9 @@
           <div v-if="person.fullName">{{ person.fullName }}</div>
           <friend-actions
             :person="person"
-            @addFriend="handleAddFriend"
-            @confirmFriend="handleConfirmFriend"
-            @deleteFriend="handleDeleteFriend"
-            @unfriend="handleUnfriend"
+            @addedFriend="$emit('addedFriend')"
+            @confirmedFriend="$emit('confirmedFriend')"
+            @deletedFriend="$emit('deletedFriend')"
           />
         </a-col>
       </a-row>
@@ -46,37 +45,7 @@ export default {
   computed: {},
   watch: {},
   methods: {
-    ...mapActions({
-      addFriend: "friends/addFriend",
-      deleteFriend: "friends/deleteFriend",
-      confirmFriend: "friends/confirmFriend"
-    }),
-    async handleAddFriend() {
-      await this.addFriend({ userId: this.person.userId });
-      this.$emit("addedFriend");
-    },
-    async handleConfirmFriend() {
-      await this.confirmFriend({ userId: this.person.userId });
-      this.$emit("confirmedFriend");
-    },
-    async handleDeleteFriend() {
-      await this.deleteFriend(this.person.userId);
-      this.$emit("deletedFriend");
-    },
-    handleUnfriend() {
-      this.$confirm({
-        title: `Are you sure you want to remove ${this.person.username} ${
-          this.person.fullName ? "(" + this.person.fullName + ")" : ""
-        } as your friend?`,
-        okText: "OK",
-        cancelText: "Cancel",
-        onOk: async () => {
-          await this.handleDeleteFriend();
-          this.$emit("delete");
-        },
-        onCancel() {}
-      });
-    }
+    ...mapActions({})
   }
 };
 </script>

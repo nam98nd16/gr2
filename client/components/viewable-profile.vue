@@ -18,6 +18,12 @@
             {{ profile.username }}
           </div>
         </div>
+        <friend-actions
+          :person="user"
+          @addedFriend="$emit('addedFriend')"
+          @confirmedFriend="$emit('confirmedFriend')"
+          @deletedFriend="$emit('deletedFriend')"
+        />
       </a-form-item>
 
       <form-text icon="id-card" label="Full name" :value="profile.fullName" />
@@ -53,8 +59,9 @@
 import { mapState, mapActions, mapMutations } from "vuex";
 import avatar from "./avatar.vue";
 import FormText from "./form-text.vue";
+import FriendActions from "./friend-actions.vue";
 export default {
-  components: { avatar, FormText },
+  components: { avatar, FormText, FriendActions },
   props: ["user"],
   data() {
     return {
