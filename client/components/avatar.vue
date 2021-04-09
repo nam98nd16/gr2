@@ -37,6 +37,9 @@ export default {
   watch: {
     avatar(newVal) {
       if (this.isMyAvatar) this.avatarURL = newVal;
+    },
+    async userId(newVal) {
+      this.avatarURL = await this.getAvatar(this.userId);
     }
   },
   computed: {

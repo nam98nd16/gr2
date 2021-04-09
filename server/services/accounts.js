@@ -308,6 +308,51 @@ const getAvatar = async (req, res) => {
   res.json(avatar ? `${process.env.baseURL}${avatar}` : null);
 };
 
+/**
+ * @param {Request} req Request object from express
+ * @param {Response} res Response object from express
+ */
+const getProfile = async (req, res) => {
+  let token = req.headers.authorization.substring(
+    7,
+    req.headers.authorization.length
+  );
+
+  let reqUser = jwt.verify(token, jwtSecret);
+
+  let { userId } = req.query;
+
+  let friendship = await knex("friends")
+    .where({ confirmed: 1 })
+    .where(function () {
+      this.where({ userId1: userId, userId2: reqUser.userId }).orWhere({
+        userId2: userId,
+        userId1: reqUser.userId,
+      });
+    });
+
+  let areFriends = false;
+  if (friendship.length) areFriends = true;
+
+  let userProfile = await knex("accounts")
+    .where("userId", "=", userId)
+    .select(
+      "username",
+      "fullName",
+      "address",
+      "phoneNumber",
+      "autobiography",
+      "email",
+      "role",
+      "subjectId",
+      "birthday",
+      "gender"
+    );
+
+  userProfile = userProfile[0];
+  res.json(userProfile);
+};
+
 module.exports = {
   register,
   login,
@@ -319,4 +364,5 @@ module.exports = {
   getUsersCount,
   updateAvatar,
   getAvatar,
+  getProfile,
 };

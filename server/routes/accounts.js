@@ -12,5 +12,6 @@ router.post("/update-roles", service.updateUsersRole);
 router.post("/update-role", service.updateUserRole);
 router.post("/update-avatar", service.updateAvatar);
 router.get("/avatar", service.getAvatar);
+router.get("/profile", service.getProfile);
 
 module.exports = router;

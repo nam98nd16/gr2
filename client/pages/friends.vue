@@ -15,6 +15,7 @@
           @addedFriend="fetchFriends(true)"
           @deletedFriend="fetchFriends(true)"
           @confirmedFriend="fetchFriends(true)"
+          @click.native="selectedUserId = person.userId"
         />
         <a-pagination
           style="float: right"
@@ -45,6 +46,16 @@
             Requests sent
           </a-radio-button>
         </a-radio-group>
+
+        <viewable-profile v-if="selectedUserId" :userId="selectedUserId" />
+
+        <div
+          v-else
+          class="mt-5"
+          style="text-align: center; font-size: 1.25rem; word-break: break-word; font-weight: 700;"
+        >
+          Select people's names to preview their profile
+        </div>
       </a-col>
     </a-row>
     <div></div>
@@ -55,8 +66,9 @@
 import pageTitle from "../components/page-title.vue";
 import searchedPerson from "../components/searched-person.vue";
 import { mapState, mapActions, mapMutations } from "vuex";
+import ViewableProfile from "../components/viewable-profile.vue";
 export default {
-  components: { pageTitle, searchedPerson },
+  components: { pageTitle, searchedPerson, ViewableProfile },
   data() {
     return {
       keyword: "",
@@ -65,7 +77,8 @@ export default {
       search: _.debounce(() => {
         this.fetchFriends();
       }, 300),
-      filteredOption: "onlyMyFriends"
+      filteredOption: "onlyMyFriends",
+      selectedUserId: null
     };
   },
   async mounted() {
@@ -103,6 +116,9 @@ export default {
       };
       this.searchFriends(payload);
       if (!shouldNotRecount) this.getSearchedFriendsCount(payload);
+    },
+    test() {
+      console.log("sdasd");
     }
   },
   beforeDestroy() {

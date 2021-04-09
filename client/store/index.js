@@ -58,5 +58,9 @@ export const actions = {
     let currentUser = jwt_decode(localStorage.getItem("token"));
     if (currentUser.userId == userId) commit("setUserAvatar", res.data);
     return res.data;
+  },
+  async getProfile({ commit }, userId) {
+    const res = await this.$axios.get(`/accounts/profile?userId=${userId}`);
+    return res.data;
   }
 };

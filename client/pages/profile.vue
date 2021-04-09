@@ -394,10 +394,6 @@ export default {
   display: initial;
 }
 
-.container .ant-form-item {
-  margin-bottom: unset;
-}
-
 .cropper {
   height: 600px;
   background: #ddd;

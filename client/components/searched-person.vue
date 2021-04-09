@@ -22,7 +22,12 @@
             v-if="!person.hasRequested && !person.hasBeenRequested"
             type="primary"
             style="float: right"
-            @click="handleAddFriend"
+            @click="
+              e => {
+                e.stopPropagation();
+                handleAddFriend();
+              }
+            "
             ><i class="fas fa-user-plus mr-2"></i>Add Friend</a-button
           >
           <span
@@ -30,9 +35,24 @@
             v-else-if="
               person.hasRequested && person.hasRequested.confirmed == '0'
             "
-            ><a-button type="primary" class="mr-2" @click="handleConfirmFriend"
+            ><a-button
+              type="primary"
+              class="mr-2"
+              @click="
+                e => {
+                  e.stopPropagation();
+                  handleConfirmFriend();
+                }
+              "
               ><i class="fas fa-user-check mr-2"></i>Confirm</a-button
-            ><a-button type="danger" @click="handleDeleteFriend"
+            ><a-button
+              type="danger"
+              @click="
+                e => {
+                  e.stopPropagation();
+                  handleDeleteFriend();
+                }
+              "
               ><i class="fas fa-user-slash mr-2"></i>Delete</a-button
             ></span
           >
@@ -44,14 +64,32 @@
             style="float: right"
             type="danger"
             ghost
-            @click="handleDeleteFriend"
+            @click="
+              e => {
+                e.stopPropagation();
+                handleDeleteFriend();
+              }
+            "
             ><i class="fas fa-user-times mr-2"></i>Cancel Request</a-button
           >
           <a-popover v-else trigger="click" placement="right">
-            <a-button slot="content" ghost type="danger" @click="handleUnfriend"
+            <a-button
+              slot="content"
+              ghost
+              type="danger"
+              @click="
+                e => {
+                  e.stopPropagation();
+                  handleUnfriend();
+                }
+              "
               ><i class="fas fa-user-times mr-2"></i>Unfriend</a-button
             >
-            <a-button style="float: right" ghost type="primary"
+            <a-button
+              @click="e => e.stopPropagation()"
+              style="float: right"
+              ghost
+              type="primary"
               ><i class="fas fa-user-check mr-2"></i>Friends</a-button
             >
           </a-popover>

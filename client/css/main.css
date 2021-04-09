@@ -1,1 +1,33 @@
 @import url("@fortawesome/fontawesome-free/css/all.css");
+
+.container2 {
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.username-profile {
+  font-weight: 700;
+  font-size: 2rem;
+}
+
+.container .ant-form-item {
+  margin-bottom: unset;
+}
+
+.profile-form .ant-form-item {
+  margin-bottom: unset;
+}
+
+.profile-label {
+  font-weight: 400;
+  font-size: 1rem;
+}
+
+.profile-text {
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
