@@ -1,13 +1,13 @@
 <template>
   <a-card v-if="profile">
-    <a-form class="profile-form" v-bind="formItemLayout">
+    <a-form labelAlign="left" class="profile-form" v-bind="formItemLayout">
       <a-form-item :colon="false">
         <span style="display: none" slot="label" class="profile-label"
           >Avatar</span
         >
         <div style="text-align: center; float: left">
           <avatar
-            :userId="userId"
+            :userId="user.userId"
             :username="profile.username"
             nullAvatarFontsize="48px"
             nullAvatarFontweight="500"
@@ -55,12 +55,12 @@ import avatar from "./avatar.vue";
 import FormText from "./form-text.vue";
 export default {
   components: { avatar, FormText },
-  props: ["userId"],
+  props: ["user"],
   data() {
     return {
       formItemLayout: {
         labelCol: {
-          md: 10,
+          md: { span: 4, offset: 6 },
           sm: 24
         },
         wrapperCol: {
@@ -72,7 +72,7 @@ export default {
     };
   },
   watch: {
-    userId(newVal) {
+    user(newVal) {
       this.fetchProfile();
     }
   },
@@ -94,7 +94,7 @@ export default {
       getProfile: "getProfile"
     }),
     async fetchProfile() {
-      this.profile = await this.getProfile(this.userId);
+      this.profile = await this.getProfile(this.user.userId);
     }
   }
 };

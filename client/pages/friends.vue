@@ -15,7 +15,7 @@
           @addedFriend="fetchFriends(true)"
           @deletedFriend="fetchFriends(true)"
           @confirmedFriend="fetchFriends(true)"
-          @click.native="selectedUserId = person.userId"
+          @click.native="selectedUser = person"
         />
         <a-pagination
           style="float: right"
@@ -47,7 +47,7 @@
           </a-radio-button>
         </a-radio-group>
 
-        <viewable-profile v-if="selectedUserId" :userId="selectedUserId" />
+        <viewable-profile v-if="selectedUser" :user="selectedUser" />
 
         <div
           v-else
@@ -78,7 +78,7 @@ export default {
         this.fetchFriends();
       }, 300),
       filteredOption: "onlyMyFriends",
-      selectedUserId: null
+      selectedUser: null
     };
   },
   async mounted() {
