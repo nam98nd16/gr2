@@ -297,8 +297,10 @@ const getAvatar = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
 
+  let { userId } = req.query;
+
   let avatar = await knex("accounts")
-    .where("userId", "=", reqUser.userId)
+    .where("userId", "=", userId)
     .select("avatarImagePath");
 
   avatar = avatar.length ? avatar[0].avatarImagePath : null;

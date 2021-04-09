@@ -1,7 +1,9 @@
+import jwt_decode from "jwt-decode";
 export const state = () => ({
   allUsers: [],
   users: [],
-  usersCount: []
+  usersCount: [],
+  avatar: null
 });
 
 export const mutations = {
@@ -13,6 +15,9 @@ export const mutations = {
   },
   setUsersCount(state, usersCount) {
     state.usersCount = usersCount;
+  },
+  setUserAvatar(state, avatar) {
+    state.avatar = avatar;
   }
 };
 
@@ -48,8 +53,10 @@ export const actions = {
     const res = await this.$axios.post(`/accounts/update-avatar`, payload);
     return res.data;
   },
-  async getAvatar({ commit }) {
-    const res = await this.$axios.get(`/accounts/avatar`);
+  async getAvatar({ commit }, userId) {
+    const res = await this.$axios.get(`/accounts/avatar?userId=${userId}`);
+    let currentUser = jwt_decode(localStorage.getItem("token"));
+    if (currentUser.userId == userId) commit("setUserAvatar", res.data);
     return res.data;
   }
 };

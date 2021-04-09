@@ -41,7 +41,16 @@
       </a-menu-item>
       <a-menu-item key="profile">
         <nuxt-link :to="'/profile'">
-          <i class="fas fa-user mr-2"></i>{{ getProfileName }}
+          <avatar
+            class="mr-2"
+            :userId="currentUser.userId"
+            :username="currentUser.username"
+            :isMyAvatar="true"
+            nullAvatarFontsize="16px"
+            nullAvatarFontweight="300"
+            diameter="28px"
+            lineHeight="26px"
+          />{{ getProfileName }}
         </nuxt-link>
       </a-menu-item>
       <a-menu-item @click="handleLogout" key="logout">
@@ -53,7 +62,9 @@
 
 <script>
 import jwt_decode from "jwt-decode";
+import Avatar from "../avatar.vue";
 export default {
+  components: { Avatar },
   data() {
     return {
       current: null,

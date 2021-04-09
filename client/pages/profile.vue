@@ -15,11 +15,7 @@
           <span slot="label" style="display: none">
             Final image
           </span>
-          <a-popover
-            v-model="popoverVisible"
-            v-if="avatarURL"
-            placement="bottom"
-          >
+          <a-popover v-model="popoverVisible" v-if="avatar" placement="bottom">
             <div class="p-2" slot="content">
               <a-button type="primary" @click.prevent="showFileChooser">
                 Upload avatar
@@ -29,7 +25,7 @@
             <div class="profile-img-container">
               <img
                 :style="popoverVisible ? 'opacity: 0.8' : ''"
-                :src="avatarURL"
+                :src="avatar"
                 :class="'ghx-avatar-img'"
               />
               <a
@@ -70,7 +66,7 @@
             @cancel="handleCancel"
           >
             <vue-cropper
-              class="mt-2"
+              class="mt-2 img-cropper"
               v-if="imgSrc"
               ref="cropper"
               :aspect-ratio="1"
@@ -241,7 +237,6 @@ export default {
       loading: false,
       pageLoading: false,
       popoverVisible: false,
-      avatarURL: null,
       visible: false,
       uploading: false,
       imgSrc: null,
@@ -254,11 +249,12 @@ export default {
   async mounted() {
     this.currentUser = jwt_decode(localStorage.getItem("token"));
     this.allSubjects.length ? {} : this.getAllSubjects();
-    this.avatarURL = await this.getAvatar();
+    await this.getAvatar(this.currentUser.userId);
   },
   computed: {
     ...mapState({
-      allSubjects: state => state.subjects.allSubjects
+      allSubjects: state => state.subjects.allSubjects,
+      avatar: state => state.avatar
     })
   },
   methods: {
@@ -363,7 +359,8 @@ export default {
       var file = this.dataURLtoFile(this.cropImg, this.uploadedFile.name);
       let formData = new FormData();
       formData.append("image", file);
-      this.avatarURL = await this.updateAvatar(formData);
+      await this.updateAvatar(formData);
+      this.getAvatar(this.currentUser.userId);
 
       this.$notification["success"]({
         message: "Uploaded avatar successfully!"
@@ -377,10 +374,10 @@ export default {
         title: "Are you sure you want to delete your avatar?",
         onOk: async () => {
           await this.updateAvatar(new FormData());
+          this.getAvatar(this.currentUser.userId);
           this.$notification["success"]({
             message: "Removed avatar successfully!"
           });
-          this.avatarURL = null;
         },
         onCancel() {}
       });
@@ -474,5 +471,17 @@ export default {
   left: 0;
   right: 0;
   transform: translateY(-50%);
+}
+</style>
+
+<style>
+.img-cropper .cropper-view-box {
+  border-radius: 50% !important;
+  display: block;
+  height: 100%;
+  outline: 1px solid #39f;
+  outline-color: rgba(51, 153, 255, 0.75);
+  overflow: hidden;
+  width: 100%;
 }
 </style>
