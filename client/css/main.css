@@ -38,3 +38,7 @@
   font-weight: 500;
   font-size: 0.9375rem;
 }
+
+.ant-table td {
+  white-space: nowrap;
+}

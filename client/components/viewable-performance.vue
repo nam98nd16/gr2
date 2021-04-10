@@ -15,11 +15,7 @@
         style="min-width: 120px"
         class="mb-2"
         v-model="selectedTopicId"
-        :options="
-          selectedMode == 'rated'
-            ? subjectOptions.filter(s => s.value)
-            : subjectOptions
-        "
+        :options="subjectOptions"
       />
       <a-select
         v-if="selectedMode == 'practice'"
@@ -29,35 +25,36 @@
         :options="difficultyOptions"
       />
       <br />
-      <a-radio-group
-        :class="'mb-2'"
-        v-model="selectedRange"
-        button-style="solid"
-      >
-        <a-radio-button value="today"> Today </a-radio-button>
-        <a-radio-button value="30 days"> 30 Days </a-radio-button>
-        <a-radio-button value="90 days">
-          90 Days
-        </a-radio-button>
-        <a-radio-button value="1 year">
-          1 Year
-        </a-radio-button>
-        <a-radio-button value="all time">
-          All Time
-        </a-radio-button>
-        <a-radio-button value="custom">
-          Custom
-        </a-radio-button>
-      </a-radio-group>
-      <a-range-picker
-        v-if="selectedRange == 'custom'"
-        v-model="selectedRangeMoments"
-      />
+      <span v-if="!(selectedMode == 'rated' && !selectedTopicId)">
+        <a-radio-group
+          :class="'mb-2'"
+          v-model="selectedRange"
+          button-style="solid"
+        >
+          <a-radio-button value="today"> Today </a-radio-button>
+          <a-radio-button value="30 days"> 30 Days </a-radio-button>
+          <a-radio-button value="90 days">
+            90 Days
+          </a-radio-button>
+          <a-radio-button value="1 year">
+            1 Year
+          </a-radio-button>
+          <a-radio-button value="all time">
+            All Time
+          </a-radio-button>
+          <a-radio-button value="custom">
+            Custom
+          </a-radio-button>
+        </a-radio-group>
+        <a-range-picker
+          v-if="selectedRange == 'custom'"
+          v-model="selectedRangeMoments"
+        />
+      </span>
     </div>
-
     <div class="chart-title">
       {{ selectedSubjectName }}
-      {{ selectedMode == "rated" ? "rating" : " - " + selectedDifficultyLabel }}
+      {{ selectedMode == "rated" ? "Rating" : " - " + selectedDifficultyLabel }}
     </div>
     <apexchart
       v-if="mounted && selectedMode == 'practice' && !loading"
@@ -68,19 +65,38 @@
     ></apexchart>
 
     <apexchart
-      v-else-if="mounted && selectedMode == 'rated' && !loading"
+      v-else-if="
+        mounted && selectedMode == 'rated' && selectedTopicId && !loading
+      "
       height="400"
       type="line"
       :options="ratedChartOptions"
       :series="ratedSeries"
     ></apexchart>
+
+    <a-table
+      class="scrollable-table"
+      v-else-if="
+        mounted && selectedMode == 'rated' && !selectedTopicId && !loading
+      "
+      :columns="allSubjectsColumns"
+      :dataSource="allSubjectsRating"
+      :pagination="false"
+      :rowKey="(r, i) => i"
+      size="middle"
+      bordered
+    >
+      <template slot="rating" slot-scope="text">
+        {{ Number.isInteger(text) ? text : text.toFixed(2) }}
+      </template>
+    </a-table>
   </a-spin>
 </template>
 
 <script>
 import { mapState, mapActions } from "vuex";
 export default {
-  props: ["userId"],
+  props: ["userId", "defaultViewAllSubjects"],
   data() {
     return {
       selectedTopicId: 1,
@@ -123,6 +139,7 @@ export default {
   },
   async mounted() {
     this.loading = true;
+    if (this.defaultViewAllSubjects) this.selectedTopicId = 0;
     await Promise.all([
       this.fetchData(),
       this.allSubjects.length ? undefined : this.getAllSubjects()
@@ -445,6 +462,22 @@ export default {
       return (
         range.startDate && range.endDate && range.startDate == range.endDate
       );
+    },
+    allSubjectsRating() {
+      let allRatings = [{}];
+      this.allSubjects.forEach(s => {
+        allRatings[0][`${s.subjectId}-rating`] =
+          this.myRatedPerformances.find(p => p.subjectId == s.subjectId)
+            ?.rating ?? 3;
+      });
+      return allRatings;
+    },
+    allSubjectsColumns() {
+      return this.allSubjects.map(s => ({
+        title: s.subjectName,
+        dataIndex: `${s.subjectId}-rating`,
+        scopedSlots: { customRender: "rating" }
+      }));
     }
   }
 };
@@ -461,5 +494,9 @@ export default {
   text-align: center;
   padding: 0px 10px;
   color: #000;
+}
+
+.scrollable-table {
+  overflow-x: auto;
 }
 </style>

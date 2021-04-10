@@ -52,20 +52,26 @@ const getPastRatings = async (req, res) => {
 
   let pastRatings;
   let query;
-  if (startDate == endDate) {
-    query = knex("rated_test_results")
-      .select(knex.raw(`"submittedTime", "ratingChange", "updatedRating"`))
-      .where("userId", "=", userId)
-      .where("subjectId", "=", subjectId)
-      .where(knex.raw(`"submittedTime"::date = '${startDate}'`));
-  } else
-    query = knex.raw(
-      `select distinct t_outer."submittedTime"::date + interval '23 hours' as "submittedTime", t_top."ratingChange", t_top."updatedRating" from rated_test_results t_outer join lateral (select * from rated_test_results t_inner where t_inner."submittedTime"::date >= '${startDate}' and t_inner."submittedTime"::date <= '${endDate}' and  t_inner."userId" = ${userId} and t_inner."subjectId" = ${subjectId} and t_inner."submittedTime"::date = t_outer."submittedTime"::date order by t_inner."submittedTime" DESC limit 1) t_top on true order by t_outer."submittedTime"::date + interval '23 hours';`
-    );
 
-  pastRatings = await query;
+  if (subjectId != 0) {
+    if (startDate == endDate) {
+      query = knex("rated_test_results")
+        .select(knex.raw(`"submittedTime", "ratingChange", "updatedRating"`))
+        .where("userId", "=", userId)
+        .where("subjectId", "=", subjectId)
+        .where(knex.raw(`"submittedTime"::date = '${startDate}'`));
+    } else
+      query = knex.raw(
+        `select distinct t_outer."submittedTime"::date + interval '23 hours' as "submittedTime", t_top."ratingChange", t_top."updatedRating" from rated_test_results t_outer join lateral (select * from rated_test_results t_inner where t_inner."submittedTime"::date >= '${startDate}' and t_inner."submittedTime"::date <= '${endDate}' and  t_inner."userId" = ${userId} and t_inner."subjectId" = ${subjectId} and t_inner."submittedTime"::date = t_outer."submittedTime"::date order by t_inner."submittedTime" DESC limit 1) t_top on true order by t_outer."submittedTime"::date + interval '23 hours';`
+      );
 
-  if (startDate != endDate) pastRatings = pastRatings.rows;
+    pastRatings = await query;
+
+    if (startDate != endDate) pastRatings = pastRatings.rows;
+  } else {
+    query = knex("ratings").where("userId", "=", userId);
+    pastRatings = await query;
+  }
 
   res.json(pastRatings);
 };

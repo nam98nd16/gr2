@@ -60,7 +60,11 @@
         />
       </div>
     </a-form>
-    <viewable-performance v-if="isViewingPerformance" :userId="user.userId" />
+    <viewable-performance
+      v-if="isViewingPerformance"
+      :userId="user.userId"
+      :defaultViewAllSubjects="true"
+    />
   </a-card>
 </template>
 
