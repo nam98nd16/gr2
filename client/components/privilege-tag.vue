@@ -43,19 +43,19 @@ export default {
       let color = "";
       switch (this.role) {
         case 0:
-          color = "red";
+          color = "#000000";
           break;
         case 1:
-          color = "#0000A0";
+          color = "#4363d8";
           break;
         case 2:
-          color = "blue";
+          color = "#dcbeff";
           break;
         case 4:
-          color = "green";
+          color = "#f58231";
           break;
         default:
-          color = "#000000";
+          color = "#ffffff";
           break;
       }
       return color;
