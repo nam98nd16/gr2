@@ -102,6 +102,34 @@ const getTopRatings = async (req, res) => {
     .orderBy("rating", "desc")
     .limit(10);
 
+  let possibleFriends = await knex("friends")
+    .where(function () {
+      this.whereIn(
+        "userId1",
+        topRatings
+          .filter((t) => t.userId != reqUser.userId)
+          .map((u) => u.userId)
+      ).orWhereIn(
+        "userId2",
+        topRatings
+          .filter((t) => t.userId != reqUser.userId)
+          .map((u) => u.userId)
+      );
+    })
+    .andWhere(function () {
+      this.where("userId1", "=", reqUser.userId).orWhere(
+        "userId2",
+        "=",
+        reqUser.userId
+      );
+    });
+
+  possibleFriends.forEach((f) => {
+    if (f.userId2 == reqUser.userId)
+      topRatings.find((u) => u.userId == f.userId1).hasBeenRequested = f;
+    else topRatings.find((u) => u.userId == f.userId2).hasRequested = f;
+  });
+
   res.json(topRatings);
 };
 

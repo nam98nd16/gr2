@@ -47,6 +47,13 @@
           :role="record.role"
           :subjectId="record.subjectId"
         />
+        <friend-actions
+          :person="record"
+          :shouldNotRenderDetailActions="true"
+          @addedFriend="fetchRatings"
+          @deletedFriend="fetchRatings"
+          @confirmedFriend="fetchRatings"
+        />
       </template>
       <template slot="rating" slot-scope="text, record, index">
         <span :style="getStyle(index)"
@@ -62,8 +69,9 @@ import PageTitle from "../components/page-title.vue";
 import { mapActions, mapState } from "vuex";
 import Avatar from "../components/avatar.vue";
 import PrivilegeTag from "../components/privilege-tag.vue";
+import FriendActions from "../components/friend-actions.vue";
 export default {
-  components: { PageTitle, Avatar, PrivilegeTag },
+  components: { PageTitle, Avatar, PrivilegeTag, FriendActions },
   data() {
     return {
       subjectOptions: [],
@@ -72,12 +80,12 @@ export default {
   },
   watch: {
     selectedSubjectId(newVal) {
-      this.getTopRatings(this.selectedSubjectId);
+      this.fetchRatings();
     }
   },
   async mounted() {
     this.initSubjectOptions();
-    this.getTopRatings(this.selectedSubjectId);
+    this.fetchRatings();
   },
   computed: {
     ...mapState({
@@ -114,6 +122,9 @@ export default {
         value: subject.subjectId,
         label: subject.subjectName
       }));
+    },
+    fetchRatings() {
+      this.getTopRatings(this.selectedSubjectId);
     },
     getStyle(index) {
       return !index

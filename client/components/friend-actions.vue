@@ -1,7 +1,11 @@
 <template>
   <span>
     <a-button
-      v-if="!person.hasRequested && !person.hasBeenRequested"
+      v-if="
+        !person.hasRequested &&
+          !person.hasBeenRequested &&
+          person.userId != currentUser.userId
+      "
       type="primary"
       style="float: right"
       @click="e => handleAddFriend(e)"
@@ -31,7 +35,7 @@
     >
     <a-popover
       v-model="popoverIsVisible"
-      v-else
+      v-else-if="person.hasBeenRequested || person.hasRequested"
       trigger="click"
       placement="right"
     >
@@ -40,14 +44,14 @@
           ><i class="fas fa-user-times mr-2"></i>Unfriend</a-button
         ><br />
         <a-button
-          v-if="!isViewingPerformance"
+          v-if="!isViewingPerformance && !shouldNotRenderDetailActions"
           class="mt-2"
           type="primary"
           @click="e => handleViewPerformance(e)"
           ><i class="fas fa-chart-line mr-2"></i>View performance</a-button
         >
         <a-button
-          v-else
+          v-else-if="!shouldNotRenderDetailActions"
           class="mt-2"
           type="primary"
           @click="e => handleViewProfile(e)"
@@ -67,12 +71,14 @@
 </template>
 
 <script>
+import jwt_decode from "jwt-decode";
 import { mapActions } from "vuex";
 export default {
-  props: ["person", "isViewingPerformance"],
+  props: ["person", "isViewingPerformance", "shouldNotRenderDetailActions"],
   data() {
     return {
-      popoverIsVisible: false
+      popoverIsVisible: false,
+      currentUser: jwt_decode(localStorage.getItem("token"))
     };
   },
   methods: {
