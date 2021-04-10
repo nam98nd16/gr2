@@ -97,9 +97,12 @@ export default {
     };
   },
   watch: {
-    user(newVal) {
-      this.isViewingPerformance = false;
-      this.fetchProfile();
+    user: {
+      handler(newVal) {
+        this.isViewingPerformance = false;
+        this.fetchProfile();
+      },
+      deep: true
     }
   },
   async mounted() {

@@ -23,6 +23,7 @@
             @addedFriend="$emit('addedFriend')"
             @confirmedFriend="$emit('confirmedFriend')"
             @deletedFriend="$emit('deletedFriend')"
+            @viewPerformance="$emit('viewPerformance')"
           />
         </a-col>
       </a-row>

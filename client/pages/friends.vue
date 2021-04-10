@@ -33,6 +33,7 @@
               selectedUser && person.userId == selectedUser.userId
             )
           "
+          @viewPerformance="handleViewPerformance(person)"
           @click.native="selectedUser = _.cloneDeep(person)"
         />
         <a-pagination
@@ -155,6 +156,11 @@ export default {
           else this.selectedUser.hasBeenRequested.confirmed = "1";
         }
       }
+    },
+    async handleViewPerformance(person) {
+      this.selectedUser = _.cloneDeep(person);
+      await this.$nextTick();
+      this.$refs.viewableProfile.isViewingPerformance = true;
     }
   },
   beforeDestroy() {
