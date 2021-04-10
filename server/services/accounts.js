@@ -8,6 +8,7 @@ const fs = require("fs");
 const validDays = 7;
 const bcrypt = require("bcrypt");
 const saltRounds = 10;
+var mv = require("mv");
 
 /**
  * @param {Request} req Request object from express
@@ -249,7 +250,7 @@ const updateAvatar = async (req, res) => {
       const tempPath = image.path;
       const targetPath = path.join(__dirname, `../public/${pathToStore}`);
 
-      fs.rename(tempPath, targetPath, async (err) => {
+      mv(tempPath, targetPath, async (err) => {
         if (err) return handleError(err, res);
         await knex("accounts")
           .where("userId", "=", reqUser.userId)
