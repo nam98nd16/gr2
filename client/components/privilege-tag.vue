@@ -15,27 +15,28 @@ export default {
     }),
     userRole() {
       let role = "";
+
+      if (this.subjectId)
+        role = `${
+          this.allSubjects.find(subj => subj.subjectId == this.subjectId)
+            ?.subjectName
+        } `;
       switch (this.role) {
         case 0:
-          role = "Admin";
+          role += "Admin";
           break;
         case 1:
-          role = "Leader";
+          role += "Leader";
           break;
         case 2:
-          role = "Expert";
+          role += "Expert";
           break;
         case 4:
-          role = "Preliminary Reviewer";
+          role += "Preliminary Reviewer";
           break;
         default:
           break;
       }
-      if (this.subjectId)
-        role += ` - ${
-          this.allSubjects.find(subj => subj.subjectId == this.subjectId)
-            ?.subjectName
-        }`;
       return role;
     },
     userRoleColor() {
