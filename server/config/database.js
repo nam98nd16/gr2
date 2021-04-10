@@ -1,13 +1,15 @@
 const knex = require("knex")({
   client: "pg",
   connection: {
-    host: "127.0.0.1",
-    port: "5432",
-    user: "postgres",
-    password: "123456",
-    database: "gr-2",
+    connectionString: process.env.DATABASE_URL,
+    ssl:
+      process.env.baseURL == "http://localhost:3000/"
+        ? undefined
+        : { rejectUnauthorized: false },
   },
 });
+
+console.log("here", process.env.DBhost);
 
 const { attachPaginate } = require("knex-paginate");
 attachPaginate();
