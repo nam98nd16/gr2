@@ -9,8 +9,6 @@ const knex = require("knex")({
   },
 });
 
-console.log("here", process.env.DBhost);
-
 const { attachPaginate } = require("knex-paginate");
 attachPaginate();
 
