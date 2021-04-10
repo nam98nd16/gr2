@@ -75,7 +75,7 @@
     ></apexchart>
 
     <a-table
-      class="scrollable-table"
+      class="scrollable-table mt-2"
       v-else-if="
         mounted && selectedMode == 'rated' && !selectedTopicId && !loading
       "
