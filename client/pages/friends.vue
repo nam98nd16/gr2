@@ -66,6 +66,7 @@
         </a-radio-group>
 
         <viewable-profile
+          ref="viewableProfile"
           v-if="selectedUser"
           :user="selectedUser"
           @addedFriend="fetchFriends(true, 'added', true)"

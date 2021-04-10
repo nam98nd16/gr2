@@ -1,18 +1,86 @@
 <template>
-  <div>
-    <page-title title="Performance monitor" />
+  <a-spin :spinning="loading">
+    <div>
+      <a-radio-group
+        :class="'mb-2'"
+        v-model="selectedMode"
+        button-style="solid"
+      >
+        <a-radio-button value="rated"> Rated </a-radio-button>
+        <a-radio-button value="practice">
+          Learning
+        </a-radio-button>
+      </a-radio-group>
+      <a-select
+        style="min-width: 120px"
+        class="mb-2"
+        v-model="selectedTopicId"
+        :options="
+          selectedMode == 'rated'
+            ? subjectOptions.filter(s => s.value)
+            : subjectOptions
+        "
+      />
+      <a-select
+        v-if="selectedMode == 'practice'"
+        style="min-width: 120px"
+        class="mb-2"
+        v-model="selectedDifficultyLevel"
+        :options="difficultyOptions"
+      />
+      <br />
+      <a-radio-group
+        :class="'mb-2'"
+        v-model="selectedRange"
+        button-style="solid"
+      >
+        <a-radio-button value="today"> Today </a-radio-button>
+        <a-radio-button value="30 days"> 30 Days </a-radio-button>
+        <a-radio-button value="90 days">
+          90 Days
+        </a-radio-button>
+        <a-radio-button value="1 year">
+          1 Year
+        </a-radio-button>
+        <a-radio-button value="all time">
+          All Time
+        </a-radio-button>
+        <a-radio-button value="custom">
+          Custom
+        </a-radio-button>
+      </a-radio-group>
+      <a-range-picker
+        v-if="selectedRange == 'custom'"
+        v-model="selectedRangeMoments"
+      />
+    </div>
 
-    <viewable-performance v-if="currentUser" :userId="currentUser.userId" />
-  </div>
+    <div class="chart-title">
+      {{ selectedSubjectName }}
+      {{ selectedMode == "rated" ? "rating" : " - " + selectedDifficultyLabel }}
+    </div>
+    <apexchart
+      v-if="mounted && selectedMode == 'practice' && !loading"
+      height="400"
+      type="bar"
+      :options="chartOptions"
+      :series="series"
+    ></apexchart>
+
+    <apexchart
+      v-else-if="mounted && selectedMode == 'rated' && !loading"
+      height="400"
+      type="line"
+      :options="ratedChartOptions"
+      :series="ratedSeries"
+    ></apexchart>
+  </a-spin>
 </template>
 
 <script>
-import pageTitle from "../components/page-title.vue";
-import jwt_decode from "jwt-decode";
 import { mapState, mapActions } from "vuex";
-import ViewablePerformance from "../components/viewable-performance.vue";
 export default {
-  components: { pageTitle, ViewablePerformance },
+  props: ["userId"],
   data() {
     return {
       selectedTopicId: 1,
@@ -49,7 +117,8 @@ export default {
       mounted: false,
       loading: false,
       selectedMode: "rated",
-      currentUser: jwt_decode(localStorage.getItem("token"))
+      myPerformances: [],
+      myRatedPerformances: []
     };
   },
   async mounted() {
@@ -128,7 +197,7 @@ export default {
     },
     async fetchData() {
       let performancePayload = {
-        userId: this.currentUser.userId,
+        userId: this.userId,
         subjectId: this.selectedTopicId,
         difficultyLevel:
           this.selectedMode == "rated"
@@ -138,15 +207,16 @@ export default {
       };
       this.loading = true;
       if (this.selectedMode == "rated")
-        await this.getMyRatedPerformances(performancePayload);
-      else await this.getMyPerformances(performancePayload);
+        this.myRatedPerformances = await this.getMyRatedPerformances(
+          performancePayload
+        );
+      else
+        this.myPerformances = await this.getMyPerformances(performancePayload);
       this.loading = false;
     }
   },
   computed: {
     ...mapState({
-      myPerformances: state => state.performance.myPerformances,
-      myRatedPerformances: state => state.performance.myRatedPerformances,
       allSubjects: state => state.subjects.allSubjects
     }),
     filteredPerformances() {

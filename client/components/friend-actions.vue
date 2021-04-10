@@ -29,14 +29,32 @@
       @click="e => handleDeleteFriend(e)"
       ><i class="fas fa-user-times mr-2"></i>Cancel Request</a-button
     >
-    <a-popover v-else trigger="click" placement="right">
-      <a-button
-        slot="content"
-        ghost
-        type="danger"
-        @click="e => handleUnfriend(e)"
-        ><i class="fas fa-user-times mr-2"></i>Unfriend</a-button
-      >
+    <a-popover
+      v-model="popoverIsVisible"
+      v-else
+      trigger="click"
+      placement="right"
+    >
+      <div slot="content">
+        <a-button ghost type="danger" @click="e => handleUnfriend(e)"
+          ><i class="fas fa-user-times mr-2"></i>Unfriend</a-button
+        ><br />
+        <a-button
+          v-if="!isViewingPerformance"
+          class="mt-2"
+          type="primary"
+          @click="e => handleViewPerformance(e)"
+          ><i class="fas fa-chart-line mr-2"></i>View performance</a-button
+        >
+        <a-button
+          v-else
+          class="mt-2"
+          type="primary"
+          @click="e => handleViewProfile(e)"
+          ><i class="fas fa-address-card mr-2"></i>View profile</a-button
+        >
+      </div>
+
       <a-button
         @click="e => e.stopPropagation()"
         style="float: right"
@@ -51,7 +69,12 @@
 <script>
 import { mapActions } from "vuex";
 export default {
-  props: ["person"],
+  props: ["person", "isViewingPerformance"],
+  data() {
+    return {
+      popoverIsVisible: false
+    };
+  },
   methods: {
     ...mapActions({
       addFriend: "friends/addFriend",
@@ -81,10 +104,19 @@ export default {
         okText: "OK",
         cancelText: "Cancel",
         onOk: async () => {
+          this.popoverIsVisible = false;
           await this.handleDeleteFriend(e);
         },
         onCancel() {}
       });
+    },
+    handleViewPerformance() {
+      this.popoverIsVisible = false;
+      this.$emit("viewPerformance");
+    },
+    handleViewProfile() {
+      this.popoverIsVisible = false;
+      this.$emit("viewProfile");
     }
   }
 };

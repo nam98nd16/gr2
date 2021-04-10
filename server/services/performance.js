@@ -15,11 +15,11 @@ const getPerformance = async (req, res) => {
     req.headers.authorization.length
   );
   let reqUser = jwt.verify(token, jwtSecret);
-  let { subjectId, difficultyLevel, startDate, endDate } = req.body;
+  let { userId, subjectId, difficultyLevel, startDate, endDate } = req.body;
   let performances;
   let query = knex("test_results")
     .select("*")
-    .where("testTakerId", "=", reqUser.userId);
+    .where("testTakerId", "=", userId);
   if (subjectId != 0) query = query.where("subjectId", "=", subjectId);
   if (difficultyLevel != 0)
     query = query.where("difficultyLevel", "=", difficultyLevel);
@@ -45,7 +45,7 @@ const getPastRatings = async (req, res) => {
     req.headers.authorization.length
   );
   let reqUser = jwt.verify(token, jwtSecret);
-  let { subjectId, startDate, endDate } = req.body;
+  let { userId, subjectId, startDate, endDate } = req.body;
 
   if (!startDate) startDate = moment("2000-01-01").format("YYYY-MM-DD");
   if (!endDate) endDate = moment("2099-12-31").format("YYYY-MM-DD");
@@ -55,12 +55,12 @@ const getPastRatings = async (req, res) => {
   if (startDate == endDate) {
     query = knex("rated_test_results")
       .select(knex.raw(`"submittedTime", "ratingChange", "updatedRating"`))
-      .where("userId", "=", reqUser.userId)
+      .where("userId", "=", userId)
       .where("subjectId", "=", subjectId)
       .where(knex.raw(`"submittedTime"::date = '${startDate}'`));
   } else
     query = knex.raw(
-      `select distinct t_outer."submittedTime"::date + interval '23 hours' as "submittedTime", t_top."ratingChange", t_top."updatedRating" from rated_test_results t_outer join lateral (select * from rated_test_results t_inner where t_inner."submittedTime"::date >= '${startDate}' and t_inner."submittedTime"::date <= '${endDate}' and  t_inner."userId" = ${reqUser.userId} and t_inner."subjectId" = ${subjectId} and t_inner."submittedTime"::date = t_outer."submittedTime"::date order by t_inner."submittedTime" DESC limit 1) t_top on true order by t_outer."submittedTime"::date + interval '23 hours';`
+      `select distinct t_outer."submittedTime"::date + interval '23 hours' as "submittedTime", t_top."ratingChange", t_top."updatedRating" from rated_test_results t_outer join lateral (select * from rated_test_results t_inner where t_inner."submittedTime"::date >= '${startDate}' and t_inner."submittedTime"::date <= '${endDate}' and  t_inner."userId" = ${userId} and t_inner."subjectId" = ${subjectId} and t_inner."submittedTime"::date = t_outer."submittedTime"::date order by t_inner."submittedTime" DESC limit 1) t_top on true order by t_outer."submittedTime"::date + interval '23 hours';`
     );
 
   pastRatings = await query;

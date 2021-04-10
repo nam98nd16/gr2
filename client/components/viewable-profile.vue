@@ -21,38 +21,46 @@
         </div>
         <friend-actions
           :person="user"
+          :isViewingPerformance="isViewingPerformance"
           @addedFriend="$emit('addedFriend')"
           @confirmedFriend="$emit('confirmedFriend')"
-          @deletedFriend="$emit('deletedFriend')"
+          @deletedFriend="
+            $emit('deletedFriend');
+            isViewingPerformance = false;
+          "
+          @viewPerformance="isViewingPerformance = true"
+          @viewProfile="isViewingPerformance = false"
         />
       </a-form-item>
-
-      <form-text icon="id-card" label="Full name" :value="profile.fullName" />
-      <form-text icon="envelope" label="Email" :value="profile.email" />
-      <form-text
-        icon="mobile-alt"
-        label="Phone number"
-        :value="profile.phoneNumber"
-      />
-      <form-text
-        icon="birthday-cake"
-        label="Birthday"
-        :value="
-          profile.birthday
-            ? $moment(profile.birthday)
-                .add(7, 'hours')
-                .format('YYYY/MM/DD')
-            : null
-        "
-      />
-      <form-text icon="house-user" label="Address" :value="profile.address" />
-      <form-text icon="venus-mars" label="Gender" :value="profile.gender" />
-      <form-text
-        icon="book-reader"
-        label="Bio"
-        :value="profile.autobiography"
-      />
+      <div v-if="!isViewingPerformance">
+        <form-text icon="id-card" label="Full name" :value="profile.fullName" />
+        <form-text icon="envelope" label="Email" :value="profile.email" />
+        <form-text
+          icon="mobile-alt"
+          label="Phone number"
+          :value="profile.phoneNumber"
+        />
+        <form-text
+          icon="birthday-cake"
+          label="Birthday"
+          :value="
+            profile.birthday
+              ? $moment(profile.birthday)
+                  .add(7, 'hours')
+                  .format('YYYY/MM/DD')
+              : null
+          "
+        />
+        <form-text icon="house-user" label="Address" :value="profile.address" />
+        <form-text icon="venus-mars" label="Gender" :value="profile.gender" />
+        <form-text
+          icon="book-reader"
+          label="Bio"
+          :value="profile.autobiography"
+        />
+      </div>
     </a-form>
+    <viewable-performance v-if="isViewingPerformance" :userId="user.userId" />
   </a-card>
 </template>
 
@@ -62,8 +70,15 @@ import avatar from "./avatar.vue";
 import FormText from "./form-text.vue";
 import FriendActions from "./friend-actions.vue";
 import PrivilegeTag from "./privilege-tag.vue";
+import ViewablePerformance from "./viewable-performance.vue";
 export default {
-  components: { avatar, FormText, FriendActions, PrivilegeTag },
+  components: {
+    avatar,
+    FormText,
+    FriendActions,
+    PrivilegeTag,
+    ViewablePerformance
+  },
   props: ["user"],
   data() {
     return {
@@ -77,11 +92,13 @@ export default {
           sm: 24
         }
       },
-      profile: null
+      profile: null,
+      isViewingPerformance: false
     };
   },
   watch: {
     user(newVal) {
+      this.isViewingPerformance = false;
       this.fetchProfile();
     }
   },
