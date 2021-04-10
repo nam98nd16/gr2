@@ -17,6 +17,7 @@
           <div class="username-profile">
             {{ profile.username }}
           </div>
+          <privilege-tag :role="user.role" :subjectId="user.subjectId" />
         </div>
         <friend-actions
           :person="user"
@@ -60,8 +61,9 @@ import { mapState, mapActions, mapMutations } from "vuex";
 import avatar from "./avatar.vue";
 import FormText from "./form-text.vue";
 import FriendActions from "./friend-actions.vue";
+import PrivilegeTag from "./privilege-tag.vue";
 export default {
-  components: { avatar, FormText, FriendActions },
+  components: { avatar, FormText, FriendActions, PrivilegeTag },
   props: ["user"],
   data() {
     return {

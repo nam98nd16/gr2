@@ -20,10 +20,10 @@ export default {
           role = "Admin";
           break;
         case 1:
-          role = "Subject Leader";
+          role = "Leader";
           break;
         case 2:
-          role = "Subject Expert";
+          role = "Expert";
           break;
         case 4:
           role = "Preliminary Reviewer";

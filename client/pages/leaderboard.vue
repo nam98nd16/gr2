@@ -30,10 +30,23 @@
         </div>
       </template>
       <template slot="username" slot-scope="text, record, index">
-        <span :style="getStyle(index)">
+        <avatar
+          class="mr-2"
+          :userId="record.userId"
+          :username="text"
+          :isMyAvatar="false"
+          nullAvatarFontsize="16px"
+          nullAvatarFontweight="300"
+          diameter="28px"
+          lineHeight="26px"
+        /><span :style="getStyle(index)">
           <i v-if="[0, 1, 2].includes(index)" class="fas fa-trophy mr-1"> </i
           >{{ text }}</span
-        >
+        ><privilege-tag
+          class="ml-2"
+          :role="record.role"
+          :subjectId="record.subjectId"
+        />
       </template>
       <template slot="rating" slot-scope="text, record, index">
         <span :style="getStyle(index)"
@@ -47,8 +60,10 @@
 <script>
 import PageTitle from "../components/page-title.vue";
 import { mapActions, mapState } from "vuex";
+import Avatar from "../components/avatar.vue";
+import PrivilegeTag from "../components/privilege-tag.vue";
 export default {
-  components: { PageTitle },
+  components: { PageTitle, Avatar, PrivilegeTag },
   data() {
     return {
       subjectOptions: [],
