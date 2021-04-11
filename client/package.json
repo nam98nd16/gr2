@@ -3,8 +3,10 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "cross-env NODE_ENV=dev nuxt --port 3333",
-    "build": "nuxt build",
+    "dev": "cross-env NODE_ENV=dev nuxt",
+    "aws": "cross-env NODE_ENV=aws nuxt",
+    "prod": "cross-env  NODE_ENV=prodution --max_old_space_size=2560 nuxt",
+    "build": "node --max-old-space-size=4096 node_modules/nuxt/bin/nuxt.js build",
     "start": "nuxt start",
     "generate": "nuxt generate"
   },
@@ -25,5 +27,8 @@
     "vue-lodash": "^2.1.2",
     "vue-moment": "^4.1.0"
   },
-  "devDependencies": {}
+  "devDependencies": {},
+  "engines": {
+    "node": "12.18.2"
+  }
 }
