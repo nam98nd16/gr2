@@ -87,9 +87,9 @@ const getTopRatings = async (req, res) => {
   );
   let reqUser = jwt.verify(token, jwtSecret);
 
-  let { subjectId } = req.query;
+  let { subjectId, onlyMyFriends } = req.query;
 
-  let topRatings = await knex("ratings")
+  let query = knex("ratings")
     .select(
       "username",
       "accounts.userId",
@@ -98,9 +98,27 @@ const getTopRatings = async (req, res) => {
       "rating"
     )
     .join("accounts", "ratings.userId", "=", "accounts.userId")
-    .where("ratings.subjectId", "=", subjectId)
-    .orderBy("rating", "desc")
-    .limit(10);
+    .where("ratings.subjectId", "=", subjectId);
+
+  if (onlyMyFriends === "true") {
+    let friendships = await knex("friends")
+      .where(function () {
+        this.where({ userId1: reqUser.userId }).orWhere({
+          userId2: reqUser.userId,
+        });
+      })
+      .andWhere({ confirmed: 1 });
+    query = query.whereIn(
+      "ratings.userId",
+      friendships.map((f) =>
+        f.userId1 == reqUser.userId ? f.userId2 : f.userId1
+      )
+    );
+  }
+
+  query = query.orderBy("rating", "desc").limit(10);
+
+  let topRatings = await query;
 
   let possibleFriends = await knex("friends")
     .where(function () {

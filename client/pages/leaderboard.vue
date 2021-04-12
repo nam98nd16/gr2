@@ -15,6 +15,18 @@
       </a-radio-button>
     </a-radio-group>
 
+    <div>
+      <a-checkbox
+        class="mb-2"
+        :checked="onlyMyFriends"
+        @change="
+          onlyMyFriends = !onlyMyFriends;
+          fetchRatings();
+        "
+        >Only my friends</a-checkbox
+      >
+    </div>
+
     <a-table
       :columns="columns"
       :data-source="topRatings"
@@ -75,7 +87,8 @@ export default {
   data() {
     return {
       subjectOptions: [],
-      selectedSubjectId: 1
+      selectedSubjectId: 1,
+      onlyMyFriends: false
     };
   },
   watch: {
@@ -124,7 +137,10 @@ export default {
       }));
     },
     fetchRatings() {
-      this.getTopRatings(this.selectedSubjectId);
+      this.getTopRatings({
+        subjectId: this.selectedSubjectId,
+        onlyMyFriends: this.onlyMyFriends
+      });
     },
     getStyle(index) {
       return !index

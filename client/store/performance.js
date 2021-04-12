@@ -27,9 +27,9 @@ export const actions = {
     commit("setMyRatedPerformances", res.data);
     return res.data;
   },
-  async getTopRatings({ commit }, subjectId) {
+  async getTopRatings({ commit }, payload) {
     const res = await this.$axios.get(
-      `/performance/top-ratings?subjectId=${subjectId}`
+      `/performance/top-ratings?subjectId=${payload.subjectId}&onlyMyFriends=${payload.onlyMyFriends}`
     );
     commit("setTopRatings", res.data);
     return res;
