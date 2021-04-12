@@ -3,6 +3,7 @@ const { parsed } = require("dotenv").config({
     "environments/.env" +
     (process.env.NODE_ENV == "development" ? "" : "." + process.env.NODE_ENV)
 });
+
 export default {
   // Disable server-side rendering (https://go.nuxtjs.dev/ssr-mode)
   ssr: false,

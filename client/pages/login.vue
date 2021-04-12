@@ -104,6 +104,8 @@ export default {
       setCurrentUser: "profile/setCurrentUser"
     }),
     handleSubmit(e) {
+      console.log("env", process.env.baseURL, "node_env", process.env.NODE_ENV);
+
       e.preventDefault();
       this.form.validateFields(async (err, values) => {
         if (!err) {

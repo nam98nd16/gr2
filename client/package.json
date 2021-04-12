@@ -6,7 +6,7 @@
     "dev": "cross-env NODE_ENV=dev nuxt",
     "aws": "cross-env NODE_ENV=aws nuxt",
     "prod": "cross-env  NODE_ENV=prodution --max_old_space_size=2560 nuxt",
-    "build": "node --max-old-space-size=4096 node_modules/nuxt/bin/nuxt.js build",
+    "build": "cross-env NODE_ENV=aws node --max-old-space-size=4096 node_modules/nuxt/bin/nuxt.js build",
     "start": "nuxt start",
     "generate": "nuxt generate"
   },
