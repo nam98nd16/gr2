@@ -48,3 +48,12 @@
 .scrollable-table {
   overflow-x: auto;
 }
+
+.ant-card-head-title {
+  display: inline-block;
+  flex: 1;
+  padding: 16px 0;
+  overflow: hidden;
+  white-space: unset;
+  text-overflow: ellipsis;
+}

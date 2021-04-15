@@ -1,149 +1,166 @@
 <template>
   <div>
     <a-card size="small">
-      <div slot="title">
-        {{ question.questionString }}
-        <a-tag color="green">{{
-          allSubjects.find(subject => subject.subjectId == question.subjectId)
-            .subjectName
-        }}</a-tag>
-        <a-tag v-if="isRejected" color="red">Rejected</a-tag>
-
-        <span v-else>
-          <a-tag v-if="isWaitingForPreliminaryReview" color="blue"
-            >Waiting for preliminary review</a-tag
-          >
-          <a-tag v-if="isWaitingForAssignee" color="blue"
-            >Waiting for assignee</a-tag
-          >
-          <a-tag v-if="isWaitingForPeerReview" color="blue"
-            >Waiting for peer review</a-tag
-          >
-          <a-tag v-if="isWaitingForFinalReview" color="blue"
-            >Waiting for final review</a-tag
-          ></span
-        >
-
-        <a-tooltip placement="right">
-          <template slot="title">
+      <template slot="title">
+        <a-row :gutter="4" type="flex" align="top" justify="start">
+          <a-col :md="12" :xs="24">
+            {{ question.questionString }}
             <div>
-              This question has been reported by:
-            </div>
-            <div v-for="(report, index) in question.reports" :key="index">
-              <span style="font-weight: bold">{{ report.username }}</span
-              >:
-              <span style="font-style: italic">{{ report.reason }}</span>
-            </div>
-          </template>
-          <i
-            v-if="isReported && canHandleReport"
-            class="fas fa-exclamation-circle pointer-cursor"
-          ></i>
-        </a-tooltip>
-        <a-tag color="blue" title="Allowed time for the question">
-          <i class="fas fa-clock"></i> {{ question.timeAllowed }}</a-tag
-        >
-        <a-tag color="red" title="Difficulty level"
-          ><i class="fas fa-skull-crossbones"></i>
-          {{ question.difficultyLevel }}
-        </a-tag>
+              <a-tag color="green">{{
+                allSubjects.find(
+                  subject => subject.subjectId == question.subjectId
+                ).subjectName
+              }}</a-tag>
+              <a-tag v-if="isRejected" color="red">Rejected</a-tag>
 
-        <div v-if="isRejected" style="font-style: italic; font-weight: 400">
-          <span v-if="question.passedPreliminaryReview === '0'"
-            ><span class="reviewer">Preliminary reviewer:</span>
-            {{ question.rejectReason }}</span
-          >
-          <div v-else-if="question.passedPeerReview === '0'">
-            <div>
-              <span class="reviewer">Expert 1:</span> {{ getRejectReason(0) }}
+              <span v-else>
+                <a-tag v-if="isWaitingForPreliminaryReview" color="blue"
+                  >Waiting for preliminary review</a-tag
+                >
+                <a-tag v-if="isWaitingForAssignee" color="blue"
+                  >Waiting for assignee</a-tag
+                >
+                <a-tag v-if="isWaitingForPeerReview" color="blue"
+                  >Waiting for peer review</a-tag
+                >
+                <a-tag v-if="isWaitingForFinalReview" color="blue"
+                  >Waiting for final review</a-tag
+                ></span
+              >
+
+              <a-tooltip placement="right">
+                <template slot="title">
+                  <div>
+                    This question has been reported by:
+                  </div>
+                  <div v-for="(report, index) in question.reports" :key="index">
+                    <span style="font-weight: bold">{{ report.username }}</span
+                    >:
+                    <span style="font-style: italic">{{ report.reason }}</span>
+                  </div>
+                </template>
+                <i
+                  v-if="isReported && canHandleReport"
+                  class="fas fa-exclamation-circle pointer-cursor"
+                ></i>
+              </a-tooltip>
+              <a-tag color="blue" title="Allowed time for the question">
+                <i class="fas fa-clock"></i> {{ question.timeAllowed }}</a-tag
+              >
+              <a-tag color="red" title="Difficulty level"
+                ><i class="fas fa-skull-crossbones"></i>
+                {{ question.difficultyLevel }}
+              </a-tag>
+
+              <div
+                v-if="isRejected"
+                style="font-style: italic; font-weight: 400"
+              >
+                <span v-if="question.passedPreliminaryReview === '0'"
+                  ><span class="reviewer">Preliminary reviewer:</span>
+                  {{ question.rejectReason }}</span
+                >
+                <div v-else-if="question.passedPeerReview === '0'">
+                  <div>
+                    <span class="reviewer">Expert 1:</span>
+                    {{ getRejectReason(0) }}
+                  </div>
+                  <div>
+                    <span class="reviewer">Expert 2:</span>
+                    {{ getRejectReason(1) }}
+                  </div>
+                  <div v-if="getRejectReason(2)">
+                    <span class="reviewer">Expert 3:</span>
+                    {{ getRejectReason(2) }}
+                  </div>
+                </div>
+                <div v-else>
+                  <span class="reviewer">Subject leader:</span>
+                  {{ question.rejectReason }}
+                </div>
+              </div>
             </div>
-            <div>
-              <span class="reviewer">Expert 2:</span> {{ getRejectReason(1) }}
-            </div>
-            <div v-if="getRejectReason(2)">
-              <span class="reviewer">Expert 3:</span> {{ getRejectReason(2) }}
-            </div>
-          </div>
-          <div v-else>
-            <span class="reviewer">Subject leader:</span>
-            {{ question.rejectReason }}
-          </div>
-        </div>
-      </div>
-      <div slot="extra">
-        <a-button
-          v-if="isRejected || (isReported && canHandleReport)"
-          size="small"
-          type="primary"
-          @click="handleUpdate"
-          >{{
-            isRejected ? "Update for review again" : "Update and clear reports"
-          }}</a-button
-        >
-        <span v-if="isAuthorized && !isRejected">
-          <a-button size="small" type="primary" @click="handleApprove"
-            >Approve</a-button
-          >
-          <a-button
-            size="small"
-            type="danger"
-            ghost
-            @click="modalRejectIsVisible = true"
-            >Reject</a-button
-          ></span
-        >
-        <span v-if="isWaitingForAssignee && canAssignQuestions">
-          <a-select
-            size="small"
-            placeholder="Select 3 assignees for peer reviews"
-            style="min-width: 255px"
-            mode="multiple"
-            class="mb-2"
-            v-model="selectedAssignees"
-          >
-            <a-select-option
-              v-for="assignee in availableAssignees"
-              :key="assignee.userId"
-              >{{ assignee.username }}</a-select-option
-            >
-          </a-select>
-          <a-button
-            size="small"
-            type="primary"
-            :disabled="selectedAssignees.length != 3"
-            @click="handleConfirmingAssignees"
-            >Confirm assignees</a-button
-          >
-        </span>
-        <a-button
-          v-if="isReported && canHandleReport"
-          size="small"
-          type="danger"
-          ghost
-          @click="handleIgnore"
-          >Ignore reports</a-button
-        >
-        <a-button
-          v-if="
-            !isSubjectLeader &&
-              !isAdmin &&
-              !isRejected &&
-              question.passedFinalReview == 1
-          "
-          size="small"
-          type="primary"
-          ghost
-          @click="handleReport"
-          >Report</a-button
-        >
-        <a-button
-          v-if="canDelete"
-          size="small"
-          type="danger"
-          @click="handleDeletion"
-          >Delete</a-button
-        >
-      </div>
+          </a-col>
+          <a-col :md="12" :xs="24">
+            <span style="float: right">
+              <a-button
+                v-if="isRejected || (isReported && canHandleReport)"
+                size="small"
+                type="primary"
+                @click="handleUpdate"
+                >{{
+                  isRejected
+                    ? "Update for review again"
+                    : "Update and clear reports"
+                }}</a-button
+              >
+              <span v-if="isAuthorized && !isRejected">
+                <a-button size="small" type="primary" @click="handleApprove"
+                  >Approve</a-button
+                >
+                <a-button
+                  size="small"
+                  type="danger"
+                  ghost
+                  @click="modalRejectIsVisible = true"
+                  >Reject</a-button
+                ></span
+              >
+              <span v-if="isWaitingForAssignee && canAssignQuestions">
+                <a-select
+                  size="small"
+                  placeholder="Select 3 assignees for peer reviews"
+                  style="min-width: 255px; font-weight: 400"
+                  mode="multiple"
+                  class="mb-1 mt-1"
+                  v-model="selectedAssignees"
+                >
+                  <a-select-option
+                    v-for="assignee in availableAssignees"
+                    :key="assignee.userId"
+                    >{{ assignee.username }}</a-select-option
+                  >
+                </a-select>
+                <a-button
+                  size="small"
+                  type="primary"
+                  :disabled="selectedAssignees.length != 3"
+                  @click="handleConfirmingAssignees"
+                  >Confirm assignees</a-button
+                >
+              </span>
+              <a-button
+                v-if="isReported && canHandleReport"
+                size="small"
+                type="danger"
+                ghost
+                @click="handleIgnore"
+                >Ignore reports</a-button
+              >
+              <a-button
+                v-if="
+                  !isSubjectLeader &&
+                    !isAdmin &&
+                    !isRejected &&
+                    question.passedFinalReview == 1
+                "
+                size="small"
+                type="primary"
+                ghost
+                @click="handleReport"
+                >Report</a-button
+              >
+              <a-button
+                v-if="canDelete"
+                size="small"
+                type="danger"
+                @click="handleDeletion"
+                >Delete</a-button
+              >
+            </span>
+          </a-col>
+        </a-row>
+      </template>
       <div
         :style="getAnswerStyle(answer.isCorrect)"
         v-for="(answer, index) in question.answers"
