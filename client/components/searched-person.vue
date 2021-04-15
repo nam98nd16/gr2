@@ -1,6 +1,6 @@
 <template>
   <div class="person-card">
-    <a-card class="mt-1" hoverable>
+    <a-card class="mb-1" hoverable>
       <a-row :gutter="4" type="flex" align="top" justify="start">
         <a-col :span="6">
           <avatar

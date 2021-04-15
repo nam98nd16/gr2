@@ -2,6 +2,18 @@
   <a-card v-if="profile">
     <a-form labelAlign="left" class="profile-form" v-bind="formItemLayout">
       <a-form-item :colon="false">
+        <friend-actions
+          :person="user"
+          :isViewingPerformance="isViewingPerformance"
+          @addedFriend="$emit('addedFriend')"
+          @confirmedFriend="$emit('confirmedFriend')"
+          @deletedFriend="
+            $emit('deletedFriend');
+            isViewingPerformance = false;
+          "
+          @viewPerformance="isViewingPerformance = true"
+          @viewProfile="isViewingPerformance = false"
+        />
         <span style="display: none" slot="label" class="profile-label"
           >Avatar</span
         >
@@ -19,18 +31,6 @@
           </div>
           <privilege-tag :role="user.role" :subjectId="user.subjectId" />
         </div>
-        <friend-actions
-          :person="user"
-          :isViewingPerformance="isViewingPerformance"
-          @addedFriend="$emit('addedFriend')"
-          @confirmedFriend="$emit('confirmedFriend')"
-          @deletedFriend="
-            $emit('deletedFriend');
-            isViewingPerformance = false;
-          "
-          @viewPerformance="isViewingPerformance = true"
-          @viewProfile="isViewingPerformance = false"
-        />
       </a-form-item>
       <div v-if="!isViewingPerformance">
         <form-text icon="id-card" label="Full name" :value="profile.fullName" />

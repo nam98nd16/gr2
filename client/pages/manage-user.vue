@@ -1,22 +1,27 @@
 <template>
   <div>
     <page-title title="User management" />
-    Total: {{ usersCount }}
-    <span style="float: right">
-      <a-switch
-        class="mb-1"
-        checked-children="Editing"
-        un-checked-children="Not Editing"
-        default-unchecked
-        v-model="isEditing"
-      />
-    </span>
+    <a-row :gutter="4" type="flex" justify="space-between">
+      <a-col :span="12">Total: {{ usersCount }}</a-col>
+      <a-col :span="12"
+        ><span>
+          <a-switch
+            style="float: right"
+            class="mb-1"
+            checked-children="Editing"
+            un-checked-children="Not Editing"
+            default-unchecked
+            v-model="isEditing"
+          /> </span
+      ></a-col>
+    </a-row>
 
     <a-table
       :columns="columns"
       :data-source="editableDataSource"
       :pagination="pagination"
       bordered
+      class="scrollable-table"
       :rowKey="(r, i) => i"
       size="middle"
       @change="handleTableChange"

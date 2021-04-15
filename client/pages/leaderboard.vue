@@ -35,6 +35,7 @@
     </div>
 
     <a-table
+      class="scrollable-table"
       :columns="columns"
       :data-source="topRatings"
       :pagination="false"

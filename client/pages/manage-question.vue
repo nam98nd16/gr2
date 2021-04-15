@@ -3,12 +3,12 @@
     <page-title title="Question management" />
     <a-input
       placeholder="Search for questions"
-      style="width: 400px"
+      style="max-width: 400px"
       v-model="filterText"
       @change="search"
     />
 
-    <a-button type="primary" @click="modalVisible = true"
+    <a-button class="mt-2" type="primary" @click="modalVisible = true"
       ><i class="fas fa-plus mr-2"></i>Create a new question</a-button
     >
     <a-modal

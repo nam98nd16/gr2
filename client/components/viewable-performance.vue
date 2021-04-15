@@ -495,8 +495,4 @@ export default {
   padding: 0px 10px;
   color: #000;
 }
-
-.scrollable-table {
-  overflow-x: auto;
-}
 </style>

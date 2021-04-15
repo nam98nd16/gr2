@@ -2,12 +2,37 @@
   <div>
     <page-title title="Friends" />
     <a-row :gutter="4" type="flex" align="top" justify="start">
-      <a-col :span="6">
+      <a-col :md="6" :xs="24">
         <a-input
+          class="mb-1"
           placeholder="Search for people"
           v-model="keyword"
           @change="search"
         />
+      </a-col>
+      <a-col :md="18" :xs="24">
+        <a-radio-group
+          class="mb-1"
+          v-model="filteredOption"
+          button-style="solid"
+        >
+          <a-radio-button value="all">
+            All people
+          </a-radio-button>
+          <a-radio-button value="onlyMyFriends">
+            My friends
+          </a-radio-button>
+          <a-radio-button value="friendRequests">
+            Friend requests
+          </a-radio-button>
+          <a-radio-button value="requestedFriends">
+            Requests sent
+          </a-radio-button>
+        </a-radio-group>
+      </a-col>
+    </a-row>
+    <a-row :gutter="4" type="flex" align="top" justify="start">
+      <a-col :md="6" :xs="24">
         <searched-person
           v-for="person in searchedFriends"
           :key="person.username"
@@ -39,33 +64,14 @@
         <a-pagination
           style="float: right"
           v-show="searchedFriendsCount > perPage"
-          class="mt-2"
+          class="mt-2 mb-1"
           v-model="currentPage"
           :pageSize="perPage"
           showLessItems
           :total="searchedFriendsCount"
         />
       </a-col>
-      <a-col :span="18">
-        <a-radio-group
-          class="mb-1"
-          v-model="filteredOption"
-          button-style="solid"
-        >
-          <a-radio-button value="all">
-            All people
-          </a-radio-button>
-          <a-radio-button value="onlyMyFriends">
-            My friends
-          </a-radio-button>
-          <a-radio-button value="friendRequests">
-            Friend requests
-          </a-radio-button>
-          <a-radio-button value="requestedFriends">
-            Requests sent
-          </a-radio-button>
-        </a-radio-group>
-
+      <a-col :md="18" :xs="24">
         <viewable-profile
           ref="viewableProfile"
           v-if="selectedUser"
@@ -84,7 +90,6 @@
         </div>
       </a-col>
     </a-row>
-    <div></div>
   </div>
 </template>
 

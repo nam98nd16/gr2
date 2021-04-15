@@ -14,8 +14,10 @@
   font-size: 2rem;
 }
 
-.container .ant-form-item {
-  margin-bottom: unset;
+@media only screen and (min-width: 768px) {
+  .container .ant-form-item {
+    margin-bottom: unset;
+  }
 }
 
 .profile-form {
@@ -41,4 +43,8 @@
 
 .ant-table td {
   white-space: nowrap;
+}
+
+.scrollable-table {
+  overflow-x: auto;
 }
