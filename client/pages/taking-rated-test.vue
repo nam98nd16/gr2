@@ -29,6 +29,7 @@
       <answerable-question
         :questionNumber="null"
         :isReviewing="hasSubmitted"
+        :checking="checking"
         :answer="{ answeredKey: answeredId }"
         :question="currentQuestion"
         ref="question"
@@ -40,7 +41,7 @@
             ><i class="fas fa-arrow-right mr-2"></i>Next</a-button
           >
           <a-button
-            :disabled="hasSubmitted"
+            :disabled="hasSubmitted || checking"
             type="primary"
             ghost
             @click="performSubmission"
@@ -49,7 +50,7 @@
         </div>
       </div>
       <apexchart
-        v-show="shouldDisplayLiveRatingChart"
+        v-show="shouldDisplayLiveRatingChart && ratings.length > 1"
         class="mt-5"
         height="300"
         type="line"
@@ -75,7 +76,8 @@ export default {
       answeredId: null,
       errorMsg: "",
       ratings: [],
-      shouldDisplayLiveRatingChart: false
+      shouldDisplayLiveRatingChart: false,
+      checking: false
     };
   },
   async created() {
@@ -178,6 +180,7 @@ export default {
     },
     async performSubmission() {
       this.hasSubmitted = true;
+      this.checking = true;
       this.countDown = 0;
       let payload = {
         answeredId: this.answeredId,
@@ -185,6 +188,8 @@ export default {
       };
       let correctAnsId = await this.submitRatedAnswer(payload);
       this.currentQuestion.answerId = correctAnsId;
+      this.checking = false;
+
       this.fetchRating();
     },
     async handleNext() {

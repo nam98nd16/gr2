@@ -26,6 +26,8 @@
           :class="
             isReviewing && ans.answerId == question.answerId
               ? 'correct-answer'
+              : checking
+              ? 'checking'
               : isReviewing &&
                 answer &&
                 ans.answerId == answer.answeredKey &&
@@ -43,7 +45,8 @@
               isReviewing &&
                 answer &&
                 ans.answerId == answer.answeredKey &&
-                answer.answeredKey == question.answerId
+                answer.answeredKey == question.answerId &&
+                !checking
             "
             class="fas fa-check mr-2"
           />
@@ -52,7 +55,8 @@
               isReviewing &&
                 answer &&
                 ans.answerId == answer.answeredKey &&
-                answer.answeredKey != question.answerId
+                answer.answeredKey != question.answerId &&
+                !checking
             "
             class="fas fa-times mr-2"
             style="color: red"
@@ -77,7 +81,7 @@
 
 <script>
 export default {
-  props: ["questionNumber", "isReviewing", "answer", "question"],
+  props: ["questionNumber", "isReviewing", "answer", "question", "checking"],
   data() {
     return {
       answeredKey: "",
