@@ -25,6 +25,13 @@
         "
         >Only my friends</a-checkbox
       >
+      <a-switch
+        style="float: right"
+        checked-children="Friend actions shown"
+        un-checked-children="Friend actions hidden"
+        default-unchecked
+        v-model="shouldDisplayFriendActions"
+      />
     </div>
 
     <a-table
@@ -60,6 +67,7 @@
           :subjectId="record.subjectId"
         />
         <friend-actions
+          v-if="shouldDisplayFriendActions"
           :person="record"
           :shouldNotRenderDetailActions="true"
           @addedFriend="fetchRatings"
@@ -88,7 +96,8 @@ export default {
     return {
       subjectOptions: [],
       selectedSubjectId: 1,
-      onlyMyFriends: false
+      onlyMyFriends: false,
+      shouldDisplayFriendActions: false
     };
   },
   watch: {
