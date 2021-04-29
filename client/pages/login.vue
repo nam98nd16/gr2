@@ -19,7 +19,7 @@
                 rules: [{ required: true, message: 'Please input your email!' }]
               }
             ]"
-            placeholder="Email"
+            placeholder="Username"
           >
             <a-icon
               slot="prefix"
@@ -50,16 +50,6 @@
         </a-form-item>
         <div v-if="errMessage">{{ errMessage }}</div>
         <a-form-item>
-          <a-checkbox
-            v-decorator="[
-              'remember',
-              {
-                valuePropName: 'checked',
-                initialValue: true
-              }
-            ]"
-            >Remember me</a-checkbox
-          >
           <!-- <nuxt-link :to="'/reset-password'">
             <a class="login-form-forgot">Forgot password</a>
           </nuxt-link> -->

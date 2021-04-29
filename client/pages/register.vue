@@ -19,7 +19,7 @@
                 rules: [{ required: true, message: 'Please input your email!' }]
               }
             ]"
-            placeholder="Email"
+            placeholder="Username"
           >
             <a-icon
               slot="prefix"
