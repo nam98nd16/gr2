@@ -5,7 +5,7 @@
         {{ questionNumber ? questionNumber + ". " : ""
         }}{{ question.questionString }}
       </div>
-      <div slot="extra">
+      <div v-if="!isAdmin && !isSubjectLeader" slot="extra">
         <a-button size="small" type="primary" ghost @click="handleReport"
           >Report</a-button
         >
@@ -74,32 +74,58 @@
       title="Report question"
       @ok="handleOk"
     >
-      <a-textarea placeholder="Enter the reason to report this question ..." />
+      <a-textarea
+        v-model="reportReason"
+        placeholder="Enter the reason to report this question ..."
+      />
     </a-modal>
   </div>
 </template>
 
 <script>
+import { mapActions } from "vuex";
+import jwtdecode from "jwt-decode";
 export default {
   props: ["questionNumber", "isReviewing", "answer", "question", "checking"],
   data() {
     return {
       answeredKey: "",
-      modalVisible: false
+      modalVisible: false,
+      currentUser: jwtdecode(localStorage.getItem("token")),
+      reportReason: ""
     };
   },
   mounted() {},
-  computed: {},
+  computed: {
+    isAdmin() {
+      return this.currentUser.role === 0;
+    },
+    isSubjectLeader() {
+      return this.currentUser.role === 1;
+    }
+  },
   watch: {
     isReviewing(newVal) {
       if (newVal) this.answeredKey = null;
     }
   },
   methods: {
+    ...mapActions({
+      reportQuestion: "questions/reportQuestion"
+    }),
     handleReport() {
       this.modalVisible = true;
     },
-    handleOk() {
+    async handleOk() {
+      let payload = {
+        questionId: this.question.questionId,
+        reporterId: this.currentUser.userId,
+        reason: this.reportReason
+      };
+      await this.reportQuestion(payload);
+      this.$notification.success({
+        message: "Reported successfully!"
+      });
       this.modalVisible = false;
     },
     handleAnswer(e) {
