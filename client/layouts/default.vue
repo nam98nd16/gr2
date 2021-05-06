@@ -69,7 +69,7 @@ html {
 @media only screen and (min-width: 768px) {
   .main-layout {
     margin: 0px 16px 7px 16px;
-    padding: 0px 24px 0px 24px;
+    padding: 24px;
   }
 
   .nav-margin {
