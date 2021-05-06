@@ -1,8 +1,9 @@
 <template>
   <a-layout style="margin-right: 10px; margin-left: 10px">
-    <Nav style="margin-bottom: 10px" />
+    <Nav class="nav-margin" />
     <nuxt
-      style="margin: 0px 16px 7px 16px;padding: 24px; background: #fff; min-height: calc(100vh - 135px)"
+      class="main-layout"
+      style="min-height: calc(100vh - 135px); background: #fff"
     />
     <Footer />
   </a-layout>
@@ -64,5 +65,23 @@ html {
 .button--grey:hover {
   color: #fff;
   background-color: #35495e;
+}
+@media only screen and (min-width: 768px) {
+  .main-layout {
+    margin: 0px 16px 7px 16px;
+    padding: 0px 24px 0px 24px;
+  }
+
+  .nav-margin {
+    margin-bottom: 10px;
+  }
+}
+
+@media only screen and (max-width: 767px) {
+  .main-layout {
+    margin: 0px;
+    padding-bottom: 12px;
+    padding-top: 12px;
+  }
 }
 </style>

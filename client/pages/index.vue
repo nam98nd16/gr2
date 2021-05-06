@@ -2,7 +2,8 @@
   <div class="container2">
     <div>
       <Logo />
-      <h1 class="title">gr2</h1>
+      <h1 class="title">SAS</h1>
+      <p>Skill Assessment System</p>
       <div class="links">
         <a
           href="https://github.com/nam98nd16/gr2"
@@ -28,7 +29,7 @@ export default {
   font-family: "Quicksand", "Source Sans Pro", -apple-system, BlinkMacSystemFont,
     "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   display: block;
-  font-weight: 300;
+  font-weight: 500;
   font-size: 100px;
   color: #35495e;
   letter-spacing: 1px;
