@@ -1,7 +1,12 @@
 <template>
   <div>
-    <page-title title="Subject management" />
-    <a-button class="mb-2" type="primary" @click="modalVisible = true">
+    <page-title :title="isAdmin ? 'Subject management' : 'Subjects'" />
+    <a-button
+      v-if="isAdmin"
+      class="mb-2"
+      type="primary"
+      @click="modalVisible = true"
+    >
       <i class="fas fa-plus mr-2"></i> Add subject</a-button
     >
     <a-row :gutter="4" type="flex" justify="space-between">
@@ -9,6 +14,7 @@
       <a-col :span="12"
         ><span>
           <a-switch
+            v-if="isAdmin"
             style="float: right"
             class="mb-1"
             checked-children="Editing"
@@ -124,8 +130,8 @@
 <script>
 import pageTitle from "../components/page-title.vue";
 import { mapActions, mapState, mapMutations } from "vuex";
+import jwtdecode from "jwt-decode";
 export default {
-  middleware: "user-management-guard",
   components: { pageTitle },
   data() {
     return {
@@ -158,7 +164,8 @@ export default {
       currentlyEditingSubject: null,
       filteredTitle: "",
       sortKey: "subjectId",
-      sortOrder: "asc"
+      sortOrder: "asc",
+      currentUser: jwtdecode(localStorage.getItem("token"))
     };
   },
   watch: {
@@ -184,6 +191,9 @@ export default {
       subjectCount: state => state.subjects.subjectCount,
       nonExpertUsers: state => state.subjects.nonExpertUsers
     }),
+    isAdmin() {
+      return this.currentUser.role === 0;
+    },
     columns() {
       return [
         {

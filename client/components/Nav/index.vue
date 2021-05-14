@@ -14,9 +14,10 @@
           <i class="fas fa-question-circle mr-2"></i>Question Management
         </nuxt-link>
       </a-menu-item>
-      <a-menu-item v-if="isAdmin" key="manage-subject">
+      <a-menu-item key="manage-subject">
         <nuxt-link :to="'/manage-subject'">
-          <i class="fas fa-book-open mr-2"></i>Subject Management
+          <i class="fas fa-book-open mr-2"></i>
+          {{ isAdmin ? "Subject Management" : "Subjects" }}
         </nuxt-link>
       </a-menu-item>
       <a-menu-item key="performance">
