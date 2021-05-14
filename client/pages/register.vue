@@ -119,6 +119,7 @@ export default {
             }
           } catch (error) {
             this.errMessage = error.response.data.detail;
+            console.log("here", error.response);
           } finally {
             this.loading = false;
           }

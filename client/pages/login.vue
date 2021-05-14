@@ -59,7 +59,22 @@
             html-type="submit"
             class="login-form-button"
             >Log in</a-button
-          >Or
+          >
+          <a-tooltip placement="right" :overlayClassName="'custom-tooltip'">
+            <template slot="title">
+              No data will be permanently stored in guest mode
+            </template>
+            <a-button
+              :loading="loading"
+              type="primary"
+              ghost
+              class="login-form-button"
+              @click="e => handleSubmit(e, true)"
+              >Continue as guest</a-button
+            >
+          </a-tooltip>
+
+          Or
           <nuxt-link :to="'/register'">
             <a>register now!</a>
           </nuxt-link>
@@ -70,7 +85,7 @@
 </template>
 
 <script>
-import { mapMutations } from "vuex";
+import { mapMutations, mapActions } from "vuex";
 import jwt_decode from "jwt-decode";
 export default {
   layout: "login",
@@ -93,7 +108,10 @@ export default {
     ...mapMutations({
       setCurrentUser: "profile/setCurrentUser"
     }),
-    handleSubmit(e) {
+    ...mapActions({
+      resetGuestData: "resetGuestData"
+    }),
+    handleSubmit(e, isGuest) {
       console.log("env", process.env.baseURL, "node_env", process.env.NODE_ENV);
 
       e.preventDefault();
@@ -101,8 +119,8 @@ export default {
         if (!err) {
           this.loading = true;
           let payload = {
-            username: values.userName,
-            password: values.password
+            username: isGuest ? "Guest" : values.userName,
+            password: isGuest ? "123456" : values.password
           };
           try {
             let res = await this.$axios.post("/accounts/login", payload);
@@ -116,6 +134,7 @@ export default {
               else this.$router.back();
 
               localStorage.setItem("token", res.data);
+              if (isGuest) this.resetGuestData();
             }
           } catch (error) {
             this.errMessage = error.response.data;

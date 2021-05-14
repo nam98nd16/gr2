@@ -31,7 +31,8 @@ const proposeQuestion = async (req, res) => {
   let answers = [answer1, answer2, answer3, answer4];
   let correctAnswerId = answers.find((answer) => answer.isCorrect).id;
   let reqUser = jwt.verify(token, jwtSecret);
-  let isPassedPreliminaryReview = reqUser.role != 3 ? 1 : 0;
+  let isPassedPreliminaryReview =
+    reqUser.role != 3 && reqUser.role != 5 ? 1 : 0;
   let addedQuestion = await knex("questions").returning("*").insert({
     questionString: questionString,
     answerId: correctAnswerId,
@@ -257,18 +258,18 @@ const getAllQuestions = async (req, res) => {
     let questionIndex = trueQuestions.findIndex(
       (question) => question.questionId == questionId
     );
-    trueQuestions[questionIndex].assignees = assignees[
-      questionId
-    ].map((assignee) => ({ ...assignee, questionId: undefined }));
+    trueQuestions[questionIndex].assignees = assignees[questionId].map(
+      (assignee) => ({ ...assignee, questionId: undefined })
+    );
   }
 
   for (let questionId in trueReports) {
     let questionIndex = trueQuestions.findIndex(
       (question) => question.questionId == questionId
     );
-    trueQuestions[questionIndex].reports = trueReports[
-      questionId
-    ].map((report) => ({ ...report, questionId: undefined }));
+    trueQuestions[questionIndex].reports = trueReports[questionId].map(
+      (report) => ({ ...report, questionId: undefined })
+    );
   }
 
   res.json(trueQuestions);
@@ -295,6 +296,13 @@ const getViewableQuestions = async (req, res) => {
   let reqUser = jwt.verify(token, jwtSecret);
 
   let query = knex.column().select().from("questions");
+
+  if (reqUser.role != 5)
+    query = query.where(
+      knex.raw(
+        `"creatorId" not in (select "userId" from accounts where "username" ilike 'guest')`
+      )
+    );
 
   query = await getUpdatedQuery(
     query,
@@ -370,6 +378,13 @@ const getViewableQuestionsCount = async (req, res) => {
   let reqUser = jwt.verify(token, jwtSecret);
 
   let query = knex("questions").count();
+
+  if (reqUser.role != 5)
+    query = query.where(
+      knex.raw(
+        `"creatorId" not in (select "userId" from accounts where "username" ilike 'guest')`
+      )
+    );
 
   query = await getUpdatedQuery(
     query,

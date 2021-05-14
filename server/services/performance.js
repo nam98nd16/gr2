@@ -98,7 +98,7 @@ const getTopRatings = async (req, res) => {
       "rating"
     )
     .join("accounts", "ratings.userId", "=", "accounts.userId")
-    .where("ratings.subjectId", "=", subjectId);
+    .where("ratings.subjectId", "=", subjectId).where("username", "not ilike", "guest");
 
   if (onlyMyFriends === "true") {
     let friendships = await knex("friends")

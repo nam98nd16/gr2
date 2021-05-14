@@ -21,7 +21,7 @@ const searchFriends = async (req, res) => {
 
   let query = knex("accounts")
     .select("username", "userId", "fullName", "role", "subjectId")
-    .where("userId", "<>", reqUser.userId);
+    .where("userId", "<>", reqUser.userId).where("username", "not ilike", "guest");
 
   query = await getUpdatedQuery(
     query,
@@ -74,7 +74,7 @@ const getSearchedFriendsCount = async (req, res) => {
 
   let reqUser = jwt.verify(token, jwtSecret);
 
-  let query = knex("accounts").count();
+  let query = knex("accounts").count().where("username", "not ilike", "guest");
 
   query = await getUpdatedQuery(query, keyword, filteredOption, reqUser);
   let count = await query;

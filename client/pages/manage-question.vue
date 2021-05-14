@@ -256,7 +256,7 @@ export default {
       availableAssignees: state => state.questions.availableAssignees
     }),
     isNormalUser() {
-      return this.currentUser.role === 3;
+      return this.currentUser.role === 3 || this.currentUser.role === 5;
     },
     isAdmin() {
       return this.currentUser.role === 0;

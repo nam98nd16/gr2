@@ -62,5 +62,8 @@ export const actions = {
   async getProfile({ commit }, userId) {
     const res = await this.$axios.get(`/accounts/profile?userId=${userId}`);
     return res.data;
+  },
+  async resetGuestData({ commit }) {
+    const res = await this.$axios.post(`/accounts/reset-guest-data`);
   }
 };

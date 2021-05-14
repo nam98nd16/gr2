@@ -13,5 +13,6 @@ router.post("/update-role", service.updateUserRole);
 router.post("/update-avatar", service.updateAvatar);
 router.get("/avatar", service.getAvatar);
 router.get("/profile", service.getProfile);
+router.post("/reset-guest-data", service.resetGuestData);
 
 module.exports = router;
