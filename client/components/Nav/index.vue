@@ -62,6 +62,7 @@
 
 <script>
 import jwt_decode from "jwt-decode";
+import { mapMutations } from "vuex";
 import Avatar from "../avatar.vue";
 export default {
   components: { Avatar },
@@ -76,8 +77,12 @@ export default {
     this.current = [curRoute];
   },
   methods: {
+    ...mapMutations({
+      setUserAvatar: "setUserAvatar"
+    }),
     handleLogout() {
       localStorage.clear();
+      this.setUserAvatar(null);
       this.$router.push("/login");
     }
   },

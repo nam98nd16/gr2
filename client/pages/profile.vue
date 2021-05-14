@@ -258,7 +258,9 @@ export default {
     })
   },
   methods: {
-    ...mapMutations({}),
+    ...mapMutations({
+      setUserAvatar: "setUserAvatar"
+    }),
     ...mapActions({
       updateProfile: "updateProfile",
       getAllSubjects: "subjects/getAllSubjects",
@@ -384,6 +386,9 @@ export default {
         onCancel() {}
       });
     }
+  },
+  beforeDestroy() {
+    this.setUserAvatar(null);
   }
 };
 </script>
