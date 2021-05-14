@@ -1,19 +1,16 @@
 <template>
   <a-spin :spinning="loading">
     <PageTitle :title="'Leaderboard'" />
-    <a-radio-group
-      class="mb-2"
+
+    <a-select
+      style="min-width: 255px; font-weight: 400"
+      class="mb-1 mt-1"
       v-model="selectedSubjectId"
-      button-style="solid"
     >
-      <a-radio-button
-        v-for="subject in subjectOptions"
-        :value="subject.value"
-        :key="subject.value"
-      >
-        {{ subject.label }}
-      </a-radio-button>
-    </a-radio-group>
+      <a-select-option v-for="subject in subjectOptions" :key="subject.value">{{
+        subject.label
+      }}</a-select-option>
+    </a-select>
 
     <div>
       <a-checkbox
