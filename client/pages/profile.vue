@@ -354,13 +354,14 @@ export default {
       return new File([u8arr], filename, { type: mime });
     },
     async handleOk() {
+      const delay = ms => new Promise(res => setTimeout(res, ms));
       this.uploading = true;
       this.cropImage();
       var file = this.dataURLtoFile(this.cropImg, this.uploadedFile.name);
       let formData = new FormData();
       formData.append("image", file);
       await this.updateAvatar(formData);
-      await this.$nextTick();
+      await delay(500);
       this.getAvatar(this.currentUser.userId);
 
       this.$notification["success"]({
