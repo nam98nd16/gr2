@@ -360,7 +360,7 @@ export default {
       let formData = new FormData();
       formData.append("image", file);
       await this.updateAvatar(formData);
-      this.getAvatar(this.currentUser.userId);
+      await this.getAvatar(this.currentUser.userId);
 
       this.$notification["success"]({
         message: "Uploaded avatar successfully!"
