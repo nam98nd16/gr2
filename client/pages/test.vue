@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <a-spin :spinning="loading">
     <page-title title="Training" />
     Select topic
     <br />
@@ -96,7 +96,7 @@
       ></i
       ><i v-else class="fas fa-bell-slash mr-2"></i>Start</a-button
     >
-  </div>
+  </a-spin>
 </template>
 
 <script>
@@ -111,14 +111,17 @@ export default {
       selectedDifficulty: "medium",
       subjects: [],
       selectedMode: "practice",
-      shouldBeTimed: false
+      shouldBeTimed: false,
+      loading: false
     };
   },
   async mounted() {
+    this.loading = true;
     await Promise.all([
       this.allSubjects.length ? undefined : this.getAllSubjects(),
       this.getRating({ subjectId: this.selectedTopic })
     ]);
+    this.loading = false;
     this.subjects = this.allSubjects.map(subject => ({
       value: subject.subjectId,
       label: subject.subjectName

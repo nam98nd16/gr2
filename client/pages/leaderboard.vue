@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <a-spin :spinning="loading">
     <PageTitle :title="'Leaderboard'" />
     <a-radio-group
       class="mb-2"
@@ -19,10 +19,7 @@
       <a-checkbox
         class="mb-2"
         :checked="onlyMyFriends"
-        @change="
-          onlyMyFriends = !onlyMyFriends;
-          fetchRatings();
-        "
+        @change="handleFilterOnlyFriends"
         >Only my friends</a-checkbox
       >
       <a-switch
@@ -82,7 +79,7 @@
         >
       </template>
     </a-table>
-  </div>
+  </a-spin>
 </template>
 
 <script>
@@ -98,17 +95,22 @@ export default {
       subjectOptions: [],
       selectedSubjectId: 1,
       onlyMyFriends: false,
-      shouldDisplayFriendActions: false
+      shouldDisplayFriendActions: false,
+      loading: false
     };
   },
   watch: {
-    selectedSubjectId(newVal) {
-      this.fetchRatings();
+    async selectedSubjectId(newVal) {
+      this.loading = true;
+      await this.fetchRatings();
+      this.loading = false;
     }
   },
   async mounted() {
-    this.initSubjectOptions();
-    this.fetchRatings();
+    this.loading = true;
+    await Promise.all([this.initSubjectOptions(), this.fetchRatings()]);
+
+    this.loading = false;
   },
   computed: {
     ...mapState({
@@ -146,11 +148,17 @@ export default {
         label: subject.subjectName
       }));
     },
-    fetchRatings() {
-      this.getTopRatings({
+    async fetchRatings() {
+      await this.getTopRatings({
         subjectId: this.selectedSubjectId,
         onlyMyFriends: this.onlyMyFriends
       });
+    },
+    async handleFilterOnlyFriends() {
+      this.onlyMyFriends = !this.onlyMyFriends;
+      this.loading = true;
+      await this.fetchRatings();
+      this.loading = false;
     },
     getStyle(index) {
       return !index

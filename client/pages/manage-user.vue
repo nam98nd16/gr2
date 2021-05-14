@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <a-spin :spinning="loading">
     <page-title title="User management" />
     <a-row :gutter="4" type="flex" justify="space-between">
       <a-col :span="12">Total: {{ usersCount }}</a-col>
@@ -83,7 +83,7 @@
         >
       </div>
     </a-table>
-  </div>
+  </a-spin>
 </template>
 
 <script>
@@ -119,7 +119,8 @@ export default {
       subjectId: null,
       search: _.debounce(() => {
         this.fetchFilteredData();
-      }, 300)
+      }, 300),
+      loading: false
     };
   },
   watch: {
@@ -130,9 +131,13 @@ export default {
     }
   },
   async mounted() {
-    this.initSubjectOptions();
-    this.fetchUsers();
-    this.fetchUserCount();
+    this.loading = true;
+    await Promise.all([
+      this.initSubjectOptions(),
+      this.fetchUsers(),
+      this.fetchUserCount()
+    ]);
+    this.loading = false;
   },
   computed: {
     ...mapState({
@@ -267,9 +272,11 @@ export default {
       });
     },
     async fetchFilteredData() {
+      this.loading = true;
       this.pagination.current = 1;
-      this.fetchUsers();
-      this.fetchUserCount();
+      await Promise.all([this.fetchUsers(), this.fetchUserCount()]);
+
+      this.loading = false;
     },
     handleTableChange(pagination, filters, sorter) {
       if (sorter.order) {

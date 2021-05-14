@@ -33,43 +33,45 @@
     </a-row>
     <a-row :gutter="4" type="flex" align="top" justify="start">
       <a-col :md="6" :xs="24">
-        <searched-person
-          v-for="person in searchedFriends"
-          :key="person.username"
-          :person="person"
-          @addedFriend="
-            fetchFriends(
-              true,
-              'added',
-              selectedUser && person.userId == selectedUser.userId
-            )
-          "
-          @deletedFriend="
-            fetchFriends(
-              true,
-              'deleted',
-              selectedUser && person.userId == selectedUser.userId
-            )
-          "
-          @confirmedFriend="
-            fetchFriends(
-              true,
-              'confirmed',
-              selectedUser && person.userId == selectedUser.userId
-            )
-          "
-          @viewPerformance="handleViewPerformance(person)"
-          @click.native="selectedUser = _.cloneDeep(person)"
-        />
-        <a-pagination
-          style="float: right"
-          v-show="searchedFriendsCount > perPage"
-          class="mt-2 mb-1"
-          v-model="currentPage"
-          :pageSize="perPage"
-          showLessItems
-          :total="searchedFriendsCount"
-        />
+        <a-spin :spinning="loading">
+          <searched-person
+            v-for="person in searchedFriends"
+            :key="person.username"
+            :person="person"
+            @addedFriend="
+              fetchFriends(
+                true,
+                'added',
+                selectedUser && person.userId == selectedUser.userId
+              )
+            "
+            @deletedFriend="
+              fetchFriends(
+                true,
+                'deleted',
+                selectedUser && person.userId == selectedUser.userId
+              )
+            "
+            @confirmedFriend="
+              fetchFriends(
+                true,
+                'confirmed',
+                selectedUser && person.userId == selectedUser.userId
+              )
+            "
+            @viewPerformance="handleViewPerformance(person)"
+            @click.native="selectedUser = _.cloneDeep(person)"
+          />
+          <a-pagination
+            style="float: right"
+            v-show="searchedFriendsCount > perPage"
+            class="mt-2 mb-1"
+            v-model="currentPage"
+            :pageSize="perPage"
+            showLessItems
+            :total="searchedFriendsCount"
+          />
+        </a-spin>
       </a-col>
       <a-col :md="18" :xs="24">
         <viewable-profile
@@ -109,10 +111,11 @@ export default {
         this.fetchFriends();
       }, 300),
       filteredOption: "onlyMyFriends",
-      selectedUser: null
+      selectedUser: null,
+      loading: false
     };
   },
-  async mounted() {
+  mounted() {
     this.fetchFriends();
   },
   watch: {
@@ -139,6 +142,7 @@ export default {
       resetSearchedResults: "friends/resetSearchedResults"
     }),
     async fetchFriends(shouldNotRecount, refreshReason, shouldRefresh) {
+      this.loading = true;
       let payload = {
         keyword: this.keyword,
         filteredOption: this.filteredOption,
@@ -146,7 +150,8 @@ export default {
         currentPage: this.currentPage
       };
       if (!shouldNotRecount) this.getSearchedFriendsCount(payload);
-      this.searchFriends(payload);
+      await this.searchFriends(payload);
+      this.loading = false;
       if (this.selectedUser && shouldRefresh) {
         if (refreshReason == "added") {
           delete this.selectedUser.hasRequested;

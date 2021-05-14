@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <a-spin :spinning="loading">
     <page-title :title="isAdmin ? 'Subject management' : 'Subjects'" />
     <a-button
       v-if="isAdmin"
@@ -124,7 +124,7 @@
         </a-form-item>
       </a-form>
     </a-modal>
-  </div>
+  </a-spin>
 </template>
 
 <script>
@@ -165,7 +165,8 @@ export default {
       filteredTitle: "",
       sortKey: "subjectId",
       sortOrder: "asc",
-      currentUser: jwtdecode(localStorage.getItem("token"))
+      currentUser: jwtdecode(localStorage.getItem("token")),
+      loading: false
     };
   },
   watch: {
@@ -181,8 +182,10 @@ export default {
     }
   },
   async mounted() {
-    this.fetchSubjects();
-    this.fetchSubjectCount();
+    this.loading = true;
+    await Promise.all([this.fetchSubjects(), this.fetchSubjectCount()]);
+
+    this.loading = false;
   },
   computed: {
     ...mapState({
@@ -258,9 +261,11 @@ export default {
       });
     },
     async fetchFilteredData() {
+      this.loading = true;
       this.pagination.current = 1;
-      this.fetchSubjects();
-      this.fetchSubjectCount();
+      await Promise.all([this.fetchSubjects(), this.fetchSubjectCount()]);
+
+      this.loading = false;
     },
     handleResetData() {},
     async handleSave() {

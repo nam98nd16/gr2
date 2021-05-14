@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <a-spin :spinning="loading">
     <page-title :title="getCurrentSubjectName() + ' Rated Test'" />
     <div
       v-if="currentRating !== null && currentRating !== undefined"
@@ -41,7 +41,8 @@
             ><i class="fas fa-arrow-right mr-2"></i>Next</a-button
           >
           <a-button
-            :disabled="hasSubmitted || checking"
+            :disabled="hasSubmitted"
+            :loading="checking"
             type="primary"
             ghost
             @click="performSubmission"
@@ -59,7 +60,7 @@
       ></apexchart>
     </div>
     <div v-else-if="errorMsg" style="text-align: center">{{ errorMsg }}</div>
-  </div>
+  </a-spin>
 </template>
 
 <script>
@@ -77,15 +78,18 @@ export default {
       errorMsg: "",
       ratings: [],
       shouldDisplayLiveRatingChart: false,
-      checking: false
+      checking: false,
+      loading: false
     };
   },
   async created() {
     if (!this.$route.params?.subjectId) {
       this.$router.push("/test");
     } else {
-      this.fetchRating();
-      this.fetchNewQuestion();
+      this.loading = true;
+      await Promise.all([this.fetchRating(), this.fetchNewQuestion()]);
+
+      this.loading = false;
     }
   },
   computed: {
@@ -193,7 +197,9 @@ export default {
       this.fetchRating();
     },
     async handleNext() {
+      this.loading = true;
       await this.fetchNewQuestion();
+      this.loading = false;
     },
     handleAnswer(answeredKey) {
       this.answeredId = answeredKey;

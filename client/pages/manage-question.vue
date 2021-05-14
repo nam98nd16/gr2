@@ -163,27 +163,29 @@
     </a-checkable-tag>
     <br /><br />
 
-    <Question
-      v-for="question in viewableQuestions"
-      :key="question.questionId"
-      :question="question"
-      @approve="fetchViewableQuestions(true)"
-      @assign="fetchViewableQuestions(true)"
-      @reject="fetchViewableQuestions(true)"
-      @delete="fetchViewableQuestions(true)"
-      @ignore="fetchViewableQuestions(true)"
-      @update="handleUpdate"
-      class="mt-2"
-    />
+    <a-spin :spinning="loading">
+      <Question
+        v-for="question in viewableQuestions"
+        :key="question.questionId"
+        :question="question"
+        @approve="fetchViewableQuestions(true)"
+        @assign="fetchViewableQuestions(true)"
+        @reject="fetchViewableQuestions(true)"
+        @delete="fetchViewableQuestions(true)"
+        @ignore="fetchViewableQuestions(true)"
+        @update="handleUpdate"
+        class="mt-2"
+      />
 
-    <a-pagination
-      class="mt-2"
-      style="float: right"
-      v-model="currentPage"
-      :pageSize="perPage"
-      showLessItems
-      :total="viewableQuestionsCount"
-    />
+      <a-pagination
+        class="mt-2"
+        style="float: right"
+        v-model="currentPage"
+        :pageSize="perPage"
+        showLessItems
+        :total="viewableQuestionsCount"
+      />
+    </a-spin>
   </div>
 </template>
 
@@ -227,20 +229,25 @@ export default {
       myQuestionsFiltered: false,
       questionToUpdate: null,
       filterText: "",
-      search: _.debounce(() => {
+      search: _.debounce(async () => {
+        this.loading = true;
         this.currentPage = 1;
-        this.fetchViewableQuestions();
-      }, 300)
+        await this.fetchViewableQuestions();
+        this.loading = false;
+      }, 300),
+      loading: false
     };
   },
   async mounted() {
     if (this.isNormalUser) this.myQuestionsFiltered = true;
     else if (this.isPreliminaryReviewer) this.wfReviewFiltered = true;
+    this.loading = true;
     await Promise.all([
       this.allSubjects.length ? undefined : this.getAllSubjects(),
       this.fetchViewableQuestions(),
       this.getAvailableAssignees()
     ]);
+    this.loading = false;
     this.subjects = this.allSubjects.map(subject => ({
       value: subject.subjectId,
       label: subject.subjectName
@@ -345,7 +352,7 @@ export default {
       this.fetchViewableQuestions();
       this.modalVisible = false;
     },
-    handleChange(e, type) {
+    async handleChange(e, type) {
       if (e) {
         let excludedFilters = [
           "wfReviewFiltered",
@@ -361,7 +368,9 @@ export default {
       }
 
       this.currentPage = 1;
-      this.fetchViewableQuestions();
+      this.loading = true;
+      await this.fetchViewableQuestions();
+      this.loading = false;
     },
     handleCorrectAnswerChange(answer, checked) {
       if (checked) {

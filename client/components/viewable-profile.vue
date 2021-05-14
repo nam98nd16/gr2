@@ -1,71 +1,81 @@
 <template>
-  <a-card v-if="profile">
-    <a-form labelAlign="left" class="profile-form" v-bind="formItemLayout">
-      <a-form-item :colon="false">
-        <friend-actions
-          :person="user"
-          :isViewingPerformance="isViewingPerformance"
-          @addedFriend="$emit('addedFriend')"
-          @confirmedFriend="$emit('confirmedFriend')"
-          @deletedFriend="
-            $emit('deletedFriend');
-            isViewingPerformance = false;
-          "
-          @viewPerformance="isViewingPerformance = true"
-          @viewProfile="isViewingPerformance = false"
-        />
-        <span style="display: none" slot="label" class="profile-label"
-          >Avatar</span
-        >
-        <div style="text-align: center; float: left">
-          <avatar
-            :userId="user.userId"
-            :username="profile.username"
-            nullAvatarFontsize="48px"
-            nullAvatarFontweight="500"
-            diameter="168px"
-            lineHeight="168px"
+  <a-spin :spinning="loading">
+    <a-card v-if="profile">
+      <a-form labelAlign="left" class="profile-form" v-bind="formItemLayout">
+        <a-form-item :colon="false">
+          <friend-actions
+            :person="user"
+            :isViewingPerformance="isViewingPerformance"
+            @addedFriend="$emit('addedFriend')"
+            @confirmedFriend="$emit('confirmedFriend')"
+            @deletedFriend="
+              $emit('deletedFriend');
+              isViewingPerformance = false;
+            "
+            @viewPerformance="isViewingPerformance = true"
+            @viewProfile="isViewingPerformance = false"
           />
-          <div class="username-profile">
-            {{ profile.username }}
+          <span style="display: none" slot="label" class="profile-label"
+            >Avatar</span
+          >
+          <div style="text-align: center; float: left">
+            <avatar
+              :userId="user.userId"
+              :username="profile.username"
+              nullAvatarFontsize="48px"
+              nullAvatarFontweight="500"
+              diameter="168px"
+              lineHeight="168px"
+            />
+            <div class="username-profile">
+              {{ profile.username }}
+            </div>
+            <privilege-tag :role="user.role" :subjectId="user.subjectId" />
           </div>
-          <privilege-tag :role="user.role" :subjectId="user.subjectId" />
+        </a-form-item>
+        <div v-if="!isViewingPerformance">
+          <form-text
+            icon="id-card"
+            label="Full name"
+            :value="profile.fullName"
+          />
+          <form-text icon="envelope" label="Email" :value="profile.email" />
+          <form-text
+            icon="mobile-alt"
+            label="Phone number"
+            :value="profile.phoneNumber"
+          />
+          <form-text
+            icon="birthday-cake"
+            label="Birthday"
+            :value="
+              profile.birthday
+                ? $moment(profile.birthday)
+                    .add(7, 'hours')
+                    .format('YYYY/MM/DD')
+                : null
+            "
+          />
+          <form-text
+            icon="house-user"
+            label="Address"
+            :value="profile.address"
+          />
+          <form-text icon="venus-mars" label="Gender" :value="profile.gender" />
+          <form-text
+            icon="book-reader"
+            label="Bio"
+            :value="profile.autobiography"
+          />
         </div>
-      </a-form-item>
-      <div v-if="!isViewingPerformance">
-        <form-text icon="id-card" label="Full name" :value="profile.fullName" />
-        <form-text icon="envelope" label="Email" :value="profile.email" />
-        <form-text
-          icon="mobile-alt"
-          label="Phone number"
-          :value="profile.phoneNumber"
-        />
-        <form-text
-          icon="birthday-cake"
-          label="Birthday"
-          :value="
-            profile.birthday
-              ? $moment(profile.birthday)
-                  .add(7, 'hours')
-                  .format('YYYY/MM/DD')
-              : null
-          "
-        />
-        <form-text icon="house-user" label="Address" :value="profile.address" />
-        <form-text icon="venus-mars" label="Gender" :value="profile.gender" />
-        <form-text
-          icon="book-reader"
-          label="Bio"
-          :value="profile.autobiography"
-        />
-      </div>
-    </a-form>
-    <viewable-performance
-      v-if="isViewingPerformance"
-      :userId="user.userId"
-      :defaultViewAllSubjects="true"
-    />
-  </a-card>
+      </a-form>
+      <viewable-performance
+        v-if="isViewingPerformance"
+        :userId="user.userId"
+        :defaultViewAllSubjects="true"
+      />
+    </a-card>
+  </a-spin>
 </template>
 
 <script>
@@ -97,7 +107,8 @@ export default {
         }
       },
       profile: null,
-      isViewingPerformance: false
+      isViewingPerformance: false,
+      loading: false
     };
   },
   watch: {
@@ -110,7 +121,9 @@ export default {
     }
   },
   async mounted() {
-    this.fetchProfile();
+    this.loading = true;
+    await this.fetchProfile();
+    this.loading = false;
   },
   computed: {
     ...mapState({}),
