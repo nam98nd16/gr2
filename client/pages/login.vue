@@ -60,7 +60,7 @@
             class="login-form-button"
             >Log in</a-button
           >
-          <a-tooltip placement="right" :overlayClassName="'custom-tooltip'">
+          <a-tooltip placement="bottom" :overlayClassName="'custom-tooltip'">
             <template slot="title">
               No data will be permanently stored in guest mode
             </template>
@@ -69,7 +69,7 @@
               type="primary"
               ghost
               class="login-form-button"
-              @click="e => handleSubmit(e, true)"
+              @click="e => handleLogin(true)"
               >Continue as guest</a-button
             >
           </a-tooltip>
@@ -111,38 +111,39 @@ export default {
     ...mapActions({
       resetGuestData: "resetGuestData"
     }),
-    handleSubmit(e, isGuest) {
+    handleSubmit(e) {
       console.log("env", process.env.baseURL, "node_env", process.env.NODE_ENV);
 
       e.preventDefault();
       this.form.validateFields(async (err, values) => {
-        if (!err) {
-          this.loading = true;
-          let payload = {
-            username: isGuest ? "Guest" : values.userName,
-            password: isGuest ? "123456" : values.password
-          };
-          try {
-            let res = await this.$axios.post("/accounts/login", payload);
-            if (res.status == 200) {
-              if (
-                this.rootScreen == "index" ||
-                !this.rootScreen ||
-                this.rootScreen == "register"
-              )
-                this.$router.push("/");
-              else this.$router.back();
-
-              localStorage.setItem("token", res.data);
-              if (isGuest) this.resetGuestData();
-            }
-          } catch (error) {
-            this.errMessage = error.response.data;
-          } finally {
-            this.loading = false;
-          }
-        }
+        if (!err) this.handleLogin(false, values);
       });
+    },
+    async handleLogin(isGuest, values) {
+      this.loading = true;
+      let payload = {
+        username: isGuest ? "Guest" : values.userName,
+        password: isGuest ? "123456" : values.password
+      };
+      try {
+        let res = await this.$axios.post("/accounts/login", payload);
+        if (res.status == 200) {
+          if (
+            this.rootScreen == "index" ||
+            !this.rootScreen ||
+            this.rootScreen == "register"
+          )
+            this.$router.push("/");
+          else this.$router.back();
+
+          localStorage.setItem("token", res.data);
+          if (isGuest) this.resetGuestData();
+        }
+      } catch (error) {
+        this.errMessage = error.response.data;
+      } finally {
+        this.loading = false;
+      }
     }
   }
 };
