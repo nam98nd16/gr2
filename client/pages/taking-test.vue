@@ -23,7 +23,7 @@
       @answer="handleAnswer"
     />
     <div class="mt-2">
-      <a-button v-if="!isReviewing" type="danger" @click="handleAbandon"
+      <a-button v-if="!isReviewing" type="danger" @click="abandonTest"
         >Abandon</a-button
       >
       <div style="float: right">
@@ -48,7 +48,7 @@
 
     <a-modal
       :cancelText="'Review'"
-      :cancelButtonProps="{ props: {}, on: { click: handleReview } }"
+      :cancelButtonProps="{ props: {}, on: { click: reviewAnswers } }"
       :maskClosable="false"
       v-model="modalVisible"
       :closable="false"
@@ -119,7 +119,7 @@ export default {
     ...mapMutations({
       setTestQuestions: "test/setTestQuestions"
     }),
-    handleAbandon() {
+    abandonTest() {
       this.$confirm({
         title:
           "Are you sure to abandon the test? Your attempt will not be recorded!",
@@ -185,7 +185,7 @@ export default {
       this.modalVisible = false;
       window.history.back();
     },
-    handleReview() {
+    reviewAnswers() {
       this.modalVisible = false;
       this.isReviewing = true;
       this.answerKey = 1;

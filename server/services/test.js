@@ -106,7 +106,7 @@ const getRatedQuestion = async (req, res) => {
  * @param {Request} req Request object from express
  * @param {Response} res Response object from express
  */
-const submiteRatedAnswer = async (req, res) => {
+const submitRatedAnswer = async (req, res) => {
   let token = req.headers.authorization.substring(
     7,
     req.headers.authorization.length
@@ -137,7 +137,7 @@ const submiteRatedAnswer = async (req, res) => {
       1.0 *
         Math.pow(10, (1.0 * (questionRating - currentRating)) / powerConstant));
 
-  let newRating = (currentRating, actualResult, expectedResult) =>
+  let calculateNewRating = (currentRating, actualResult, expectedResult) =>
     currentRating + k * (actualResult - expectedResult);
 
   let expectedProb = expectedProbability(
@@ -145,7 +145,7 @@ const submiteRatedAnswer = async (req, res) => {
     question.difficultyLevel
   );
   let actualRes = isCorrect ? 1 : 0;
-  curRating = newRating(curRating, actualRes, expectedProb);
+  curRating = calculateNewRating(curRating, actualRes, expectedProb);
   if (curRating < 0) curRating = 0;
 
   await knex("ratings")
@@ -261,5 +261,5 @@ module.exports = {
   submitAnswers,
   getRatedQuestion,
   getRating,
-  submiteRatedAnswer,
+  submitRatedAnswer,
 };

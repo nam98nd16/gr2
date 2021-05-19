@@ -314,19 +314,25 @@ export default {
         this.currentPage--;
     },
     async handleProposeQuestion() {
-      if (
-        !this.selectedTopic ||
-        !this.questionString ||
-        !this.answer3.string ||
-        !this.answer2.string ||
-        !this.answer1.string ||
-        !this.answer4.string
-      ) {
-        this.$notification.error({
-          message: "Please enter all the required information!"
-        });
-        return;
-      }
+      let verifyInput = () => {
+        if (
+          !this.selectedTopic ||
+          !this.questionString ||
+          !this.answer3.string ||
+          !this.answer2.string ||
+          !this.answer1.string ||
+          !this.answer4.string
+        ) {
+          this.$notification.error({
+            message: "Please enter all the required information!"
+          });
+          return false;
+        } else return true;
+      };
+
+      let isValidInput = verifyInput();
+      if (!isValidInput) return;
+
       let payload = {
         questionString: this.questionString,
         answer1: this.answer1,

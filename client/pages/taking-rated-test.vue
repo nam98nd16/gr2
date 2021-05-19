@@ -13,7 +13,8 @@
         checked-children="Live rating chart on"
         un-checked-children="Live rating chart off"
         default-unchecked
-        v-model="shouldDisplayLiveRatingChart"
+        :checked="shouldDisplayLiveRatingChart"
+        @change="toggleViewLiveRatingChart"
       />
     </div>
     <div
@@ -203,6 +204,9 @@ export default {
     },
     handleAnswer(answeredKey) {
       this.answeredId = answeredKey;
+    },
+    toggleViewLiveRatingChart() {
+      this.shouldDisplayLiveRatingChart = !this.shouldDisplayLiveRatingChart;
     }
   },
   async beforeRouteLeave(to, from, next) {

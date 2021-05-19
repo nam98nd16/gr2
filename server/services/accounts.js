@@ -18,17 +18,25 @@ const register = async (req, res) => {
   bcrypt.hash(req.body.password, saltRounds, async (err, hash) => {
     // Store hash in your password DB.
     if (err) res.status(500).json(err.message);
-    let existedUser = await knex("accounts").where(
-      "username",
-      "ilike",
-      req.body.username
-    );
-    if (existedUser.length) {
-      res.status(400).json({
-        detail: `Key (username)=(${req.body.username}) already exists.`,
-      });
-      return;
-    }
+
+    let validateInput = async () => {
+      let existedUser = await knex("accounts").where(
+        "username",
+        "ilike",
+        req.body.username
+      );
+
+      if (existedUser.length) {
+        res.status(400).json({
+          detail: `Key (username)=(${req.body.username}) already exists.`,
+        });
+        return true;
+      } else return false;
+    };
+
+    let invalidUsername = await validateInput();
+    if (invalidUsername) return;
+
     try {
       let user = await knex("accounts").returning("*").insert({
         username: req.body.username,
@@ -51,20 +59,25 @@ const login = async (req, res) => {
     .select()
     .from("accounts")
     .where("username", "ilike", req.body.username);
-  if (!users.length) res.status(400).json("Account not existed!");
-  else {
-    let user = users[0];
-    bcrypt.compare(req.body.password, user.password, async (err, result) => {
-      if (result) {
-        user.password = undefined;
-        const token = jwt.sign(user, jwtSecret, {
-          expiresIn: validDays * 24 + "h",
-          algorithm: "HS256",
-        });
-        return res.json(token);
-      } else res.status(400).json("Invalid password!");
-    });
-  }
+
+  let validateInput = () => {
+    if (!users.length) res.status(400).json("Account not existed!");
+    else {
+      let user = users[0];
+      bcrypt.compare(req.body.password, user.password, async (err, result) => {
+        if (result) {
+          user.password = undefined;
+          const token = jwt.sign(user, jwtSecret, {
+            expiresIn: validDays * 24 + "h",
+            algorithm: "HS256",
+          });
+          return res.json(token);
+        } else res.status(400).json("Invalid password!");
+      });
+    }
+  };
+
+  validateInput();
 };
 
 /**

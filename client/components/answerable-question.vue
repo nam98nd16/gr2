@@ -19,7 +19,7 @@
             ? ''
             : answeredKey
         "
-        @change="e => handleAnswer(e)"
+        @change="e => answerQuestion(e)"
       >
         <a-radio
           v-for="(ans, index) in question.answers"
@@ -128,7 +128,7 @@ export default {
       });
       this.modalVisible = false;
     },
-    handleAnswer(e) {
+    answerQuestion(e) {
       if (!this.isReviewing) {
         this.answeredKey = e.target.value;
         this.$emit("answer", e.target.value);
