@@ -386,9 +386,6 @@ export default {
         onCancel() {}
       });
     }
-  },
-  beforeDestroy() {
-    this.setUserAvatar(null);
   }
 };
 </script>
