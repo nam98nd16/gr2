@@ -63,7 +63,7 @@
 
 <script>
 import jwt_decode from "jwt-decode";
-import { mapMutations } from "vuex";
+import { mapMutations, mapState } from "vuex";
 import Avatar from "../avatar.vue";
 export default {
   components: { Avatar },
@@ -76,23 +76,36 @@ export default {
   mounted() {
     let curRoute = this.$route.name;
     this.current = [curRoute];
+    this.setCurrentRoute(curRoute);
   },
-  methods: {
-    ...mapMutations({
-      setUserAvatar: "setUserAvatar"
-    }),
-    handleLogout() {
-      localStorage.clear();
-      this.setUserAvatar(null);
-      this.$router.push("/login");
+  watch: {
+    currentRoute(newVal) {
+      if (this.current[0] != newVal) this.current = [newVal];
+    },
+    current(newVal) {
+      if (this.currentRoute != newVal[0]) this.setCurrentRoute(newVal[0]);
     }
   },
   computed: {
+    ...mapState({
+      currentRoute: state => state.currentRoute
+    }),
     getProfileName() {
       return this.currentUser.username;
     },
     isAdmin() {
       return this.currentUser.role == 0;
+    }
+  },
+  methods: {
+    ...mapMutations({
+      setUserAvatar: "setUserAvatar",
+      setCurrentRoute: "setCurrentRoute"
+    }),
+    handleLogout() {
+      localStorage.clear();
+      this.setUserAvatar(null);
+      this.$router.push("/login");
     }
   }
 };

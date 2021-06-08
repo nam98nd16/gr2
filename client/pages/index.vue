@@ -1,26 +1,82 @@
 <template>
-  <div class="container2">
+  <div class="">
     <div>
-      <Logo />
-      <h1 class="title">SAS</h1>
-      <p>Skill Assessment System</p>
-      <div class="links">
-        <a
-          href="https://github.com/nam98nd16/gr2"
-          target="_blank"
-          rel="noopener noreferrer"
-          class="button--grey"
+      <a-carousel arrows :after-change="onChange">
+        <div
+          slot="prevArrow"
+          slot-scope="props"
+          class="custom-slick-arrow"
+          style="left: 20px;zIndex: 1"
         >
-          GitHub
-        </a>
-      </div>
+          <a-icon type="left-circle" />
+        </div>
+        <div
+          slot="nextArrow"
+          slot-scope="props"
+          class="custom-slick-arrow"
+          style="right: 20px"
+        >
+          <a-icon type="right-circle" />
+        </div>
+        <div class="img-container">
+          <h3>IMPROVE YOUR SKILLS WITH TRAINING</h3>
+          <nuxt-link :to="'/test'">
+            <img
+              src="../static/TRAINING.png"
+              @click="handleClickLink('test')"
+            />
+          </nuxt-link>
+        </div>
+        <div class="img-container">
+          <h3>CREATE YOUR OWN QUESTION</h3>
+          <nuxt-link :to="'/manage-question'"
+            ><img
+              src="../static/QUESTION.png"
+              @click="handleClickLink('manage-question')"
+          /></nuxt-link>
+        </div>
+        <div class="img-container">
+          <h3>REVIEW YOUR PERFORMANCE</h3>
+          <nuxt-link :to="'/performance'"
+            ><img
+              src="../static/PERFORMANCE.png"
+              @click="handleClickLink('performance')"
+          /></nuxt-link>
+        </div>
+        <div class="img-container">
+          <h3>VIEW LEADERBOARD</h3>
+          <nuxt-link :to="'/leaderboard'"
+            ><img
+              src="../static/LEADERBOARD.png"
+              @click="handleClickLink('leaderboard')"
+          /></nuxt-link>
+        </div>
+        <div class="img-container">
+          <h3>MAKE FRIENDS</h3>
+          <nuxt-link :to="'/friends'"
+            ><img
+              src="../static/FRIENDS.png"
+              @click="handleClickLink('friends')"
+          /></nuxt-link>
+        </div>
+      </a-carousel>
     </div>
   </div>
 </template>
 
 <script>
+import { mapMutations } from "vuex";
 export default {
-  async mounted() {}
+  async mounted() {},
+  methods: {
+    ...mapMutations({
+      setCurrentRoute: "setCurrentRoute"
+    }),
+    onChange() {},
+    handleClickLink(link) {
+      this.setCurrentRoute(link);
+    }
+  }
 };
 </script>
 
@@ -45,5 +101,41 @@ export default {
 
 .links {
   padding-top: 15px;
+}
+</style>
+
+<style scoped>
+.ant-carousel >>> .slick-slide {
+  text-align: center;
+  line-height: 160px;
+  background: #364d79;
+  overflow: auto;
+}
+
+.ant-carousel >>> .slick-slide h3 {
+  color: #fff;
+}
+
+.img-container img {
+  display: block;
+  margin: auto;
+  max-height: calc(100vh - 335px);
+  max-width: 90%;
+  margin-bottom: 100px;
+}
+
+.ant-carousel >>> .custom-slick-arrow {
+  width: 50px;
+  height: 50px;
+  font-size: 50px;
+  color: #fff;
+  background-color: rgba(31, 45, 61, 0.11);
+  opacity: 0.3;
+}
+.ant-carousel >>> .custom-slick-arrow:before {
+  display: none;
+}
+.ant-carousel >>> .custom-slick-arrow:hover {
+  opacity: 0.5;
 }
 </style>

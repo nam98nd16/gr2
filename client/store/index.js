@@ -3,7 +3,8 @@ export const state = () => ({
   allUsers: [],
   users: [],
   usersCount: [],
-  avatar: null
+  avatar: null,
+  currentRoute: null
 });
 
 export const mutations = {
@@ -18,6 +19,9 @@ export const mutations = {
   },
   setUserAvatar(state, avatar) {
     state.avatar = avatar;
+  },
+  setCurrentRoute(state, currentRoute) {
+    state.currentRoute = currentRoute;
   }
 };
 
