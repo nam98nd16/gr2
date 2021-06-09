@@ -1,7 +1,7 @@
 <template>
   <div class="">
     <div>
-      <a-carousel arrows :after-change="onChange">
+      <a-carousel arrows autoplay :after-change="onChange">
         <div
           slot="prevArrow"
           slot-scope="props"
