@@ -18,47 +18,34 @@
         >
           <a-icon type="right-circle" />
         </div>
-        <div class="img-container">
-          <h3>IMPROVE YOUR SKILLS WITH TRAINING</h3>
-          <nuxt-link :to="'/test'">
-            <img
-              src="../static/TRAINING.png"
-              @click="handleClickLink('test')"
-            />
-          </nuxt-link>
-        </div>
-        <div class="img-container">
-          <h3>CREATE YOUR OWN QUESTION</h3>
-          <nuxt-link :to="'/manage-question'"
-            ><img
-              src="../static/QUESTION.png"
-              @click="handleClickLink('manage-question')"
-          /></nuxt-link>
-        </div>
-        <div class="img-container">
-          <h3>REVIEW YOUR PERFORMANCE</h3>
-          <nuxt-link :to="'/performance'"
-            ><img
-              src="../static/PERFORMANCE.png"
-              @click="handleClickLink('performance')"
-          /></nuxt-link>
-        </div>
-        <div class="img-container">
-          <h3>VIEW LEADERBOARD</h3>
-          <nuxt-link :to="'/leaderboard'"
-            ><img
-              src="../static/LEADERBOARD.png"
-              @click="handleClickLink('leaderboard')"
-          /></nuxt-link>
-        </div>
-        <div class="img-container">
-          <h3>MAKE FRIENDS</h3>
-          <nuxt-link :to="'/friends'"
-            ><img
-              src="../static/FRIENDS.png"
-              @click="handleClickLink('friends')"
-          /></nuxt-link>
-        </div>
+        <nuxt-link :to="'/test'"
+          ><div class="img-container" @click="handleClickLink('test')">
+            <h3>IMPROVE YOUR SKILLS WITH TRAINING</h3>
+            <img src="../static/TRAINING.png" /></div
+        ></nuxt-link>
+        <nuxt-link :to="'/manage-question'">
+          <div
+            class="img-container"
+            @click="handleClickLink('manage-question')"
+          >
+            <h3>CREATE YOUR OWN QUESTION</h3>
+            <img src="../static/QUESTION.png" /></div
+        ></nuxt-link>
+        <nuxt-link :to="'/performance'"
+          ><div class="img-container" @click="handleClickLink('performance')">
+            <h3>REVIEW YOUR PERFORMANCE</h3>
+            <img src="../static/PERFORMANCE.png" /></div
+        ></nuxt-link>
+        <nuxt-link :to="'/leaderboard'"
+          ><div class="img-container" @click="handleClickLink('leaderboard')">
+            <h3>VIEW LEADERBOARD</h3>
+            <img src="../static/LEADERBOARD.png" /></div
+        ></nuxt-link>
+        <nuxt-link :to="'/friends'"
+          ><div class="img-container" @click="handleClickLink('friends')">
+            <h3>MAKE FRIENDS</h3>
+            <img src="../static/FRIENDS.png" /></div
+        ></nuxt-link>
       </a-carousel>
     </div>
   </div>
