@@ -192,7 +192,7 @@
 <script>
 import Question from "@/components/question";
 import PageTitle from "../components/page-title.vue";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapState, mapMutations } from "vuex";
 import jwtdecode from "jwt-decode";
 export default {
   components: { Question, PageTitle },
@@ -239,6 +239,7 @@ export default {
     };
   },
   async mounted() {
+    this.setCurrentRoute("manage-question");
     if (this.isNormalUser) this.myQuestionsFiltered = true;
     else if (this.isPreliminaryReviewer) this.wfReviewFiltered = true;
     this.loading = true;
@@ -292,6 +293,9 @@ export default {
       getViewableQuestions: "questions/getViewableQuestions",
       getViewableQuestionsCount: "questions/getViewableQuestionsCount",
       getAvailableAssignees: "questions/getAvailableAssignees"
+    }),
+    ...mapMutations({
+      setCurrentRoute: "setCurrentRoute"
     }),
     async fetchViewableQuestions(afterDeletion) {
       let payload = {

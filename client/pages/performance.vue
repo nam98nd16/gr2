@@ -9,7 +9,7 @@
 <script>
 import pageTitle from "../components/page-title.vue";
 import jwt_decode from "jwt-decode";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapMutations } from "vuex";
 import ViewablePerformance from "../components/viewable-performance.vue";
 export default {
   components: { pageTitle, ViewablePerformance },
@@ -54,6 +54,7 @@ export default {
   },
   async mounted() {
     this.loading = true;
+    this.setCurrentRoute("performance");
     await Promise.all([
       this.fetchData(),
       this.allSubjects.length ? undefined : this.getAllSubjects()
@@ -94,6 +95,9 @@ export default {
       getMyPerformances: "performance/getMyPerformances",
       getMyRatedPerformances: "performance/getMyRatedPerformances",
       getAllSubjects: "subjects/getAllSubjects"
+    }),
+    ...mapMutations({
+      setCurrentRoute: "setCurrentRoute"
     }),
     getDateRange() {
       let range = {

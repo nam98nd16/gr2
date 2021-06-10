@@ -101,7 +101,7 @@
 
 <script>
 import pageTitle from "../components/page-title.vue";
-import { mapState, mapActions } from "vuex";
+import { mapState, mapActions, mapMutations } from "vuex";
 export default {
   components: { pageTitle },
   data() {
@@ -117,6 +117,7 @@ export default {
   },
   async mounted() {
     this.loading = true;
+    this.setCurrentRoute("test");
     await Promise.all([
       this.allSubjects.length ? undefined : this.getAllSubjects(),
       this.getRating({ subjectId: this.selectedTopic })
@@ -143,6 +144,9 @@ export default {
       getAllSubjects: "subjects/getAllSubjects",
       getTestQuestions: "test/getTestQuestions",
       getRating: "test/getRating"
+    }),
+    ...mapMutations({
+      setCurrentRoute: "setCurrentRoute"
     }),
     getCurrentSubjectName() {
       return this.allSubjects.find(s => s.subjectId == this.selectedTopic)

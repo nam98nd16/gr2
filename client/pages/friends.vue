@@ -116,6 +116,7 @@ export default {
     };
   },
   mounted() {
+    this.setCurrentRoute("friends");
     this.fetchFriends();
   },
   watch: {
@@ -139,7 +140,8 @@ export default {
       getSearchedFriendsCount: "friends/getSearchedFriendsCount"
     }),
     ...mapMutations({
-      resetSearchedResults: "friends/resetSearchedResults"
+      resetSearchedResults: "friends/resetSearchedResults",
+      setCurrentRoute: "setCurrentRoute"
     }),
     async fetchFriends(shouldNotRecount, refreshReason, shouldRefresh) {
       this.loading = true;

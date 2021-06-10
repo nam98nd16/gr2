@@ -183,6 +183,7 @@ export default {
   },
   async mounted() {
     this.loading = true;
+    this.setCurrentRoute("manage-subject");
     await Promise.all([this.fetchSubjects(), this.fetchSubjectCount()]);
 
     this.loading = false;
@@ -244,6 +245,9 @@ export default {
       addSubject: "subjects/addSubject",
       updateSubject: "subjects/updateSubject",
       removeSubject: "subjects/removeSubject"
+    }),
+    ...mapMutations({
+      setCurrentRoute: "setCurrentRoute"
     }),
     async fetchSubjects() {
       await this.getSubjects({

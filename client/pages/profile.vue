@@ -247,6 +247,7 @@ export default {
     this.form = this.$form.createForm(this, { name: "profile" });
   },
   async mounted() {
+    this.setCurrentRoute("profile");
     this.currentUser = jwt_decode(localStorage.getItem("token"));
     this.allSubjects.length ? {} : this.getAllSubjects();
     await this.getAvatar(this.currentUser.userId);
@@ -259,7 +260,8 @@ export default {
   },
   methods: {
     ...mapMutations({
-      setUserAvatar: "setUserAvatar"
+      setUserAvatar: "setUserAvatar",
+      setCurrentRoute: "setCurrentRoute"
     }),
     ...mapActions({
       updateProfile: "updateProfile",

@@ -81,7 +81,7 @@
 
 <script>
 import PageTitle from "../components/page-title.vue";
-import { mapActions, mapState } from "vuex";
+import { mapActions, mapState, mapMutations } from "vuex";
 import Avatar from "../components/avatar.vue";
 import PrivilegeTag from "../components/privilege-tag.vue";
 import FriendActions from "../components/friend-actions.vue";
@@ -105,6 +105,7 @@ export default {
   },
   async mounted() {
     this.loading = true;
+    this.setCurrentRoute("leaderboard");
     await Promise.all([this.initSubjectOptions(), this.fetchRatings()]);
 
     this.loading = false;
@@ -137,6 +138,9 @@ export default {
     ...mapActions({
       getTopRatings: "performance/getTopRatings",
       getAllSubjects: "subjects/getAllSubjects"
+    }),
+    ...mapMutations({
+      setCurrentRoute: "setCurrentRoute"
     }),
     async initSubjectOptions() {
       this.allSubjects.length ? {} : await this.getAllSubjects();

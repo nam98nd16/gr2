@@ -54,7 +54,9 @@
 <script>
 import { mapMutations } from "vuex";
 export default {
-  async mounted() {},
+  async mounted() {
+    this.setCurrentRoute("index");
+  },
   methods: {
     ...mapMutations({
       setCurrentRoute: "setCurrentRoute"

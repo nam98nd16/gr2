@@ -132,6 +132,7 @@ export default {
   },
   async mounted() {
     this.loading = true;
+    this.setCurrentRoute("manage-user");
     await Promise.all([
       this.initSubjectOptions(),
       this.fetchUsers(),
@@ -217,8 +218,10 @@ export default {
       getUsersCount: "getUsersCount"
     }),
     ...mapMutations({
-      setAllUsers: "setAllUsers"
+      setAllUsers: "setAllUsers",
+      setCurrentRoute: "setCurrentRoute"
     }),
+
     async initSubjectOptions() {
       this.allSubjects.length ? {} : await this.getAllSubjects();
       this.subjectOptions = this.allSubjects.map(subject => ({
