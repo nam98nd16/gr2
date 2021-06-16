@@ -40,7 +40,7 @@
           <i class="fas fa-users-cog mr-2"></i>User Management
         </nuxt-link>
       </a-menu-item>
-      <a-menu-item key="profile">
+      <a-menu-item v-if="!isGuest" key="profile">
         <nuxt-link :to="'/profile'">
           <avatar
             class="mr-2"
@@ -54,8 +54,18 @@
           />{{ getProfileName }}
         </nuxt-link>
       </a-menu-item>
-      <a-menu-item @click="handleLogout" key="logout">
+      <a-menu-item v-if="!isGuest" @click="handleLogout" key="logout">
         <i class="fas fa-sign-out-alt mr-2"></i>Log out
+      </a-menu-item>
+      <a-menu-item v-if="isGuest" key="login">
+        <nuxt-link :to="'/login'">
+          <i class="fas fa-sign-in-alt mr-2"></i>Log in
+        </nuxt-link>
+      </a-menu-item>
+      <a-menu-item v-if="isGuest" key="register">
+        <nuxt-link :to="'/register'">
+          <i class="fas fa-user-plus mr-2"></i>Sign up
+        </nuxt-link>
       </a-menu-item>
     </a-menu>
   </div>
@@ -95,6 +105,9 @@ export default {
     },
     isAdmin() {
       return this.currentUser.role == 0;
+    },
+    isGuest() {
+      return this.currentUser.role == 5;
     }
   },
   methods: {

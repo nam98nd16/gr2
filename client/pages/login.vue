@@ -87,6 +87,8 @@
 <script>
 import { mapMutations, mapActions } from "vuex";
 import jwt_decode from "jwt-decode";
+const guestToken =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6Ikd1ZXN0IiwidXNlcklkIjo2NiwiZnVsbE5hbWUiOm51bGwsImFkZHJlc3MiOm51bGwsInBob25lTnVtYmVyIjpudWxsLCJhdXRvYmlvZ3JhcGh5IjpudWxsLCJlbWFpbCI6bnVsbCwicm9sZSI6NSwic3ViamVjdElkIjpudWxsLCJiaXJ0aGRheSI6bnVsbCwiZ2VuZGVyIjpudWxsLCJhdmF0YXJJbWFnZVBhdGgiOm51bGwsImlhdCI6MTYyMzgyODU2OSwiZXhwIjoxNjg0MzA4NTY5fQ.iMRHW_qhTjvKtv143kEFV-ekRufO-RmRgXi5KRs5h_8";
 export default {
   layout: "login",
   beforeCreate() {
@@ -103,6 +105,16 @@ export default {
     next(vm => {
       vm.rootScreen = from.name;
     });
+  },
+  created() {
+    let token = localStorage.getItem("token");
+    if (!token) this.handleGuestAutoLogin();
+    try {
+      const data = jwt_decode(token);
+    } catch (error) {
+      localStorage.clear();
+      this.handleGuestAutoLogin();
+    }
   },
   methods: {
     ...mapMutations({
@@ -144,6 +156,11 @@ export default {
       } finally {
         this.loading = false;
       }
+    },
+    handleGuestAutoLogin() {
+      localStorage.setItem("token", guestToken);
+      this.$router.push("/");
+      this.resetGuestData();
     }
   }
 };

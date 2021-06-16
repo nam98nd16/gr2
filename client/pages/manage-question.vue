@@ -131,6 +131,8 @@
         :max="60"
       />
     </a-modal>
+
+    <LoginPromptModal ref="loginModal" />
     <br />
 
     <a-checkable-tag
@@ -192,10 +194,11 @@
 <script>
 import Question from "@/components/question";
 import PageTitle from "../components/page-title.vue";
+import LoginPromptModal from "../components/login-prompt-modal";
 import { mapActions, mapState, mapMutations } from "vuex";
 import jwtdecode from "jwt-decode";
 export default {
-  components: { Question, PageTitle },
+  components: { Question, PageTitle, LoginPromptModal },
   data() {
     return {
       modalVisible: false,
@@ -277,6 +280,9 @@ export default {
     },
     isPreliminaryReviewer() {
       return this.currentUser.role === 4;
+    },
+    isGuest() {
+      return this.currentUser.role == 5;
     }
   },
   watch: {
@@ -318,49 +324,52 @@ export default {
         this.currentPage--;
     },
     async handleProposeQuestion() {
-      let verifyInput = () => {
-        if (
-          !this.selectedTopic ||
-          !this.questionString ||
-          !this.answer3.string ||
-          !this.answer2.string ||
-          !this.answer1.string ||
-          !this.answer4.string
-        ) {
-          this.$notification.error({
-            message: "Please enter all the required information!"
+      let canContinue = this.checkIfUserCanContinue();
+      if (canContinue) {
+        let verifyInput = () => {
+          if (
+            !this.selectedTopic ||
+            !this.questionString ||
+            !this.answer3.string ||
+            !this.answer2.string ||
+            !this.answer1.string ||
+            !this.answer4.string
+          ) {
+            this.$notification.error({
+              message: "Please enter all the required information!"
+            });
+            return false;
+          } else return true;
+        };
+
+        let isValidInput = verifyInput();
+        if (!isValidInput) return;
+
+        let payload = {
+          questionString: this.questionString,
+          answer1: this.answer1,
+          answer2: this.answer2,
+          answer3: this.answer3,
+          answer4: this.answer4,
+          topicId: this.selectedTopic,
+          difficultyLevel: this.difficultyLevel,
+          allowedTime: this.allowedTime,
+          questionId: this.questionToUpdate?.questionId ?? undefined
+        };
+        if (this.questionToUpdate) {
+          let res = await this.updateQuestion(payload);
+          this.$notification.success({
+            message: "Successfully updated the question!"
           });
-          return false;
-        } else return true;
-      };
-
-      let isValidInput = verifyInput();
-      if (!isValidInput) return;
-
-      let payload = {
-        questionString: this.questionString,
-        answer1: this.answer1,
-        answer2: this.answer2,
-        answer3: this.answer3,
-        answer4: this.answer4,
-        topicId: this.selectedTopic,
-        difficultyLevel: this.difficultyLevel,
-        allowedTime: this.allowedTime,
-        questionId: this.questionToUpdate?.questionId ?? undefined
-      };
-      if (this.questionToUpdate) {
-        let res = await this.updateQuestion(payload);
-        this.$notification.success({
-          message: "Successfully updated the question!"
-        });
-      } else {
-        let res = await this.proposeQuestion(payload);
-        this.$notification.success({
-          message: "Successfully proposed the question!"
-        });
+        } else {
+          let res = await this.proposeQuestion(payload);
+          this.$notification.success({
+            message: "Successfully proposed the question!"
+          });
+        }
+        this.fetchViewableQuestions();
+        this.modalVisible = false;
       }
-      this.fetchViewableQuestions();
-      this.modalVisible = false;
     },
     async handleChange(e, type) {
       if (e) {
@@ -422,6 +431,12 @@ export default {
       this.difficultyLevel = question.difficultyLevel;
       this.allowedTime = question.timeAllowed;
       this.modalVisible = true;
+    },
+    checkIfUserCanContinue() {
+      if (this.isGuest) {
+        this.$refs.loginModal.modalVisible = true;
+        return false;
+      } else return true;
     }
   }
 };

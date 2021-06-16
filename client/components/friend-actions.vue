@@ -67,19 +67,28 @@
         ><i class="fas fa-user-check mr-2"></i>Friends</a-button
       >
     </a-popover>
+
+    <LoginPromptModal ref="loginModal" />
   </span>
 </template>
 
 <script>
 import jwt_decode from "jwt-decode";
+import LoginPromptModal from "./login-prompt-modal";
 import { mapActions } from "vuex";
 export default {
   props: ["person", "isViewingPerformance", "shouldNotRenderDetailActions"],
+  components: { LoginPromptModal },
   data() {
     return {
       popoverIsVisible: false,
       currentUser: jwt_decode(localStorage.getItem("token"))
     };
+  },
+  computed: {
+    isGuest() {
+      return this.currentUser.role == 5;
+    }
   },
   methods: {
     ...mapActions({
@@ -89,32 +98,44 @@ export default {
     }),
     async handleAddFriend(e) {
       e.stopPropagation();
-      await this.addFriend({ userId: this.person.userId });
-      this.$emit("addedFriend");
+      let canContinue = this.checkIfUserCanContinue();
+      if (canContinue) {
+        await this.addFriend({ userId: this.person.userId });
+        this.$emit("addedFriend");
+      }
     },
     async handleConfirmFriend(e) {
       e.stopPropagation();
-      await this.confirmFriend({ userId: this.person.userId });
-      this.$emit("confirmedFriend");
+      let canContinue = this.checkIfUserCanContinue();
+      if (canContinue) {
+        await this.confirmFriend({ userId: this.person.userId });
+        this.$emit("confirmedFriend");
+      }
     },
     async handleDeleteFriend(e) {
       e.stopPropagation();
-      await this.deleteFriend(this.person.userId);
-      this.$emit("deletedFriend");
+      let canContinue = this.checkIfUserCanContinue();
+      if (canContinue) {
+        await this.deleteFriend(this.person.userId);
+        this.$emit("deletedFriend");
+      }
     },
     handleUnfriend(e) {
-      this.$confirm({
-        title: `Are you sure you want to remove ${this.person.username} ${
-          this.person.fullName ? "(" + this.person.fullName + ")" : ""
-        } as your friend?`,
-        okText: "OK",
-        cancelText: "Cancel",
-        onOk: async () => {
-          this.popoverIsVisible = false;
-          await this.handleDeleteFriend(e);
-        },
-        onCancel() {}
-      });
+      let canContinue = this.checkIfUserCanContinue();
+      if (canContinue) {
+        this.$confirm({
+          title: `Are you sure you want to remove ${this.person.username} ${
+            this.person.fullName ? "(" + this.person.fullName + ")" : ""
+          } as your friend?`,
+          okText: "OK",
+          cancelText: "Cancel",
+          onOk: async () => {
+            this.popoverIsVisible = false;
+            await this.handleDeleteFriend(e);
+          },
+          onCancel() {}
+        });
+      }
     },
     handleViewPerformance() {
       this.popoverIsVisible = false;
@@ -123,6 +144,12 @@ export default {
     handleViewProfile() {
       this.popoverIsVisible = false;
       this.$emit("viewProfile");
+    },
+    checkIfUserCanContinue() {
+      if (this.isGuest) {
+        this.$refs.loginModal.modalVisible = true;
+        return false;
+      } else return true;
     }
   }
 };

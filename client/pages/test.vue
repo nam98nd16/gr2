@@ -96,11 +96,18 @@
       ></i
       ><i v-else class="fas fa-bell-slash mr-2"></i>Start</a-button
     >
+    <div v-if="isGuest" style="color: red">
+      You are currently not logged in. Your test results will not be saved.
+      Please
+      <span style="color: blue"><a @click="redirectToLogin">login</a></span> to
+      save your results!
+    </div>
   </a-spin>
 </template>
 
 <script>
 import pageTitle from "../components/page-title.vue";
+import jwtdecode from "jwt-decode";
 import { mapState, mapActions, mapMutations } from "vuex";
 export default {
   components: { pageTitle },
@@ -112,7 +119,8 @@ export default {
       subjects: [],
       selectedMode: "practice",
       shouldBeTimed: false,
-      loading: false
+      loading: false,
+      currentUser: jwtdecode(localStorage.getItem("token"))
     };
   },
   async mounted() {
@@ -132,7 +140,10 @@ export default {
     ...mapState({
       allSubjects: state => state.subjects.allSubjects,
       currentRating: state => state.test.currentRating
-    })
+    }),
+    isGuest() {
+      return this.currentUser.role == 5;
+    }
   },
   watch: {
     selectedTopic(newVal) {
@@ -179,6 +190,9 @@ export default {
       } catch (error) {
         this.$notification.error({ message: error.response.data });
       }
+    },
+    redirectToLogin() {
+      this.$router.push("/login");
     }
   }
 };
