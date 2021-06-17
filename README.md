@@ -36,6 +36,11 @@ Use the package manager [yarn](https://yarnpkg.com/) to install dependencies.
 yarn
 ```
 
+For database, we use PostgreSQL. Firstly, restore the database using the SQL dump file in the databases folder (you can refer to this [online tutorial](https://www.postgresqltutorial.com/postgresql-restore-database/)). Secondly, start PostgreSQL server on your machine. Then, modify the ```DATABASE_URL``` variable in the ```environments/.env.dev``` to match your PostgreSQL server config.
+
+
+
+
 ## Run
 
 ```bash
