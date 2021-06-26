@@ -78,12 +78,15 @@ const getRatedQuestion = async (req, res) => {
   let originalRating = await getOriginalRating(reqUser.userId, subjectId);
 
   let question = await knex.raw(
-    `select * from questions where "subjectId" = ${subjectId} and abs(${originalRating} - "difficultyLevel") = (select min(abs(${originalRating} - "difficultyLevel")) from questions) order by random() limit 1`
+    `select * from questions where "passedFinalReview" = '1' and "subjectId" = ${subjectId} and abs(${originalRating} - "difficultyLevel") = (select min(abs(${originalRating} - "difficultyLevel")) from (select * from questions where "passedFinalReview" = '1' and "subjectId" = ${subjectId}) as derivedTable) order by random() limit 1`
   );
 
   question = question.rows[0];
 
-  if (!question) res.status(500).json("No question found!");
+  if (!question) {
+    res.status(500).json("No question found!");
+    return;
+  }
 
   let answers = await knex("answers")
     .select()
